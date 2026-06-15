@@ -8,7 +8,8 @@ from game_logic import SnakeGameHeadless
 from agent import Agent
 from pydantic import BaseModel
 import chess
-from chess_ai import get_best_move
+from chess_ai import get_best_move, evaluate_board, detect_opening, explain_move, get_material_balance
+from chess_cnn import get_best_move_cnn, cnn_evaluate
 import json
 import asyncio
 
@@ -27,11 +28,52 @@ class ChessMoveRequest(BaseModel):
     fen: str
     depth: int = 3
 
+class ChessAnalyzeRequest(BaseModel):
+    fen: str
+    last_move: str | None = None
+
 @app.post("/api/chess/move")
 async def post_chess_move(req: ChessMoveRequest):
     board = chess.Board(req.fen)
     best_move = await asyncio.to_thread(get_best_move, board, req.depth)
     return {"move": best_move}
+
+@app.post("/api/chess/cnn-move")
+async def post_chess_cnn_move(req: ChessMoveRequest):
+    board = chess.Board(req.fen)
+    best_move = await asyncio.to_thread(get_best_move_cnn, board, min(req.depth, 2))
+    return {"move": best_move}
+
+@app.post("/api/chess/analyze")
+async def post_chess_analyze(req: ChessAnalyzeRequest):
+    board = chess.Board(req.fen)
+    score = await asyncio.to_thread(cnn_evaluate, board)
+    material = get_material_balance(board)
+    opening = detect_opening(board)
+    explanation = ""
+    if req.last_move:
+        try:
+            move = chess.Move.from_uci(req.last_move)
+            board_before = chess.Board(req.fen)
+            # Reconstruct board before last move
+            board_before.push(move)
+            board_before2 = chess.Board(req.fen)
+            explanation = explain_move(board_before2, move)
+        except Exception:
+            explanation = ""
+    return {
+        "score": round(score * 100, 2),
+        "material": material,
+        "opening": opening,
+        "explanation": explanation,
+    }
+
+@app.post("/api/chess/hint")
+async def post_chess_hint(req: ChessMoveRequest):
+    board = chess.Board(req.fen)
+    # Hint always for the side to move (should be White = player)
+    best_move = await asyncio.to_thread(get_best_move, board, min(req.depth, 2))
+    return {"hint": best_move}
 
 class ConnectionManager:
     def __init__(self):

@@ -36,32 +36,86 @@
             <!-- CHESS TAB -->
             <section id="chess-tab" class="tab-pane active">
                 <header>
-                    <h1>Interactive Chess <span>Platform</span></h1>
-                    <p>Powered by Minimax Search Algorithm with Alpha-Beta Pruning</p>
+                    <h1>Chess AI <span>Platform</span></h1>
+                    <p id="chessSubtitle">Minimax cu Alpha-Beta Pruning + CNN Evaluator</p>
                 </header>
                 <div class="panel chess-layout">
                     <div class="board-wrapper">
                         <div id="board" style="width: 480px;"></div>
                     </div>
                     <div class="chess-sidebar">
+
+                        <!-- Status -->
                         <div class="status-card">
-                            <h3>Game Status</h3>
+                            <h3>Status Joc</h3>
                             <div id="chessStatus" class="status-badge">Rândul tău (Alb)</div>
                         </div>
+
+                        <!-- AI Mode Toggle -->
                         <div class="info-card">
-                            <h3>Difficulty Level (Minimax Depth)</h3>
-                            <select id="chessDifficulty" class="btn secondary-btn" style="text-align: left; background: rgba(0,0,0,0.5);">
-                                <option value="1">Easy (Depth 1)</option>
-                                <option value="2">Medium (Depth 2)</option>
-                                <option value="3" selected>Hard (Depth 3)</option>
+                            <h3>Mod AI</h3>
+                            <div class="ai-mode-toggle">
+                                <button id="btnMinimax" class="mode-btn active" onclick="setAIMode('minimax')">🌲 Minimax</button>
+                                <button id="btnCNN" class="mode-btn" onclick="setAIMode('cnn')">🧠 CNN</button>
+                            </div>
+                            <p id="aiModeDesc" style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">
+                                Minimax explorează pozițiile viitoare sistematic cu Alpha-Beta Pruning.
+                            </p>
+                        </div>
+
+                        <!-- Difficulty -->
+                        <div class="info-card">
+                            <h3>Dificultate (Adâncime Minimax)</h3>
+                            <select id="chessDifficulty" class="btn secondary-btn" style="text-align:left; background:rgba(0,0,0,0.5);">
+                                <option value="1">Ușor (Depth 1)</option>
+                                <option value="2">Mediu (Depth 2)</option>
+                                <option value="3" selected>Greu (Depth 3)</option>
                                 <option value="4">Grandmaster (Depth 4)</option>
                             </select>
                         </div>
+
+                        <!-- Evaluation Bar -->
                         <div class="info-card">
-                            <h3>How it works</h3>
-                            <p>This AI does not use neural networks or text prediction. It uses a <strong>Decision Tree</strong> to evaluate thousands of future positions. It enforces strict chess rules.</p>
+                            <h3>📊 Evaluare Poziție (CNN)</h3>
+                            <div class="eval-bar-outer">
+                                <div id="evalBarWhite" class="eval-bar-white"></div>
+                                <div id="evalBarBlack" class="eval-bar-black"></div>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-top:4px;">
+                                <span style="color:#fff;">Alb</span>
+                                <span id="evalScore" style="color:var(--accent); font-weight:600;">0.00</span>
+                                <span style="color:#999;">Negru</span>
+                            </div>
                         </div>
-                        <button class="btn primary-btn" onclick="resetChessGame()">New Game</button>
+
+                        <!-- Material Balance -->
+                        <div class="info-card">
+                            <h3>⚖️ Balanță Material</h3>
+                            <div style="font-size:0.85rem;">
+                                <div>Alb a capturat: <span id="whiteCaptured" style="font-size:1rem;">—</span></div>
+                                <div>Negru a capturat: <span id="blackCaptured" style="font-size:1rem;">—</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Opening -->
+                        <div class="info-card">
+                            <h3>📖 Deschidere</h3>
+                            <div id="openingName" class="opening-badge">Poziție de start</div>
+                        </div>
+
+                        <!-- Move Explanation -->
+                        <div class="info-card">
+                            <h3>💬 Ultima mutare AI</h3>
+                            <p id="moveExplanation" style="font-size:0.85rem; color:var(--text-muted); margin:0;">Jocul nu a început.</p>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            <button class="btn secondary-btn" onclick="requestHint()">💡 Sugerează-mi o mutare</button>
+                            <button class="btn secondary-btn" onclick="analyzePosition()">🔍 Analizează Poziția</button>
+                            <button class="btn primary-btn" onclick="resetChessGame()">🔄 Joc Nou</button>
+                        </div>
+
                     </div>
                 </div>
             </section>
