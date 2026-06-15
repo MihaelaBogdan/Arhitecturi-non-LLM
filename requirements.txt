@@ -1,0 +1,11 @@
+pygame-ce
+torch
+torchvision
+torchaudio
+matplotlib
+numpy
+ipython
+fastapi
+uvicorn
+websockets
+chess

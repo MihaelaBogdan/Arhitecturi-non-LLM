@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Core | Non-LLM Models</title>
+    <link rel="stylesheet" href="/static/dashboard.css">
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chess -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="logo">
+                <h2>AI Core<span>.</span></h2>
+                <p>Non-LLM Showcase</p>
+            </div>
+            <ul class="nav-links">
+                <li class="active" onclick="switchTab('chess-tab', this)"><span class="icon">♟️</span> Chess AI</li>
+                <li onclick="switchTab('snake-tab', this)"><span class="icon">🐍</span> Snake RL</li>
+                <li onclick="switchTab('tetris-tab', this)"><span class="icon">🧱</span> Tetris Heuristic</li>
+
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="content">
+            <!-- CHESS TAB -->
+            <section id="chess-tab" class="tab-pane active">
+                <header>
+                    <h1>Interactive Chess <span>Platform</span></h1>
+                    <p>Powered by Minimax Search Algorithm with Alpha-Beta Pruning</p>
+                </header>
+                <div class="panel chess-layout">
+                    <div class="board-wrapper">
+                        <div id="board" style="width: 480px;"></div>
+                    </div>
+                    <div class="chess-sidebar">
+                        <div class="status-card">
+                            <h3>Game Status</h3>
+                            <div id="chessStatus" class="status-badge">Rândul tău (Alb)</div>
+                        </div>
+                        <div class="info-card">
+                            <h3>Difficulty Level (Minimax Depth)</h3>
+                            <select id="chessDifficulty" class="btn secondary-btn" style="text-align: left; background: rgba(0,0,0,0.5);">
+                                <option value="1">Easy (Depth 1)</option>
+                                <option value="2">Medium (Depth 2)</option>
+                                <option value="3" selected>Hard (Depth 3)</option>
+                                <option value="4">Grandmaster (Depth 4)</option>
+                            </select>
+                        </div>
+                        <div class="info-card">
+                            <h3>How it works</h3>
+                            <p>This AI does not use neural networks or text prediction. It uses a <strong>Decision Tree</strong> to evaluate thousands of future positions. It enforces strict chess rules.</p>
+                        </div>
+                        <button class="btn primary-btn" onclick="resetChessGame()">New Game</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SNAKE TAB -->
+            <section id="snake-tab" class="tab-pane" style="display:none;">
+                <header>
+                    <h1>Snake <span>Reinforcement Learning</span></h1>
+                    <p>Deep Q-Network Agent Learning in Real-Time</p>
+                </header>
+                <div class="panel snake-layout">
+                    <div class="game-view">
+                        <div class="stats-row">
+                            <div class="stat-box">Score: <span id="score">0</span></div>
+                            <div class="stat-box record">Record: <span id="record">0</span></div>
+                            <div class="stat-box">Episode: <span id="games">0</span></div>
+                        </div>
+                        <canvas id="gameCanvas" width="400" height="400" style="background: black; border-radius: 8px;"></canvas>
+                        <button id="snakeModeBtn" class="btn secondary-btn" onclick="toggleSnakeMode()">🤖 Auto Mode (AI)</button>
+                    </div>
+                    <div class="chart-view" style="flex:1;">
+                        <canvas id="chartCanvas"></canvas>
+                        <div class="info-card mt-2">
+                            <h3>Learning Mechanism</h3>
+                            <p>The AI receives a +10 reward for eating food and -10 for dying. It updates its Q-Table (via Neural Network) to maximize future rewards.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TETRIS TAB -->
+            <section id="tetris-tab" class="tab-pane" style="display:none;">
+                <header>
+                    <h1>Tetris <span>Heuristic AI</span></h1>
+                    <p>Rule-based Optimization Search</p>
+                </header>
+                <div class="panel tetris-layout">
+                    <div class="tetris-view">
+                        <canvas id="tetrisCanvas" width="300" height="600" style="background: black; border-radius: 8px; border: 2px solid #333;"></canvas>
+                    </div>
+                    <div class="tetris-sidebar">
+                        <div class="stat-box mb-2">Score: <span id="tetris-score">0</span></div>
+                        <div class="info-card">
+                            <h3>Heuristic Evaluation</h3>
+                            <p>The AI evaluates each possible drop location for a piece. It calculates a score based on:</p>
+                            <ul>
+                                <li style="color:var(--accent)">Lines Cleared (+)</li>
+                                <li style="color:var(--danger)">Holes Created (-)</li>
+                                <li style="color:var(--danger)">Bumpiness (-)</li>
+                                <li style="color:var(--danger)">Aggregate Height (-)</li>
+                            </ul>
+                            <p style="margin-top:10px;">The move with the highest score is chosen.</p>
+                        </div>
+                        <button class="btn primary-btn" onclick="startTetrisAI()">Start AI</button>
+                    </div>
+                </div>
+            </section>
+
+
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/static/app.js"></script>
+    <script src="/static/chess_module.js"></script>
+    <script src="/static/snake_module.js"></script>
+    <script src="/static/tetris_module.js"></script>
+
+</body>
+</html>
