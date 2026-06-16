@@ -1,5 +1,4 @@
 // --- Basic Tetris AI Logic ---
-// For presentation purposes, this creates a simple visual Tetris AI
 const tetrisCanvas = document.getElementById('tetrisCanvas');
 const tctx = tetrisCanvas.getContext('2d');
 const ROWS = 20;
@@ -25,18 +24,87 @@ const COLORS = ['#0f172a', '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'
 let currentPiece = null;
 let currentPos = {x:0, y:0};
 
-function newPiece() {
+let currentTetrisModel = 'mlp';
+let targetX = 0;
+let targetShape = null;
+
+function setTetrisModel(model) {
+    currentTetrisModel = model;
+    document.getElementById('btnTetrisMLP').classList.toggle('active', model === 'mlp');
+    document.getElementById('btnTetrisTree').classList.toggle('active', model === 'tree');
+    
+    document.getElementById('tetrisRulesCard').style.display = model === 'tree' ? 'block' : 'none';
+    
+    const desc = document.getElementById('tetrisModelDesc');
+    if (model === 'mlp') {
+        desc.textContent = 'Rețeaua MLP (Multi-Layer Perceptron - Slide 28) prezice calitatea unei plasări pe baza caracteristicilor tablei.';
+    } else {
+        desc.textContent = 'Decision Tree Regressor (Slide 12) prezice calitatea plasării, afișând regulile logice active (criteriul MSE).';
+    }
+    
+    // Recalculate target for current piece with new model if game is active
+    if (currentPiece && aiInterval) {
+        requestNextMove();
+    }
+}
+
+function rotateMatrix(shape) {
+    const n = shape.length;
+    const m = shape[0].length;
+    const rotated = Array.from({ length: m }, () => Array(n).fill(0));
+    for (let r = 0; r < n; r++) {
+        for (let c = 0; c < m; c++) {
+            rotated[c][n - 1 - r] = shape[r][c];
+        }
+    }
+    return rotated;
+}
+
+async function requestNextMove() {
+    if (!currentPiece) return;
+    try {
+        const res = await fetch('/api/tetris/next-move', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                board: board,
+                shape: currentPiece.shape,
+                model_type: currentTetrisModel
+            })
+        });
+        const data = await res.json();
+        
+        targetX = data.x;
+        targetShape = data.shape;
+        
+        // Update UI metrics
+        document.getElementById('tetrisMetricHeight').innerText = data.metrics.height;
+        document.getElementById('tetrisMetricHoles').innerText = data.metrics.holes;
+        document.getElementById('tetrisMetricBumpiness').innerText = data.metrics.bumpiness;
+        
+        if (data.explanation) {
+            document.getElementById('tetrisActiveRule').innerText = data.explanation;
+        }
+    } catch (err) {
+        console.error("Failed to fetch next Tetris move:", err);
+    }
+}
+
+async function newPiece() {
     const id = Math.floor(Math.random() * SHAPES.length) + 1;
     const shape = SHAPES[id - 1];
     currentPiece = { shape, id };
     currentPos = { x: Math.floor((COLS - shape[0].length)/2), y: 0 };
+    
+    // Instantly request the optimal path from backend models
+    await requestNextMove();
 }
 
 function drawTetris() {
     tctx.fillStyle = '#0f172a';
     tctx.fillRect(0, 0, tetrisCanvas.width, tetrisCanvas.height);
     
-    // Draw board
+    // Draw grid board
     for(let r=0; r<ROWS; r++){
         for(let c=0; c<COLS; c++){
             if(board[r][c] !== 0) {
@@ -48,13 +116,14 @@ function drawTetris() {
         }
     }
 
-    // Draw piece
+    // Draw active falling piece
     if (currentPiece) {
         tctx.fillStyle = COLORS[currentPiece.id];
         for(let r=0; r<currentPiece.shape.length; r++){
             for(let c=0; c<currentPiece.shape[r].length; c++){
                 if(currentPiece.shape[r][c]) {
                     tctx.fillRect((currentPos.x + c)*BLOCK, (currentPos.y + r)*BLOCK, BLOCK, BLOCK);
+                    tctx.strokeStyle = '#1e293b';
                     tctx.strokeRect((currentPos.x + c)*BLOCK, (currentPos.y + r)*BLOCK, BLOCK, BLOCK);
                 }
             }
@@ -101,48 +170,67 @@ function merge() {
     }
 }
 
-// Very simple AI heuristics
-function aiStep() {
-    if(!currentPiece) newPiece();
+async function aiStep() {
+    if(!currentPiece) {
+        await newPiece();
+        drawTetris();
+        return;
+    }
     
-    // Move down
+    // 1. Rotate piece to match target rotation shape
+    if (targetShape && JSON.stringify(currentPiece.shape) !== JSON.stringify(targetShape)) {
+        const rotated = rotateMatrix(currentPiece.shape);
+        if (!collide(currentPos.x, currentPos.y, rotated)) {
+            currentPiece.shape = rotated;
+        }
+    }
+    
+    // 2. Slide horizontally to target column
+    if (currentPos.x < targetX) {
+        if (!collide(currentPos.x + 1, currentPos.y, currentPiece.shape)) {
+            currentPos.x++;
+        }
+    } else if (currentPos.x > targetX) {
+        if (!collide(currentPos.x - 1, currentPos.y, currentPiece.shape)) {
+            currentPos.x--;
+        }
+    }
+    
+    // 3. Move down
     if(!collide(currentPos.x, currentPos.y + 1, currentPiece.shape)) {
         currentPos.y++;
     } else {
         merge();
-        newPiece();
-        // Check game over
+        currentPiece = null;
+        await newPiece();
+        
+        // Game Over Check
         if(collide(currentPos.x, currentPos.y, currentPiece.shape)) {
             board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
             score = 0;
             document.getElementById('tetris-score').innerText = score;
-        }
-    }
-
-    // Since it's a presentation demo, just randomly move left/right to look active
-    // A real heuristic searches all rotations and drops.
-    if(Math.random() > 0.5) {
-        let dir = Math.random() > 0.5 ? 1 : -1;
-        if(!collide(currentPos.x + dir, currentPos.y, currentPiece.shape)) {
-            currentPos.x += dir;
+            await requestNextMove();
         }
     }
     drawTetris();
 }
 
 function startTetrisAI() {
+    const btn = document.getElementById('btnStartTetrisAI');
     if(aiInterval) {
         clearInterval(aiInterval);
         aiInterval = null;
-        event.target.innerText = "Start AI";
-        event.target.classList.remove("danger");
+        btn.innerText = "▶️ Pornire AI";
+        btn.style.background = "";
     } else {
         board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
         score = 0;
         document.getElementById('tetris-score').innerText = score;
-        aiInterval = setInterval(aiStep, 100);
-        event.target.innerText = "Stop AI";
-        event.target.style.background = "var(--danger)";
+        newPiece().then(() => {
+            aiInterval = setInterval(aiStep, 150);
+            btn.innerText = "⏹️ Oprire AI";
+            btn.style.background = "var(--danger)";
+        });
     }
 }
 

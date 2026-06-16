@@ -12,7 +12,7 @@ from chess_ai import get_best_move, evaluate_board, detect_opening, explain_move
 from chess_cnn import get_best_move_cnn, cnn_evaluate
 import json
 from collections import deque
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.naive_bayes import GaussianNB
 import torch
 import torch.nn as nn
@@ -180,7 +180,7 @@ def pretrain_models_at_startup():
     print("Pre-training Snake models at startup...")
     try:
         agent = Agent()
-        game = SnakeGameHeadless()
+        game = SnakeGameHeadless(w=400, h=400)
         
         # Simulate play using the loaded model weights (so we get real data)
         # Disable randomness for high-quality data
@@ -254,7 +254,7 @@ def pretrain_models_at_startup():
 async def training_loop():
     global server_state, tree_model, bayes_model, score_predictor_model, predicted_next_score
     agent = Agent()
-    game = SnakeGameHeadless()
+    game = SnakeGameHeadless(w=400, h=400)
     
     # Initialize plot scores from startup pre-training to populate the chart immediately
     plot_scores = list(scores_history)
@@ -267,6 +267,10 @@ async def training_loop():
     record = max(plot_scores) if plot_scores else 0
     
     while True:
+        if not manager.active_connections:
+            await asyncio.sleep(0.5)
+            continue
+
         state_old = agent.get_state(game)
         
         # Calculate Naive Bayes risks for current step
@@ -361,25 +365,22 @@ async def training_loop():
                 agent.remember(state_old, final_move, reward, state_new, done)
 
         # Broadcast state
-        if manager.active_connections:
-            state_msg = {
-                "snake": [{"x": pt.x, "y": pt.y} for pt in game.snake],
-                "food": {"x": game.food.x, "y": game.food.y},
-                "score": score,
-                "games": agent.n_games,
-                "record": record,
-                "scores": plot_scores,
-                "mean_scores": plot_mean_scores,
-                "ai_mode": server_state["ai_mode"],
-                "tree_rule": explain_tree_decision(tree_model, state_old),
-                "bayes_risks": current_bayes_risks,
-                "predicted_next_score": predicted_next_score
-            }
-            await manager.broadcast(state_msg)
-            # Control speed for visualization
-            await asyncio.sleep(0.04) # 25 FPS
-        else:
-            await asyncio.sleep(0.001)
+        state_msg = {
+            "snake": [{"x": pt.x, "y": pt.y} for pt in game.snake],
+            "food": {"x": game.food.x, "y": game.food.y},
+            "score": score,
+            "games": agent.n_games,
+            "record": record,
+            "scores": plot_scores,
+            "mean_scores": plot_mean_scores,
+            "ai_mode": server_state["ai_mode"],
+            "tree_rule": explain_tree_decision(tree_model, state_old),
+            "bayes_risks": current_bayes_risks,
+            "predicted_next_score": predicted_next_score
+        }
+        await manager.broadcast(state_msg)
+        # Control speed for visualization
+        await asyncio.sleep(0.04) # 25 FPS
 
         if done:
             game.reset()
@@ -404,59 +405,286 @@ async def training_loop():
                 scores_history.pop(0)
 
             # --- Retrain Models ---
-            # 1. Train Decision Tree
-            if len(training_data_x) >= 100:
-                try:
-                    X_t = np.array(list(training_data_x))
-                    y_t = np.array(list(training_data_y))
-                    tree_model = DecisionTreeClassifier(max_depth=6, random_state=42)
-                    tree_model.fit(X_t, y_t)
-                except Exception as e:
-                    print(f"Error training Decision Tree: {e}")
+            # Retrain only every 5 games to avoid blocking the event loop frequently
+            if agent.n_games % 5 == 0:
+                # 1. Train Decision Tree
+                if len(training_data_x) >= 100:
+                    try:
+                        X_t = np.array(list(training_data_x))
+                        y_t = np.array(list(training_data_y))
+                        tree_model = DecisionTreeClassifier(max_depth=6, random_state=42)
+                        tree_model.fit(X_t, y_t)
+                    except Exception as e:
+                        print(f"Error training Decision Tree: {e}")
 
-            # 2. Train Naive Bayes
-            if len(collision_data_x) >= 100:
-                try:
-                    X_c = np.array(list(collision_data_x))
-                    y_c = np.array(list(collision_data_y))
-                    bayes_model = GaussianNB()
-                    bayes_model.fit(X_c, y_c)
-                except Exception as e:
-                    print(f"Error training Naive Bayes: {e}")
+                # 2. Train Naive Bayes
+                if len(collision_data_x) >= 100:
+                    try:
+                        X_c = np.array(list(collision_data_x))
+                        y_c = np.array(list(collision_data_y))
+                        bayes_model = GaussianNB()
+                        bayes_model.fit(X_c, y_c)
+                    except Exception as e:
+                        print(f"Error training Naive Bayes: {e}")
 
-            # 3. Train Score Predictor (RNN/MLP)
-            if len(scores_history) >= 10:
-                try:
-                    X_s = []
-                    y_s = []
-                    for i in range(len(scores_history) - 5):
-                        X_s.append(scores_history[i:i+5])
-                        y_s.append(scores_history[i+5])
-                    X_s = torch.tensor(X_s, dtype=torch.float32)
-                    y_s = torch.tensor(y_s, dtype=torch.float32).unsqueeze(1)
-                    
-                    if score_predictor_model is None:
-                        score_predictor_model = ScorePredictor()
-                    
-                    opt = optim.Adam(score_predictor_model.parameters(), lr=0.01)
-                    crit = nn.MSELoss()
-                    score_predictor_model.train()
-                    for _ in range(15):
-                        opt.zero_grad()
-                        loss = crit(score_predictor_model(X_s), y_s)
-                        loss.backward()
-                        opt.step()
+                # 3. Train Score Predictor (RNN/MLP)
+                if len(scores_history) >= 10:
+                    try:
+                        X_s = []
+                        y_s = []
+                        for i in range(len(scores_history) - 5):
+                            X_s.append(scores_history[i:i+5])
+                            y_s.append(scores_history[i+5])
+                        X_s = torch.tensor(X_s, dtype=torch.float32)
+                        y_s = torch.tensor(y_s, dtype=torch.float32).unsqueeze(1)
                         
-                    score_predictor_model.eval()
+                        if score_predictor_model is None:
+                            score_predictor_model = ScorePredictor()
+                        
+                        opt = optim.Adam(score_predictor_model.parameters(), lr=0.01)
+                        crit = nn.MSELoss()
+                        score_predictor_model.train()
+                        for _ in range(15):
+                            opt.zero_grad()
+                            loss = crit(score_predictor_model(X_s), y_s)
+                            loss.backward()
+                            opt.step()
+                            
+                        score_predictor_model.eval()
+                        with torch.no_grad():
+                            last_5 = torch.tensor([scores_history[-5:]], dtype=torch.float32)
+                            predicted_next_score = round(max(0.0, score_predictor_model(last_5).item()), 1)
+                    except Exception as e:
+                        print(f"Error training Score Predictor: {e}")
+
+# --- Tetris AI Models & Helper Functions ---
+class TetrisMLP(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.fc = nn.Sequential(
+            nn.Linear(4, 16),
+            nn.ReLU(),
+            nn.Linear(16, 1)
+        )
+    def forward(self, x):
+        return self.fc(x)
+
+tetris_mlp_model = None
+tetris_tree_model = None
+
+class TetrisMoveRequest(BaseModel):
+    board: list[list[int]]
+    shape: list[list[int]]
+    model_type: str # "mlp" | "tree"
+
+def rotate_matrix(shape):
+    return [list(x) for x in zip(*shape[::-1])]
+
+def calculate_tetris_features(board):
+    ROWS = 20
+    COLS = 10
+    
+    # 1. Lines cleared
+    lines_cleared = 0
+    temp_board = []
+    for r in range(ROWS):
+        if all(board[r][c] != 0 for c in range(COLS)):
+            lines_cleared += 1
+        else:
+            temp_board.append(board[r])
+            
+    while len(temp_board) < ROWS:
+        temp_board.insert(0, [0] * COLS)
+        
+    # 2. Heights
+    column_heights = [0] * COLS
+    for c in range(COLS):
+        for r in range(ROWS):
+            if temp_board[r][c] != 0:
+                column_heights[c] = ROWS - r
+                break
+    aggregate_height = sum(column_heights)
+    
+    # 3. Holes
+    holes = 0
+    for c in range(COLS):
+        block_found = False
+        for r in range(ROWS):
+            if temp_board[r][c] != 0:
+                block_found = True
+            elif block_found and temp_board[r][c] == 0:
+                holes += 1
+                
+    # 4. Bumpiness
+    bumpiness = 0
+    for c in range(COLS - 1):
+        bumpiness += abs(column_heights[c] - column_heights[c+1])
+        
+    return aggregate_height, lines_cleared, holes, bumpiness
+
+def explain_tetris_tree_decision(model, x):
+    if model is None:
+        return "Arborele se antrenează..."
+    
+    tree_ = model.tree_
+    node = 0
+    conditions = []
+    feature_names = ["Înălțime", "Linii Curățate", "Goluri", "Denivelare"]
+    
+    while tree_.children_left[node] != -1:
+        feat = tree_.feature[node]
+        val = x[feat]
+        thresh = tree_.threshold[node]
+        
+        if val <= thresh:
+            conditions.append(f"{feature_names[feat]} <= {round(thresh, 1)}")
+            node = tree_.children_left[node]
+        else:
+            conditions.append(f"{feature_names[feat]} > {round(thresh, 1)}")
+            node = tree_.children_right[node]
+            
+    val_at_leaf = float(tree_.value[node][0][0])
+    explanation = "Dacă " + " ȘI ".join(conditions) + " ➜ Scor Estimator: " + f"{round(val_at_leaf, 2)}"
+    return explanation
+
+def pretrain_tetris_models():
+    global tetris_mlp_model, tetris_tree_model
+    print("Pre-training Tetris models...")
+    try:
+        X = []
+        y = []
+        
+        # We generate 3,000 synthetic states and evaluate them
+        for _ in range(3000):
+            board = [[0]*10 for _ in range(20)]
+            for c in range(10):
+                h = np.random.randint(0, 8)
+                for r in range(20 - h, 20):
+                    board[r][c] = 1 if np.random.rand() > 0.15 else 0
+                    
+            h_agg, lines, holes, bump = calculate_tetris_features(board)
+            score = -0.510066 * h_agg + 0.760666 * lines - 0.35663 * holes - 0.184483 * bump
+            
+            X.append([float(h_agg), float(lines), float(holes), float(bump)])
+            y.append(float(score))
+            
+        X = np.array(X)
+        y = np.array(y)
+        
+        # 1. Fit Decision Tree Regressor
+        tetris_tree_model = DecisionTreeRegressor(max_depth=5, random_state=42)
+        tetris_tree_model.fit(X, y)
+        
+        # 2. Fit MLP Regressor
+        tetris_mlp_model = TetrisMLP()
+        opt = optim.Adam(tetris_mlp_model.parameters(), lr=0.01)
+        crit = nn.MSELoss()
+        
+        X_t = torch.tensor(X, dtype=torch.float32)
+        y_t = torch.tensor(y, dtype=torch.float32).unsqueeze(1)
+        
+        tetris_mlp_model.train()
+        for _ in range(20):
+            opt.zero_grad()
+            loss = crit(tetris_mlp_model(X_t), y_t)
+            loss.backward()
+            opt.step()
+            
+        tetris_mlp_model.eval()
+        print("Tetris models pre-training complete!")
+    except Exception as e:
+        print(f"Failed to pre-train Tetris models: {e}")
+
+def check_collision(board, x, y, shape):
+    ROWS = 20
+    COLS = 10
+    for r in range(len(shape)):
+        for c in range(len(shape[r])):
+            if shape[r][c]:
+                nx = x + c
+                ny = y + r
+                if nx < 0 or nx >= COLS or ny >= ROWS:
+                    return True
+                if ny >= 0 and board[ny][nx] != 0:
+                    return True
+    return False
+
+@app.post("/api/tetris/next-move")
+async def post_tetris_next_move(req: TetrisMoveRequest):
+    board = req.board
+    original_shape = req.shape
+    model_type = req.model_type
+    
+    best_score = -999999.0
+    best_x = 0
+    best_shape = original_shape
+    best_features = [0.0, 0.0, 0.0, 0.0]
+    
+    # Try all 4 rotations
+    current_shape = original_shape
+    for rot in range(4):
+        # Try all possible columns
+        for x in range(-2, 12):
+            if not check_collision(board, x, 0, current_shape):
+                # Find landing y
+                y = 0
+                while not check_collision(board, x, y + 1, current_shape):
+                    y += 1
+                    
+                # Simulate placement
+                temp_board = [row[:] for row in board]
+                for r in range(len(current_shape)):
+                    for c in range(len(current_shape[r])):
+                        if current_shape[r][c]:
+                            ny = y + r
+                            nx = x + c
+                            if 0 <= ny < 20 and 0 <= nx < 10:
+                                temp_board[ny][nx] = 1
+                                
+                # Calculate features
+                h_agg, lines, holes, bump = calculate_tetris_features(temp_board)
+                features = [float(h_agg), float(lines), float(holes), float(bump)]
+                
+                # Predict score using chosen model
+                if model_type == "mlp" and tetris_mlp_model is not None:
+                    feat_tensor = torch.tensor([features], dtype=torch.float32)
                     with torch.no_grad():
-                        last_5 = torch.tensor([scores_history[-5:]], dtype=torch.float32)
-                        predicted_next_score = round(max(0.0, score_predictor_model(last_5).item()), 1)
-                except Exception as e:
-                    print(f"Error training Score Predictor: {e}")
+                        score = float(tetris_mlp_model(feat_tensor).item())
+                elif model_type == "tree" and tetris_tree_model is not None:
+                    score = float(tetris_tree_model.predict([features])[0])
+                else:
+                    score = -0.510066 * h_agg + 0.760666 * lines - 0.35663 * holes - 0.184483 * bump
+                    
+                if score > best_score:
+                    best_score = score
+                    best_x = x
+                    best_shape = current_shape
+                    best_features = features
+                    
+        current_shape = rotate_matrix(current_shape)
+        
+    explanation = ""
+    if model_type == "tree" and tetris_tree_model is not None:
+        explanation = explain_tetris_tree_decision(tetris_tree_model, best_features)
+    elif model_type == "mlp":
+        explanation = f"Evaluare MLP: Scor plasare prezis = {round(best_score, 2)} pe baza metricilor tablei."
+        
+    return {
+        "x": best_x,
+        "shape": best_shape,
+        "explanation": explanation,
+        "metrics": {
+            "height": int(best_features[0]),
+            "lines": int(best_features[1]),
+            "holes": int(best_features[2]),
+            "bumpiness": int(best_features[3])
+        }
+    }
 
 @app.on_event("startup")
 async def startup_event():
     pretrain_models_at_startup()
+    pretrain_tetris_models()
     asyncio.create_task(training_loop())
 
 @app.websocket("/ws")

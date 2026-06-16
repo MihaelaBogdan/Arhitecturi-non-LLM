@@ -254,26 +254,63 @@
             <section id="tetris-tab" class="tab-pane" style="display:none;">
                 <header>
                     <h1>Tetris <span>Heuristic AI</span></h1>
-                    <p>Rule-based Optimization Search</p>
+                    <p>Căutare Euristică ghidată de Rețele Neurale & Arbori de Decizie (Slide 12 & 28)</p>
                 </header>
                 <div class="panel tetris-layout">
-                    <div class="tetris-view">
+                    <div class="tetris-view" style="width: 300px; display: flex; flex-direction: column; gap: 10px;">
+                        <div class="stat-box">Scor: <span id="tetris-score">0</span></div>
                         <canvas id="tetrisCanvas" width="300" height="600" style="background: black; border-radius: 8px; border: 2px solid #333;"></canvas>
+                        <button id="btnStartTetrisAI" class="btn primary-btn" onclick="startTetrisAI()" style="margin-top: 5px;">▶️ Pornire AI</button>
                     </div>
-                    <div class="tetris-sidebar">
-                        <div class="stat-box mb-2">Score: <span id="tetris-score">0</span></div>
+                    <div class="tetris-sidebar" style="flex: 1.2; display: flex; flex-direction: column; gap: 15px; max-height: 80vh; overflow-y: auto;">
+                        <!-- AI Model Selector -->
                         <div class="info-card">
-                            <h3>Heuristic Evaluation</h3>
-                            <p>The AI evaluates each possible drop location for a piece. It calculates a score based on:</p>
-                            <ul>
-                                <li style="color:var(--accent)">Lines Cleared (+)</li>
-                                <li style="color:var(--danger)">Holes Created (-)</li>
-                                <li style="color:var(--danger)">Bumpiness (-)</li>
-                                <li style="color:var(--danger)">Aggregate Height (-)</li>
-                            </ul>
-                            <p style="margin-top:10px;">The move with the highest score is chosen.</p>
+                            <h3>Model AI Tetris</h3>
+                            <div class="ai-mode-toggle" style="margin-top: 8px;">
+                                <button id="btnTetrisMLP" class="mode-btn active" onclick="setTetrisModel('mlp')">🧠 MLP (Rețea)</button>
+                                <button id="btnTetrisTree" class="mode-btn" onclick="setTetrisModel('tree')">🌲 Decision Tree</button>
+                            </div>
+                            <p id="tetrisModelDesc" style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">
+                                Rețeaua MLP (Multi-Layer Perceptron - Slide 28) prezice calitatea unei plasări pe baza caracteristicilor tablei.
+                            </p>
                         </div>
-                        <button class="btn primary-btn" onclick="startTetrisAI()">Start AI</button>
+
+                        <!-- Explainable AI Rules (Decision Tree) -->
+                        <div class="info-card" id="tetrisRulesCard" style="display: none;">
+                            <h3>🌲 Explainable AI (Decision Tree Regressor)</h3>
+                            <div style="font-size:0.85rem; color:var(--text-muted); line-height: 1.4; margin-top: 6px;">
+                                Regula de split activă (criteriu MSE - Slide 12):
+                                <div id="tetrisActiveRule" style="font-family: monospace; font-size:0.8rem; color: var(--accent); margin-top: 8px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; border-left: 3px solid var(--accent); white-space: normal; word-break: break-all;">
+                                    Se așteaptă prima mutare...
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Live Metrics -->
+                        <div class="info-card">
+                            <h3>📊 Metrici Tablă în Timp Real</h3>
+                            <div style="font-size:0.9rem; color:var(--text-muted); display:flex; flex-direction:column; gap:8px; margin-top: 8px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <span>Înălțime Totală (Aggregate Height):</span>
+                                    <span id="tetrisMetricHeight" style="color:var(--danger); font-weight:600; font-size:1.1rem;">0</span>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <span>Goluri Acoperite (Holes):</span>
+                                    <span id="tetrisMetricHoles" style="color:var(--danger); font-weight:600; font-size:1.1rem;">0</span>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <span>Denivelare (Bumpiness):</span>
+                                    <span id="tetrisMetricBumpiness" style="color:var(--danger); font-weight:600; font-size:1.1rem;">0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="info-card">
+                            <h3>Mecanism Evaluare</h3>
+                            <p style="font-size: 0.8rem; line-height: 1.4; color: var(--text-muted);">
+                                AI-ul simulează toate cele 4 rotații și cele 10 coloane la fiecare pas, utilizând rețeaua MLP sau arborele antrenat cu criteriul MSE pe ecuația Pierre Dellacherie.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </section>

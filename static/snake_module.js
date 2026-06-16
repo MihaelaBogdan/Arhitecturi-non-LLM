@@ -63,9 +63,55 @@ function drawGame(data) {
 }
 
 // WebSocket connection
-const ws = new WebSocket(`ws://${window.location.host}/ws`);
+let ws;
+function connectWebSocket() {
+    ws = new WebSocket(`ws://${window.location.host}/ws`);
+    
+    ws.onopen = function() { 
+        console.log("WebSocket connected."); 
+        initChart(); 
+    };
+    
+    ws.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        
+        document.getElementById('score').innerText = data.score;
+        document.getElementById('record').innerText = data.record;
+        document.getElementById('games').innerText = data.games;
+        
+        drawGame(data);
+        updateChart(data.scores || data.plot_scores, data.mean_scores || data.plot_mean_scores);
+        
+        // Update Decision Tree Rule
+        if (data.tree_rule) {
+            document.getElementById('snakeActiveRule').innerText = data.tree_rule;
+        }
+        
+        // Update Naive Bayes Risks
+        if (data.bayes_risks) {
+            updateRiskBar('riskBarStraight', 'riskLabelStraight', data.bayes_risks.straight);
+            updateRiskBar('riskBarRight', 'riskLabelRight', data.bayes_risks.right);
+            updateRiskBar('riskBarLeft', 'riskLabelLeft', data.bayes_risks.left);
+        }
+        
+        // Update RNN Predicted Score
+        if (data.predicted_next_score !== undefined) {
+            document.getElementById('snakePredictedScore').innerText = data.predicted_next_score > 0 ? data.predicted_next_score + ' puncte' : '—';
+        }
+    };
 
-ws.onopen = function() { console.log("WebSocket connected."); initChart(); };
+    ws.onclose = function(e) {
+        console.log("WebSocket connection closed. Reconnecting in 2 seconds...");
+        setTimeout(connectWebSocket, 2000);
+    };
+
+    ws.onerror = function(err) {
+        console.error("WebSocket error:", err);
+        ws.close();
+    };
+}
+
+connectWebSocket();
 
 function updateRiskBar(barId, labelId, proba) {
     const bar = document.getElementById(barId);
@@ -88,34 +134,6 @@ function updateRiskBar(barId, labelId, proba) {
     }
 }
 
-ws.onmessage = function(event) {
-    const data = JSON.parse(event.data);
-    
-    document.getElementById('score').innerText = data.score;
-    document.getElementById('record').innerText = data.record;
-    document.getElementById('games').innerText = data.games;
-    
-    drawGame(data);
-    updateChart(data.scores || data.plot_scores, data.mean_scores || data.plot_mean_scores);
-    
-    // Update Decision Tree Rule
-    if (data.tree_rule) {
-        document.getElementById('snakeActiveRule').innerText = data.tree_rule;
-    }
-    
-    // Update Naive Bayes Risks
-    if (data.bayes_risks) {
-        updateRiskBar('riskBarStraight', 'riskLabelStraight', data.bayes_risks.straight);
-        updateRiskBar('riskBarRight', 'riskLabelRight', data.bayes_risks.right);
-        updateRiskBar('riskBarLeft', 'riskLabelLeft', data.bayes_risks.left);
-    }
-    
-    // Update RNN Predicted Score
-    if (data.predicted_next_score !== undefined) {
-        document.getElementById('snakePredictedScore').innerText = data.predicted_next_score > 0 ? data.predicted_next_score + ' puncte' : '—';
-    }
-};
-
 // --- AI Mode Selection for Snake ---
 let currentSnakeAIMode = 'dqn';
 
@@ -134,7 +152,9 @@ function setSnakeAIMode(mode) {
         desc.textContent = 'Naive Bayes folosește probabilități condiționate pentru a măsura și evita riscul de coliziune pe fiecare cale.';
     }
     
-    ws.send(JSON.stringify({type: "ai_mode", ai_mode: mode}));
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({type: "ai_mode", ai_mode: mode}));
+    }
 }
 
 // --- Manual Mode ---
@@ -151,12 +171,16 @@ function toggleSnakeMode() {
         btn.classList.add('secondary-btn');
         btn.style.backgroundColor = "";
     }
-    ws.send(JSON.stringify({type: "mode", manual: isManual}));
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({type: "mode", manual: isManual}));
+    }
 }
 
 document.addEventListener('keydown', (e) => {
     if (isManual && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
         e.preventDefault();
-        ws.send(JSON.stringify({type: "action", key: e.key}));
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({type: "action", key: e.key}));
+        }
     }
 });
