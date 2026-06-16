@@ -32,14 +32,17 @@ function setTetrisModel(model) {
     currentTetrisModel = model;
     document.getElementById('btnTetrisMLP').classList.toggle('active', model === 'mlp');
     document.getElementById('btnTetrisTree').classList.toggle('active', model === 'tree');
+    document.getElementById('btnTetrisKNN').classList.toggle('active', model === 'knn');
     
     document.getElementById('tetrisRulesCard').style.display = model === 'tree' ? 'block' : 'none';
     
     const desc = document.getElementById('tetrisModelDesc');
     if (model === 'mlp') {
         desc.textContent = 'Rețeaua MLP (Multi-Layer Perceptron - Slide 28) prezice calitatea unei plasări pe baza caracteristicilor tablei.';
-    } else {
+    } else if (model === 'tree') {
         desc.textContent = 'Decision Tree Regressor (Slide 12) prezice calitatea plasării, afișând regulile logice active (criteriul MSE).';
+    } else if (model === 'knn') {
+        desc.textContent = 'KNN Regressor (Slide 15) prezice calitatea plasării făcând media euristică a celor mai apropiate 5 table din istoric.';
     }
     
     // Recalculate target for current piece with new model if game is active

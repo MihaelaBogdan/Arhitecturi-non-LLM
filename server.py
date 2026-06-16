@@ -14,6 +14,7 @@ import json
 from collections import deque
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsRegressor
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -471,11 +472,12 @@ class TetrisMLP(nn.Module):
 
 tetris_mlp_model = None
 tetris_tree_model = None
+tetris_knn_model = None
 
 class TetrisMoveRequest(BaseModel):
     board: list[list[int]]
     shape: list[list[int]]
-    model_type: str # "mlp" | "tree"
+    model_type: str # "mlp" | "tree" | "knn"
 
 def rotate_matrix(shape):
     return [list(x) for x in zip(*shape[::-1])]
@@ -548,7 +550,7 @@ def explain_tetris_tree_decision(model, x):
     return explanation
 
 def pretrain_tetris_models():
-    global tetris_mlp_model, tetris_tree_model
+    global tetris_mlp_model, tetris_tree_model, tetris_knn_model
     print("Pre-training Tetris models...")
     try:
         X = []
@@ -575,7 +577,11 @@ def pretrain_tetris_models():
         tetris_tree_model = DecisionTreeRegressor(max_depth=5, random_state=42)
         tetris_tree_model.fit(X, y)
         
-        # 2. Fit MLP Regressor
+        # 2. Fit KNN Regressor (Slide 15)
+        tetris_knn_model = KNeighborsRegressor(n_neighbors=5, weights='distance')
+        tetris_knn_model.fit(X, y)
+        
+        # 3. Fit MLP Regressor
         tetris_mlp_model = TetrisMLP()
         opt = optim.Adam(tetris_mlp_model.parameters(), lr=0.01)
         crit = nn.MSELoss()
@@ -652,6 +658,8 @@ async def post_tetris_next_move(req: TetrisMoveRequest):
                         score = float(tetris_mlp_model(feat_tensor).item())
                 elif model_type == "tree" and tetris_tree_model is not None:
                     score = float(tetris_tree_model.predict([features])[0])
+                elif model_type == "knn" and tetris_knn_model is not None:
+                    score = float(tetris_knn_model.predict([features])[0])
                 else:
                     score = -0.510066 * h_agg + 0.760666 * lines - 0.35663 * holes - 0.184483 * bump
                     
@@ -666,6 +674,8 @@ async def post_tetris_next_move(req: TetrisMoveRequest):
     explanation = ""
     if model_type == "tree" and tetris_tree_model is not None:
         explanation = explain_tetris_tree_decision(tetris_tree_model, best_features)
+    elif model_type == "knn" and tetris_knn_model is not None:
+        explanation = f"Evaluare KNN: Calitate prezisă ca medie a celor mai similare 5 table din istoric (Scor = {round(best_score, 2)})."
     elif model_type == "mlp":
         explanation = f"Evaluare MLP: Scor plasare prezis = {round(best_score, 2)} pe baza metricilor tablei."
         
