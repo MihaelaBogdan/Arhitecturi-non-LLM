@@ -213,7 +213,7 @@ def pretrain_models_at_startup():
         if len(training_data_x) >= 100:
             X_t = np.array(list(training_data_x))
             y_t = np.array(list(training_data_y))
-            tree_model = DecisionTreeClassifier(max_depth=4, random_state=42)
+            tree_model = DecisionTreeClassifier(max_depth=6, random_state=42)
             tree_model.fit(X_t, y_t)
             
         # Fit Naive Bayes
@@ -308,6 +308,12 @@ async def training_loop():
             # AI Control
             ai_mode = server_state.get("ai_mode", "dqn")
             
+            # Pre-calculate greedy DQN action (without exploration noise)
+            state_tensor = torch.tensor(state_old, dtype=torch.float)
+            with torch.no_grad():
+                pred = agent.model(state_tensor)
+            greedy_action_idx = torch.argmax(pred).item()
+            
             if ai_mode == "tree" and tree_model is not None:
                 try:
                     action_idx = tree_model.predict(state_old.reshape(1, -1))[0]
@@ -315,30 +321,37 @@ async def training_loop():
                     final_move[action_idx] = 1
                 except:
                     final_move = agent.get_action(state_old)
-            elif ai_mode == "bayes" and bayes_model is not None:
-                try:
-                    risks = []
-                    for a in range(3):
-                        sample = np.append(state_old, a).reshape(1, -1)
-                        proba = bayes_model.predict_proba(sample)[0][1]
-                        risks.append(proba)
-                    best_action = np.argmin(risks)
-                    final_move = [0, 0, 0]
-                    final_move[best_action] = 1
-                except:
-                    final_move = agent.get_action(state_old)
+            elif ai_mode == "bayes":
+                # Start with greedy DQN action as baseline
+                action_idx = greedy_action_idx
+                if bayes_model is not None:
+                    try:
+                        risks = []
+                        for a in range(3):
+                            sample = np.append(state_old, a).reshape(1, -1)
+                            proba = bayes_model.predict_proba(sample)[0][1]
+                            risks.append(proba)
+                        # Safety override: if the greedy move is risky (> 0.4), choose the safest one!
+                        if risks[action_idx] > 0.4:
+                            action_idx = np.argmin(risks)
+                    except:
+                        pass
+                final_move = [0, 0, 0]
+                final_move[action_idx] = 1
             else:
-                # Default to DQN
+                # Default to DQN (includes exploration during training)
                 final_move = agent.get_action(state_old)
             
             reward, done, score = game.play_step(final_move)
             
             # Data collection for tree and bayes (collect whenever AI plays)
-            action_idx = np.argmax(final_move)
+            # We train the Decision Tree ONLY on greedy/smart actions of DQN to avoid exploration noise
             training_data_x.append(state_old)
-            training_data_y.append(action_idx)
+            training_data_y.append(greedy_action_idx)
             
-            collision_data_x.append(np.append(state_old, action_idx))
+            # We record actual collision data based on the chosen move and its outcome
+            action_chosen_idx = np.argmax(final_move)
+            collision_data_x.append(np.append(state_old, action_chosen_idx))
             collision_data_y.append(1 if done else 0)
 
             # DQN updates (only if in DQN mode)
@@ -396,7 +409,7 @@ async def training_loop():
                 try:
                     X_t = np.array(list(training_data_x))
                     y_t = np.array(list(training_data_y))
-                    tree_model = DecisionTreeClassifier(max_depth=4, random_state=42)
+                    tree_model = DecisionTreeClassifier(max_depth=6, random_state=42)
                     tree_model.fit(X_t, y_t)
                 except Exception as e:
                     print(f"Error training Decision Tree: {e}")
