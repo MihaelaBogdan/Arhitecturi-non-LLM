@@ -63,6 +63,34 @@
                             </p>
                         </div>
 
+                        <!-- CNN Architecture visualizer -->
+                        <div class="info-card" id="cnnVisualizer" style="display: none;">
+                            <h3>Arhitectură Rețea CNN</h3>
+                            <div class="cnn-architecture-wrapper">
+                                <div class="cnn-layer" data-layer="input">
+                                    <span class="layer-dot"></span> Input: <strong>12 × 8 × 8</strong> tensor
+                                </div>
+                                <div class="cnn-layer" data-layer="conv1">
+                                    <span class="layer-dot"></span> Conv2d (32 filtre, 3x3, BatchNorm, ReLU)
+                                </div>
+                                <div class="cnn-layer" data-layer="conv2">
+                                    <span class="layer-dot"></span> Conv2d (64 filtre, 3x3, BatchNorm, ReLU)
+                                </div>
+                                <div class="cnn-layer" data-layer="conv3">
+                                    <span class="layer-dot"></span> Conv2d (128 filtre, 3x3, ReLU)
+                                </div>
+                                <div class="cnn-layer" data-layer="flatten">
+                                    <span class="layer-dot"></span> Flatten (8192 neuroni)
+                                </div>
+                                <div class="cnn-layer" data-layer="dense">
+                                    <span class="layer-dot"></span> Dense (256 neuroni, Dropout 0.3)
+                                </div>
+                                <div class="cnn-layer" data-layer="output">
+                                    <span class="layer-dot"></span> Output (1 scor de evaluare)
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Difficulty -->
                         <div class="info-card">
                             <h3>Dificultate (Adâncime Minimax)</h3>
@@ -127,20 +155,96 @@
                     <p>Deep Q-Network Agent Learning in Real-Time</p>
                 </header>
                 <div class="panel snake-layout">
-                    <div class="game-view">
+                    <div class="game-view" style="width: 400px; display: flex; flex-direction: column; gap: 10px;">
                         <div class="stats-row">
-                            <div class="stat-box">Score: <span id="score">0</span></div>
+                            <div class="stat-box">Scor: <span id="score">0</span></div>
                             <div class="stat-box record">Record: <span id="record">0</span></div>
-                            <div class="stat-box">Episode: <span id="games">0</span></div>
+                            <div class="stat-box">Episod: <span id="games">0</span></div>
                         </div>
                         <canvas id="gameCanvas" width="400" height="400" style="background: black; border-radius: 8px;"></canvas>
-                        <button id="snakeModeBtn" class="btn secondary-btn" onclick="toggleSnakeMode()">🤖 Auto Mode (AI)</button>
+                        <button id="snakeModeBtn" class="btn secondary-btn" onclick="toggleSnakeMode()" style="margin-top: 5px;">🤖 Auto Mode (AI)</button>
                     </div>
-                    <div class="chart-view" style="flex:1;">
-                        <canvas id="chartCanvas"></canvas>
-                        <div class="info-card mt-2">
-                            <h3>Learning Mechanism</h3>
-                            <p>The AI receives a +10 reward for eating food and -10 for dying. It updates its Q-Table (via Neural Network) to maximize future rewards.</p>
+
+                    <!-- Snake Sidebar (Decision Tree, Naive Bayes, RNN) -->
+                    <div class="snake-sidebar" style="flex: 1.2; display: flex; flex-direction: column; gap: 15px; max-height: 80vh; overflow-y: auto; padding-right: 5px;">
+                        <!-- AI Mode Toggle -->
+                        <div class="info-card">
+                            <h3>Mod AI Snake</h3>
+                            <div class="ai-mode-toggle" style="margin-top: 8px;">
+                                <button id="btnSnakeDQN" class="mode-btn active" onclick="setSnakeAIMode('dqn')">🧠 DQN (Rețea)</button>
+                                <button id="btnSnakeTree" class="mode-btn" onclick="setSnakeAIMode('tree')">🌲 Dec. Tree</button>
+                                <button id="btnSnakeBayes" class="mode-btn" onclick="setSnakeAIMode('bayes')">🔮 Bayes Risk</button>
+                            </div>
+                            <p id="snakeAiModeDesc" style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">
+                                DQN folosește o rețea neurală profundă pentru a aproxima calitatea deciziilor (Q-Values).
+                            </p>
+                        </div>
+
+                        <!-- Decision Tree Rule (Explainable AI) -->
+                        <div class="info-card" id="snakeTreeRulesCard">
+                            <h3>🌲 Explainable AI (Decision Tree)</h3>
+                            <div style="font-size:0.85rem; color:var(--text-muted); line-height: 1.4; margin-top: 6px;">
+                                Regula logică curentă din arbore:
+                                <div id="snakeActiveRule" style="font-family: monospace; font-size:0.8rem; color: var(--accent); margin-top: 8px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; border-left: 3px solid var(--accent); white-space: normal; word-break: break-all;">
+                                    Arborele se antrenează... Așteaptă finalul primului joc.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Naive Bayes Risk Analysis -->
+                        <div class="info-card" id="snakeBayesRisksCard">
+                            <h3>🔮 Naive Bayes (Riscuri de Coliziune)</h3>
+                            <div style="display:flex; flex-direction:column; gap:8px; margin-top: 8px;">
+                                <div>
+                                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom: 2px;">
+                                        <span>Înainte</span>
+                                        <span id="riskLabelStraight" style="font-weight:600; color:var(--accent);">0%</span>
+                                    </div>
+                                    <div class="eval-bar-outer" style="height: 10px; background: rgba(255,255,255,0.05);">
+                                        <div id="riskBarStraight" style="width: 0%; background: var(--accent); height: 100%; transition: width 0.1s ease, background-color 0.3s;"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom: 2px;">
+                                        <span>Dreapta</span>
+                                        <span id="riskLabelRight" style="font-weight:600; color:var(--accent);">0%</span>
+                                    </div>
+                                    <div class="eval-bar-outer" style="height: 10px; background: rgba(255,255,255,0.05);">
+                                        <div id="riskBarRight" style="width: 0%; background: var(--accent); height: 100%; transition: width 0.1s ease, background-color 0.3s;"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom: 2px;">
+                                        <span>Stânga</span>
+                                        <span id="riskLabelLeft" style="font-weight:600; color:var(--accent);">0%</span>
+                                    </div>
+                                    <div class="eval-bar-outer" style="height: 10px; background: rgba(255,255,255,0.05);">
+                                        <div id="riskBarLeft" style="width: 0%; background: var(--accent); height: 100%; transition: width 0.1s ease, background-color 0.3s;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- RNN Score prediction -->
+                        <div class="info-card">
+                            <h3>📈 Prognoză Scor Următor (RNN)</h3>
+                            <div style="font-size:0.85rem; color:var(--text-muted); margin-top: 4px;">
+                                Scor estimat pentru meciul următor: 
+                                <span id="snakePredictedScore" style="color: var(--primary); font-weight: bold; font-size: 1.25rem; display: block; margin-top: 6px;">—</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Performance Chart -->
+                    <div class="chart-view" style="flex: 1.2; display: flex; flex-direction: column; gap: 15px;">
+                        <div style="height: 250px; background: rgba(0,0,0,0.15); padding: 10px; border-radius: 12px;">
+                            <canvas id="chartCanvas"></canvas>
+                        </div>
+                        <div class="info-card">
+                            <h3>Mecanism Învățare (DQN)</h3>
+                            <p style="font-size: 0.8rem; line-height: 1.4; color: var(--text-muted);">
+                                Agentul primește +10 pentru hrană, -10 pentru coliziuni și +1/-1 în funcție de distanța față de hrană. Rețeaua învață Q-Values prin experiențe din memorie.
+                            </p>
                         </div>
                     </div>
                 </div>

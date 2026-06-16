@@ -6,6 +6,8 @@ from game_logic import SnakeGameHeadless, Direction, Point
 from model import Linear_QNet, QTrainer
 from helper import plot
 
+import os
+
 MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
 LR = 0.001
@@ -18,6 +20,15 @@ class Agent:
         self.gamma = 0.9 # discount rate
         self.memory = deque(maxlen=MAX_MEMORY) # popleft()
         self.model = Linear_QNet(11, 256, 3)
+        
+        model_path = './model/model.pth'
+        if os.path.exists(model_path):
+            try:
+                self.model.load_state_dict(torch.load(model_path, map_location='cpu', weights_only=True))
+                print("DQN model loaded successfully from model/model.pth")
+            except Exception as e:
+                print(f"Failed to load DQN model: {e}")
+                
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
 
 

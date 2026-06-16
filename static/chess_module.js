@@ -4,16 +4,68 @@ const chessGame = new Chess();
 let currentAIMode = 'minimax';  // 'minimax' | 'cnn'
 let lastAIMove = null;
 
+let cnnAnimationInterval = null;
+
+function startCNNAnimation() {
+    stopCNNAnimation();
+    const layers = ['input', 'conv1', 'conv2', 'conv3', 'flatten', 'dense', 'output'];
+    let currentIdx = 0;
+    
+    // Initial clear
+    document.querySelectorAll('.cnn-layer').forEach(el => {
+        el.classList.remove('pulse-layer', 'active-layer');
+    });
+    
+    // Light up the input layer
+    const inputLayer = document.querySelector('.cnn-layer[data-layer="input"]');
+    if (inputLayer) inputLayer.classList.add('active-layer');
+    
+    cnnAnimationInterval = setInterval(() => {
+        // Remove pulse from all layers
+        document.querySelectorAll('.cnn-layer').forEach(el => el.classList.remove('pulse-layer'));
+        
+        // Pulse current layer
+        const layerName = layers[currentIdx];
+        const el = document.querySelector(`.cnn-layer[data-layer="${layerName}"]`);
+        if (el) {
+            el.classList.add('pulse-layer');
+        }
+        
+        // Progress to next layer
+        currentIdx = (currentIdx + 1) % layers.length;
+    }, 120);
+}
+
+function stopCNNAnimation() {
+    if (cnnAnimationInterval) {
+        clearInterval(cnnAnimationInterval);
+        cnnAnimationInterval = null;
+    }
+    // Reset layers to active-layer state
+    document.querySelectorAll('.cnn-layer').forEach(el => {
+        el.classList.remove('pulse-layer');
+        el.classList.add('active-layer');
+    });
+}
+
 // ---- AI Mode ----
 function setAIMode(mode) {
     currentAIMode = mode;
     document.getElementById('btnMinimax').classList.toggle('active', mode === 'minimax');
     document.getElementById('btnCNN').classList.toggle('active', mode === 'cnn');
     const desc = document.getElementById('aiModeDesc');
+    const visualizer = document.getElementById('cnnVisualizer');
+    
     if (mode === 'minimax') {
         desc.textContent = 'Minimax explorează pozițiile viitoare sistematic cu Alpha-Beta Pruning.';
+        if (visualizer) $(visualizer).slideUp(300);
+        stopCNNAnimation();
     } else {
         desc.textContent = 'CNN evaluează pozițiile prin pattern-uri învățate din mii de partide simulate.';
+        if (visualizer) {
+            $(visualizer).slideDown(300);
+            document.querySelectorAll('.cnn-layer').forEach(el => el.classList.add('active-layer'));
+        }
     }
 }
 
@@ -129,6 +181,9 @@ function requestHint() {
 // ---- AI Move ----
 function makeAIMove() {
     updateChessStatus(true);
+    if (currentAIMode === 'cnn') {
+        startCNNAnimation();
+    }
     const depth = parseInt(document.getElementById('chessDifficulty').value) || 3;
     const endpoint = currentAIMode === 'cnn' ? '/api/chess/cnn-move' : '/api/chess/move';
 
@@ -139,7 +194,7 @@ function makeAIMove() {
     })
     .then(r => r.json())
     .then(data => {
-        const moveKey = currentAIMode === 'cnn' ? data.move : data.move;
+        const moveKey = data.move;
         if (moveKey) {
             chessGame.move(moveKey, { sloppy: true });
             chessBoard.position(chessGame.fen());
@@ -148,10 +203,12 @@ function makeAIMove() {
             analyzePosition(moveKey);
         }
         updateChessStatus(false);
+        stopCNNAnimation();
     })
     .catch(err => {
         console.error(err);
         document.getElementById('chessStatus').innerText = 'Eroare la AI.';
+        stopCNNAnimation();
     });
 }
 
@@ -224,4 +281,5 @@ function resetChessGame() {
     document.getElementById('whiteCaptured').textContent = '—';
     document.getElementById('blackCaptured').textContent = '—';
     updateEvalBar(0);
+    stopCNNAnimation();
 }

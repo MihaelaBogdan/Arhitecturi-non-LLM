@@ -100,3 +100,50 @@ header p { color: var(--text-muted); font-size: 1.1rem; margin-bottom: 2rem; }
 /* Secondary btn without margin override for chess */
 .chess-sidebar .secondary-btn { margin-top: 0; }
 
+/* CNN Visualizer styles */
+.cnn-architecture-wrapper {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+    padding-left: 12px;
+    border-left: 2px solid rgba(255, 255, 255, 0.05);
+}
+.cnn-layer {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    padding: 6px 10px;
+    border-radius: 6px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.layer-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+.cnn-layer.active-layer {
+    color: var(--text-main);
+    background: rgba(59, 130, 246, 0.08);
+    transform: translateX(4px);
+}
+.cnn-layer.active-layer .layer-dot {
+    background: var(--primary);
+    box-shadow: 0 0 8px var(--primary);
+}
+.cnn-layer.pulse-layer {
+    color: #fff;
+    background: rgba(16, 185, 129, 0.15);
+    transform: translateX(6px);
+}
+.cnn-layer.pulse-layer .layer-dot {
+    background: var(--accent);
+    box-shadow: 0 0 10px var(--accent);
+}
+
