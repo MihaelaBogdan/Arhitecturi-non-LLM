@@ -148,3 +148,74 @@ header p { color: var(--text-muted); font-size: 1.1rem; margin-bottom: 2rem; }
     box-shadow: 0 0 10px var(--accent);
 }
 
+/* Move Evaluation Badges */
+.move-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+}
+
+.badge-neutral {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.badge-excellent {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--accent);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+    animation: pulse-gold 2s infinite alternate;
+}
+
+.badge-good {
+    background: rgba(59, 130, 246, 0.15);
+    color: var(--primary);
+    border: 1px solid rgba(59, 130, 246, 0.4);
+}
+
+.badge-okay {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.badge-blunder {
+    background: rgba(239, 68, 68, 0.2);
+    color: var(--danger);
+    border: 1px solid rgba(239, 68, 68, 0.5);
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
+    animation: pulse-blunder 1.5s infinite;
+}
+
+@keyframes pulse-gold {
+    0% {
+        box-shadow: 0 0 5px rgba(16, 185, 129, 0.2);
+        transform: scale(1);
+    }
+    100% {
+        box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
+        transform: scale(1.03);
+    }
+}
+
+@keyframes pulse-blunder {
+    0% {
+        box-shadow: 0 0 5px rgba(239, 68, 68, 0.3);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 15px rgba(239, 68, 68, 0.6);
+        transform: scale(1.05);
+    }
+    100% {
+        box-shadow: 0 0 5px rgba(239, 68, 68, 0.3);
+        transform: scale(1);
+    }
+}

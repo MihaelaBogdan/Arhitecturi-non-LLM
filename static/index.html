@@ -253,37 +253,52 @@
             <!-- TETRIS TAB -->
             <section id="tetris-tab" class="tab-pane" style="display:none;">
                 <header>
-                    <h1>Tetris <span>Heuristic AI</span></h1>
-                    <p>Căutare Euristică ghidată de Rețele Neurale & Arbori de Decizie (Slide 12 & 28)</p>
+                    <h1>Tetris <span>KNN AI & Review</span></h1>
+                    <p>Evaluare bazată pe Vecini (Slide 15) + Clasificare și Explicații în Timp Real</p>
                 </header>
                 <div class="panel tetris-layout">
                     <div class="tetris-view" style="width: 300px; display: flex; flex-direction: column; gap: 10px;">
                         <div class="stat-box">Scor: <span id="tetris-score">0</span></div>
                         <canvas id="tetrisCanvas" width="300" height="600" style="background: black; border-radius: 8px; border: 2px solid #333;"></canvas>
-                        <button id="btnStartTetrisAI" class="btn primary-btn" onclick="startTetrisAI()" style="margin-top: 5px;">▶️ Pornire AI</button>
-                    </div>
-                    <div class="tetris-sidebar" style="flex: 1.2; display: flex; flex-direction: column; gap: 15px; max-height: 80vh; overflow-y: auto;">
-                        <!-- AI Model Selector -->
-                        <div class="info-card">
-                            <h3>Model AI Tetris</h3>
-                            <div class="ai-mode-toggle" style="margin-top: 8px;">
-                                <button id="btnTetrisMLP" class="mode-btn active" onclick="setTetrisModel('mlp')">🧠 MLP (Rețea)</button>
-                                <button id="btnTetrisTree" class="mode-btn" onclick="setTetrisModel('tree')">🌲 Decision Tree</button>
-                                <button id="btnTetrisKNN" class="mode-btn" onclick="setTetrisModel('knn')">🔍 KNN</button>
-                            </div>
-                            <p id="tetrisModelDesc" style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">
-                                Rețeaua MLP (Multi-Layer Perceptron - Slide 28) prezice calitatea unei plasări pe baza caracteristicilor tablei.
-                            </p>
+                        
+                        <!-- Auto/Manual Mode Selector -->
+                        <div style="display:flex; flex-direction:column; gap:8px; margin-top: 5px;">
+                            <button id="btnStartTetrisAI" class="btn primary-btn" onclick="startTetrisAI()">🤖 Pornire KNN AI</button>
+                            <button id="btnToggleTetrisManual" class="btn secondary-btn" onclick="toggleTetrisManualMode()" style="margin-top:0;">🎮 Joacă tu (Mod Manual)</button>
                         </div>
 
-                        <!-- Explainable AI Rules (Decision Tree) -->
-                        <div class="info-card" id="tetrisRulesCard" style="display: none;">
-                            <h3>🌲 Explainable AI (Decision Tree Regressor)</h3>
-                            <div style="font-size:0.85rem; color:var(--text-muted); line-height: 1.4; margin-top: 6px;">
-                                Regula de split activă (criteriu MSE - Slide 12):
-                                <div id="tetrisActiveRule" style="font-family: monospace; font-size:0.8rem; color: var(--accent); margin-top: 8px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; border-left: 3px solid var(--accent); white-space: normal; word-break: break-all;">
-                                    Se așteaptă prima mutare...
+                        <!-- Game Speed Selector -->
+                        <div class="info-card" style="margin-top: 5px; padding: 12px;">
+                            <h3 style="font-size:1rem; margin-bottom:6px; color: var(--primary);">⚡ Viteza Jocului</h3>
+                            <select id="tetrisSpeed" class="btn secondary-btn" style="padding: 8px 12px; font-size: 0.95rem; margin-top: 0; background: rgba(0,0,0,0.4);" onchange="updateTetrisSpeed()">
+                                <option value="slow">Încet (Slow)</option>
+                                <option value="normal" selected>Normal</option>
+                                <option value="fast">Rapid (Fast)</option>
+                                <option value="turbo">Ultra (Turbo)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="tetris-sidebar" style="flex: 1.2; display: flex; flex-direction: column; gap: 15px; max-height: 80vh; overflow-y: auto;">
+                        <!-- Real-time Move Review (Explainable AI) -->
+                        <div class="info-card" id="tetrisReviewCard">
+                            <h3>🔍 Review Mutare (Explainable AI)</h3>
+                            <div style="margin-top: 8px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start;">
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <span style="font-size:0.9rem; color:var(--text-muted);">Calitate:</span>
+                                    <span id="tetrisMoveBadge" class="move-badge badge-neutral">Se așteaptă mutarea...</span>
                                 </div>
+                                <div id="tetrisMoveExplanation" style="font-size:0.85rem; color:var(--text-muted); line-height: 1.4; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; border-left: 3px solid var(--primary); width:100%;">
+                                    Plasează o piesă sau pornește AI-ul pentru a vedea analiza în timp real a mutărilor bazată pe KNN.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Learning Curve Chart -->
+                        <div class="info-card">
+                            <h3>📈 Curbă Învățare Tetris</h3>
+                            <div style="height: 180px; background: rgba(0,0,0,0.15); padding: 8px; border-radius: 12px; margin-top:8px;">
+                                <canvas id="tetrisChartCanvas"></canvas>
                             </div>
                         </div>
 
@@ -303,13 +318,25 @@
                                     <span>Denivelare (Bumpiness):</span>
                                     <span id="tetrisMetricBumpiness" style="color:var(--danger); font-weight:600; font-size:1.1rem;">0</span>
                                 </div>
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <span>Tranziții Rânduri:</span>
+                                    <span id="tetrisMetricRowTransitions" style="color:var(--danger); font-weight:600; font-size:1.1rem;">0</span>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <span>Tranziții Coloane:</span>
+                                    <span id="tetrisMetricColTransitions" style="color:var(--danger); font-weight:600; font-size:1.1rem;">0</span>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <span>Gropi/Canale (Wells):</span>
+                                    <span id="tetrisMetricWells" style="color:var(--danger); font-weight:600; font-size:1.1rem;">0</span>
+                                </div>
                             </div>
                         </div>
 
                         <div class="info-card">
-                            <h3>Mecanism Evaluare</h3>
+                            <h3>Mecanism Model KNN (Slide 15)</h3>
                             <p style="font-size: 0.8rem; line-height: 1.4; color: var(--text-muted);">
-                                AI-ul simulează toate cele 4 rotații și cele 10 coloane la fiecare pas, utilizând rețeaua MLP sau arborele antrenat cu criteriul MSE pe ecuația Pierre Dellacherie.
+                                Modelul K-Nearest Neighbors evaluează plasările analizând cele 200 de pătrățele ale grilei 20x10. Caută cele mai similare 5 table din baza de date și prezice calitatea mutării prin media scorurilor acestora.
                             </p>
                         </div>
                     </div>

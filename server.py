@@ -522,7 +522,40 @@ def calculate_tetris_features(board):
     for c in range(COLS - 1):
         bumpiness += abs(column_heights[c] - column_heights[c+1])
         
-    return aggregate_height, lines_cleared, holes, bumpiness
+    # 5. Row transitions
+    row_transitions = 0
+    for r in range(ROWS):
+        if temp_board[r][0] == 0:
+            row_transitions += 1
+        for c in range(COLS - 1):
+            if (temp_board[r][c] == 0) != (temp_board[r][c+1] == 0):
+                row_transitions += 1
+        if temp_board[r][COLS - 1] == 0:
+            row_transitions += 1
+            
+    # 6. Column transitions
+    col_transitions = 0
+    for c in range(COLS):
+        if temp_board[0][c] != 0:
+            col_transitions += 1
+        for r in range(ROWS - 1):
+            if (temp_board[r][c] == 0) != (temp_board[r+1][c] == 0):
+                col_transitions += 1
+        if temp_board[ROWS - 1][c] == 0:
+            col_transitions += 1
+            
+    # 7. Wells
+    wells = 0
+    for c in range(COLS):
+        left_h = ROWS if c == 0 else column_heights[c - 1]
+        right_h = ROWS if c == COLS - 1 else column_heights[c + 1]
+        target_h = min(left_h, right_h)
+        if target_h > column_heights[c]:
+            depth = target_h - column_heights[c]
+            wells += sum(range(1, depth + 1))
+        
+    return aggregate_height, lines_cleared, holes, bumpiness, row_transitions, col_transitions, wells
+
 
 def explain_tetris_tree_decision(model, x):
     if model is None:
@@ -565,7 +598,7 @@ def pretrain_tetris_models():
                 for r in range(20 - h, 20):
                     board[r][c] = 1 if np.random.rand() > 0.15 else 0
                     
-            h_agg, lines, holes, bump = calculate_tetris_features(board)
+            h_agg, lines, holes, bump, _, _, _ = calculate_tetris_features(board)
             score = -0.510066 * h_agg + 0.760666 * lines - 0.35663 * holes - 0.184483 * bump
             
             X_features.append([float(h_agg), float(lines), float(holes), float(bump)])
@@ -628,6 +661,7 @@ async def post_tetris_next_move(req: TetrisMoveRequest):
     best_x = 0
     best_shape = original_shape
     best_features = [0.0, 0.0, 0.0, 0.0]
+    best_extra = [0, 0, 0]
     
     # Try all 4 rotations
     current_shape = original_shape
@@ -651,7 +685,7 @@ async def post_tetris_next_move(req: TetrisMoveRequest):
                                 temp_board[ny][nx] = 1
                                 
                 # Calculate features
-                h_agg, lines, holes, bump = calculate_tetris_features(temp_board)
+                h_agg, lines, holes, bump, row_trans, col_trans, wells = calculate_tetris_features(temp_board)
                 features = [float(h_agg), float(lines), float(holes), float(bump)]
                 
                 # Predict score using chosen model
@@ -672,6 +706,7 @@ async def post_tetris_next_move(req: TetrisMoveRequest):
                     best_x = x
                     best_shape = current_shape
                     best_features = features
+                    best_extra = [row_trans, col_trans, wells]
                     
         current_shape = rotate_matrix(current_shape)
         
@@ -691,7 +726,165 @@ async def post_tetris_next_move(req: TetrisMoveRequest):
             "height": int(best_features[0]),
             "lines": int(best_features[1]),
             "holes": int(best_features[2]),
-            "bumpiness": int(best_features[3])
+            "bumpiness": int(best_features[3]),
+            "row_transitions": int(best_extra[0]),
+            "col_transitions": int(best_extra[1]),
+            "wells": int(best_extra[2])
+        }
+    }
+
+class TetrisEvaluateRequest(BaseModel):
+    board: list[list[int]]
+    shape: list[list[int]]
+    chosen_x: int
+    chosen_shape: list[list[int]]
+
+@app.post("/api/tetris/evaluate-move")
+async def post_tetris_evaluate_move(req: TetrisEvaluateRequest):
+    board = req.board
+    original_shape = req.shape
+    chosen_x = req.chosen_x
+    chosen_shape = req.chosen_shape
+    
+    # 1. Simulate all possible placements and evaluate them using KNN
+    placements = []
+    current_shape = original_shape
+    for rot in range(4):
+        for x in range(-2, 12):
+            if not check_collision(board, x, 0, current_shape):
+                y = 0
+                while not check_collision(board, x, y + 1, current_shape):
+                    y += 1
+                
+                # Simulate placement
+                temp_board = [row[:] for row in board]
+                for r in range(len(current_shape)):
+                    for c in range(len(current_shape[r])):
+                        if current_shape[r][c]:
+                            ny = y + r
+                            nx = x + c
+                            if 0 <= ny < 20 and 0 <= nx < 10:
+                                temp_board[ny][nx] = 1
+                                
+                h_agg, lines, holes, bump, row_trans, col_trans, wells = calculate_tetris_features(temp_board)
+                features = [float(h_agg), float(lines), float(holes), float(bump)]
+                
+                # Predict score via KNN
+                score = -999999.0
+                if tetris_knn_model is not None:
+                    grid_flat = np.array(temp_board, dtype=float).flatten()
+                    score = float(tetris_knn_model.predict([grid_flat])[0])
+                else:
+                    score = -0.510066 * h_agg + 0.760666 * lines - 0.35663 * holes - 0.184483 * bump
+                    
+                placements.append({
+                    "score": score,
+                    "x": x,
+                    "shape": current_shape,
+                    "features": features,
+                    "extra": [row_trans, col_trans, wells],
+                    "temp_board": temp_board
+                })
+        current_shape = rotate_matrix(current_shape)
+        
+    if not placements:
+        return {"classification": "Medie", "explanation": "Mutare neevaluată (stare neobișnuită)."}
+        
+    # Sort placements by score descending
+    placements.sort(key=lambda p: p["score"], reverse=True)
+    best_move = placements[0]
+    
+    # 2. Evaluate the chosen move
+    chosen_y = 0
+    while not check_collision(board, chosen_x, chosen_y + 1, chosen_shape):
+        chosen_y += 1
+        
+    simulated_chosen_board = [row[:] for row in board]
+    for r in range(len(chosen_shape)):
+        for c in range(len(chosen_shape[r])):
+            if chosen_shape[r][c]:
+                ny = chosen_y + r
+                nx = chosen_x + c
+                if 0 <= ny < 20 and 0 <= nx < 10:
+                    simulated_chosen_board[ny][nx] = 1
+                    
+    chosen_h_agg, chosen_lines, chosen_holes, chosen_bump, chosen_row_trans, chosen_col_trans, chosen_wells = calculate_tetris_features(simulated_chosen_board)
+    chosen_features = [float(chosen_h_agg), float(chosen_lines), float(chosen_holes), float(chosen_bump)]
+    
+    chosen_score = -999999.0
+    if tetris_knn_model is not None:
+        grid_flat = np.array(simulated_chosen_board, dtype=float).flatten()
+        chosen_score = float(tetris_knn_model.predict([grid_flat])[0])
+    else:
+        chosen_score = -0.510066 * chosen_h_agg + 0.760666 * chosen_lines - 0.35663 * chosen_holes - 0.184483 * chosen_bump
+        
+    # Find rank of chosen_score
+    match_index = -1
+    for i, p in enumerate(placements):
+        if p["x"] == chosen_x and np.array_equal(p["shape"], chosen_shape):
+            match_index = i
+            break
+            
+    if match_index != -1:
+        rank = match_index + 1
+    else:
+        rank = sum(1 for p in placements if p["score"] > chosen_score + 1e-5) + 1
+        
+    total_possibilities = len(placements)
+    percentile = (rank - 1) / total_possibilities if total_possibilities > 1 else 0.0
+    
+    # Classify move
+    classification = "Greșeală"
+    if rank == 1 or percentile <= 0.10:
+        classification = "Excelentă"
+    elif percentile <= 0.30:
+        classification = "Bună"
+    elif percentile <= 0.60:
+        classification = "Medie"
+    else:
+        classification = "Greșeală"
+        
+    # 3. Generate explanation
+    best_h_agg, best_lines, best_holes, best_bump = best_move["features"]
+    
+    explanation = ""
+    if classification == "Excelentă":
+        explanation = "Mutare excelentă! Ai plasat piesa perfect. "
+        if chosen_lines > 0:
+            explanation += f"Ai curățat {chosen_lines} linie/linii!"
+        else:
+            explanation += "Ai menținut tabla curată, fără a crea goluri noi."
+    else:
+        reasons = []
+        if chosen_holes > best_holes:
+            reasons.append(f"a creat {int(chosen_holes - best_holes)} gol(uri) în plus")
+        if chosen_h_agg > best_h_agg:
+            reasons.append(f"a crescut înălțimea cu {int(chosen_h_agg - best_h_agg)} unități")
+        if chosen_bump > best_bump:
+            reasons.append(f"a mărit denivelarea cu {int(chosen_bump - best_bump)} unități")
+            
+        reason_str = ", ".join(reasons) if reasons else "are o așezare mai puțin optimă"
+        explanation = f"Mutarea este clasificată ca {classification.lower()} deoarece {reason_str}. "
+        explanation += f"Cea mai bună mutare ar fi fost la coloana {best_move['x'] + 1} "
+        if best_lines > 0:
+            explanation += f"(ar fi curățat {int(best_lines)} linie/linii)."
+        else:
+            explanation += "(ar fi lăsat tabla mai netedă și fără goluri)."
+            
+    return {
+        "classification": classification,
+        "score": round(chosen_score, 2),
+        "best_score": round(best_move["score"], 2),
+        "explanation": explanation,
+        "best_x": best_move["x"],
+        "metrics": {
+            "height": int(chosen_h_agg),
+            "lines": int(chosen_lines),
+            "holes": int(chosen_holes),
+            "bumpiness": int(chosen_bump),
+            "row_transitions": int(chosen_row_trans),
+            "col_transitions": int(chosen_col_trans),
+            "wells": int(chosen_wells)
         }
     }
 
