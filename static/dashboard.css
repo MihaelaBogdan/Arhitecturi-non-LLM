@@ -62,12 +62,13 @@ header p { color: var(--text-muted); font-size: 1.1rem; margin-bottom: 2rem; }
 .highlight-hint-to   { background: rgba(251, 191, 36, 0.3) !important; box-shadow: inset 0 0 12px rgba(251, 191, 36, 0.6); }
 
 /* AI Mode Toggle */
-.ai-mode-toggle { display: flex; gap: 8px; }
+.ai-mode-toggle { display: flex; gap: 8px; flex-wrap: wrap; }
 .mode-btn {
-    flex: 1; padding: 8px 12px; border: 2px solid rgba(255,255,255,0.15);
+    flex: 1 1 calc(50% - 8px); padding: 8px 12px; border: 2px solid rgba(255,255,255,0.15);
     border-radius: 8px; background: rgba(255,255,255,0.05);
     color: var(--text-muted); font-weight: 600; cursor: pointer;
     font-size: 0.9rem; transition: all 0.2s; font-family: 'Outfit', sans-serif;
+    min-width: 80px;
 }
 .mode-btn:hover { border-color: var(--primary); color: var(--text-main); }
 .mode-btn.active { background: var(--primary); border-color: var(--primary); color: white; }

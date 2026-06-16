@@ -553,7 +553,8 @@ def pretrain_tetris_models():
     global tetris_mlp_model, tetris_tree_model, tetris_knn_model
     print("Pre-training Tetris models...")
     try:
-        X = []
+        X_features = []
+        X_grids = []
         y = []
         
         # We generate 3,000 synthetic states and evaluate them
@@ -567,26 +568,28 @@ def pretrain_tetris_models():
             h_agg, lines, holes, bump = calculate_tetris_features(board)
             score = -0.510066 * h_agg + 0.760666 * lines - 0.35663 * holes - 0.184483 * bump
             
-            X.append([float(h_agg), float(lines), float(holes), float(bump)])
+            X_features.append([float(h_agg), float(lines), float(holes), float(bump)])
+            X_grids.append(np.array(board, dtype=float).flatten())
             y.append(float(score))
             
-        X = np.array(X)
+        X_features = np.array(X_features)
+        X_grids = np.array(X_grids)
         y = np.array(y)
         
         # 1. Fit Decision Tree Regressor
         tetris_tree_model = DecisionTreeRegressor(max_depth=5, random_state=42)
-        tetris_tree_model.fit(X, y)
+        tetris_tree_model.fit(X_features, y)
         
-        # 2. Fit KNN Regressor (Slide 15)
+        # 2. Fit KNN Regressor (Slide 15) on 200 raw grid features (like Conlan dataset)
         tetris_knn_model = KNeighborsRegressor(n_neighbors=5, weights='distance')
-        tetris_knn_model.fit(X, y)
+        tetris_knn_model.fit(X_grids, y)
         
         # 3. Fit MLP Regressor
         tetris_mlp_model = TetrisMLP()
         opt = optim.Adam(tetris_mlp_model.parameters(), lr=0.01)
         crit = nn.MSELoss()
         
-        X_t = torch.tensor(X, dtype=torch.float32)
+        X_t = torch.tensor(X_features, dtype=torch.float32)
         y_t = torch.tensor(y, dtype=torch.float32).unsqueeze(1)
         
         tetris_mlp_model.train()
@@ -659,7 +662,8 @@ async def post_tetris_next_move(req: TetrisMoveRequest):
                 elif model_type == "tree" and tetris_tree_model is not None:
                     score = float(tetris_tree_model.predict([features])[0])
                 elif model_type == "knn" and tetris_knn_model is not None:
-                    score = float(tetris_knn_model.predict([features])[0])
+                    grid_flat = np.array(temp_board, dtype=float).flatten()
+                    score = float(tetris_knn_model.predict([grid_flat])[0])
                 else:
                     score = -0.510066 * h_agg + 0.760666 * lines - 0.35663 * holes - 0.184483 * bump
                     
@@ -675,7 +679,7 @@ async def post_tetris_next_move(req: TetrisMoveRequest):
     if model_type == "tree" and tetris_tree_model is not None:
         explanation = explain_tetris_tree_decision(tetris_tree_model, best_features)
     elif model_type == "knn" and tetris_knn_model is not None:
-        explanation = f"Evaluare KNN: Calitate prezisă ca medie a celor mai similare 5 table din istoric (Scor = {round(best_score, 2)})."
+        explanation = f"Evaluare KNN: Calitate prezisă din cele mai similare 5 grile de 20x10 din istoric (Scor = {round(best_score, 2)})."
     elif model_type == "mlp":
         explanation = f"Evaluare MLP: Scor plasare prezis = {round(best_score, 2)} pe baza metricilor tablei."
         
