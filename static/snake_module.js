@@ -12,17 +12,46 @@ function initChart() {
         data: {
             labels: [],
             datasets: [
-                { label: 'Scor per Episod', data: [], borderColor: '#3b82f6', tension: 0.1, fill: false },
-                { label: 'Media (toate)', data: [], borderColor: '#10b981', tension: 0.1, fill: false }
+                {
+                    label: 'Scor per Episod',
+                    data: [],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                    borderWidth: 2.5,
+                    tension: 0.25,
+                    fill: true,
+                    pointRadius: 1,
+                    pointBackgroundColor: '#3b82f6'
+                },
+                {
+                    label: 'Media (toate)',
+                    data: [],
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.04)',
+                    borderWidth: 3,
+                    tension: 0.2,
+                    fill: true,
+                    pointRadius: 0
+                }
             ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            scales: { y: { beginAtZero: true } },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(255, 255, 255, 0.06)' },
+                    ticks: { color: '#94a3b8', font: { size: 10 } }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#94a3b8', font: { size: 10 }, maxTicksLimit: 12 }
+                }
+            },
             animation: false,
             plugins: {
-                legend: { labels: { color: '#f8fafc' } }
+                legend: { labels: { color: '#f8fafc', font: { size: 11 } } }
             }
         }
     });
@@ -41,25 +70,170 @@ function updateChart(scores, mean_scores) {
     chartInstance.update();
 }
 
+function isCollision(x, y, snake) {
+    // Check out of bounds
+    if (x < 0 || x >= canvas.width || y < 0 || y >= canvas.height) return true;
+    // Check hit body (excluding the head)
+    for (let i = 1; i < snake.length; i++) {
+        if (snake[i].x === x && snake[i].y === y) return true;
+    }
+    return false;
+}
+
 function drawGame(data) {
     const snake = data.snake;
     const food = data.food;
     
-    // clear
+    // Clear board
     ctx.fillStyle = '#0f172a';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // draw snake
-    snake.forEach((pt, index) => {
-        ctx.fillStyle = index === 0 ? '#3b82f6' : '#60a5fa';
-        ctx.fillRect(pt.x, pt.y, BLOCK_SIZE, BLOCK_SIZE);
-        ctx.strokeStyle = '#0f172a';
-        ctx.strokeRect(pt.x, pt.y, BLOCK_SIZE, BLOCK_SIZE);
-    });
-
-    // draw food
+    // Draw food
     ctx.fillStyle = '#ef4444';
     ctx.fillRect(food.x, food.y, BLOCK_SIZE, BLOCK_SIZE);
+    // Glow effect on food
+    ctx.shadowColor = '#ef4444';
+    ctx.shadowBlur = 8;
+    ctx.fillRect(food.x + 2, food.y + 2, BLOCK_SIZE - 4, BLOCK_SIZE - 4);
+    ctx.shadowBlur = 0; // reset
+    
+    // Draw snake body and head
+    snake.forEach((pt, index) => {
+        if (index === 0) {
+            // Head color represents active model
+            if (isManual) {
+                ctx.fillStyle = '#ef4444'; // Red for Manual
+            } else if (data.ai_mode === 'tree') {
+                ctx.fillStyle = '#ffb703'; // Gold for Decision Tree
+            } else if (data.ai_mode === 'bayes') {
+                ctx.fillStyle = '#fb8500'; // Orange for Naive Bayes
+            } else {
+                ctx.fillStyle = '#3b82f6'; // Blue for DQN
+            }
+        } else {
+            ctx.fillStyle = isManual ? '#f87171' : '#60a5fa';
+        }
+        
+        ctx.beginPath();
+        ctx.roundRect(pt.x + 1, pt.y + 1, BLOCK_SIZE - 2, BLOCK_SIZE - 2, index === 0 ? 5 : 3);
+        ctx.fill();
+        ctx.strokeStyle = '#0f172a';
+        ctx.stroke();
+        
+        // Draw eyes on snake head
+        if (index === 0) {
+            ctx.fillStyle = '#ffffff';
+            let eyeX1, eyeY1, eyeX2, eyeY2;
+            if (data.direction === 'up') {
+                eyeX1 = pt.x + 5; eyeY1 = pt.y + 5;
+                eyeX2 = pt.x + 15; eyeY2 = pt.y + 5;
+            } else if (data.direction === 'down') {
+                eyeX1 = pt.x + 5; eyeY1 = pt.y + 15;
+                eyeX2 = pt.x + 15; eyeY2 = pt.y + 15;
+            } else if (data.direction === 'left') {
+                eyeX1 = pt.x + 5; eyeY1 = pt.y + 5;
+                eyeX2 = pt.x + 5; eyeY2 = pt.y + 15;
+            } else {
+                eyeX1 = pt.x + 15; eyeY1 = pt.y + 5;
+                eyeX2 = pt.x + 15; eyeY2 = pt.y + 15;
+            }
+            ctx.beginPath();
+            ctx.arc(eyeX1, eyeY1, 2, 0, Math.PI * 2);
+            ctx.arc(eyeX2, eyeY2, 2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw pupil
+            ctx.fillStyle = '#000000';
+            ctx.beginPath();
+            ctx.arc(eyeX1, eyeY1, 0.8, 0, Math.PI * 2);
+            ctx.arc(eyeX2, eyeY2, 0.8, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    });
+
+    // Draw Diagnostics (only if direction and Q-values exist)
+    if (snake.length > 0 && data.direction && data.dqn_q_values) {
+        const head = snake[0];
+        let dx = 0, dy = 0;
+        if (data.direction === 'up') { dx = 0; dy = -1; }
+        else if (data.direction === 'down') { dx = 0; dy = 1; }
+        else if (data.direction === 'left') { dx = -1; dy = 0; }
+        else if (data.direction === 'right') { dx = 1; dy = 0; }
+
+        // Compute adjacent positions
+        const sx = head.x + dx * BLOCK_SIZE;
+        const sy = head.y + dy * BLOCK_SIZE;
+
+        const rx = -dy, ry = dx;
+        const rx_c = head.x + rx * BLOCK_SIZE;
+        const ry_c = head.y + ry * BLOCK_SIZE;
+
+        const lx = dy, ly = -dx;
+        const lx_c = head.x + lx * BLOCK_SIZE;
+        const ly_c = head.y + ly * BLOCK_SIZE;
+
+        const adjacents = [
+            { name: "ÎNAINTE", x: sx, y: sy, idx: 0, q: data.dqn_q_values[0], r: data.bayes_risks ? data.bayes_risks.straight : 0.0 },
+            { name: "DREAPTA", x: rx_c, y: ry_c, idx: 1, q: data.dqn_q_values[1], r: data.bayes_risks ? data.bayes_risks.right : 0.0 },
+            { name: "STÂNGA", x: lx_c, y: ly_c, idx: 2, q: data.dqn_q_values[2], r: data.bayes_risks ? data.bayes_risks.left : 0.0 }
+        ];
+
+        // Draw overlays on board
+        adjacents.forEach(adj => {
+            // Check if this adjacent cell is a collision (wall or body hit)
+            const isColl = isCollision(adj.x, adj.y, snake);
+            
+            if (adj.x < 0 || adj.x >= canvas.width || adj.y < 0 || adj.y >= canvas.height) return;
+            
+            const isTree = (data.tree_action === adj.idx);
+            const isBayes = (data.bayes_action === adj.idx);
+            const isChosen = (data.chosen_action === adj.idx);
+            
+            ctx.save();
+            
+            if (isColl) {
+                // If it is a collision block, draw danger overlay with a red cross (no choices here!)
+                ctx.fillStyle = 'rgba(239, 68, 68, 0.2)';
+                ctx.fillRect(adj.x, adj.y, BLOCK_SIZE, BLOCK_SIZE);
+                ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
+                ctx.strokeRect(adj.x, adj.y, BLOCK_SIZE, BLOCK_SIZE);
+                
+                ctx.font = 'bold 9px sans-serif';
+                ctx.fillStyle = '#ef4444';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText("✕", adj.x + BLOCK_SIZE/2, adj.y + BLOCK_SIZE/2);
+            } else {
+                if (isChosen) {
+                    // Highlight action chosen by active mode
+                    ctx.fillStyle = 'rgba(59, 130, 246, 0.12)';
+                    ctx.fillRect(adj.x, adj.y, BLOCK_SIZE, BLOCK_SIZE);
+                    ctx.strokeStyle = isManual ? '#ef4444' : (data.ai_mode === 'tree' ? '#ffb703' : (data.ai_mode === 'bayes' ? '#fb8500' : '#3b82f6'));
+                    ctx.lineWidth = 2.5;
+                    ctx.strokeRect(adj.x + 1, adj.y + 1, BLOCK_SIZE - 2, BLOCK_SIZE - 2);
+                } else {
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+                    ctx.strokeRect(adj.x, adj.y, BLOCK_SIZE, BLOCK_SIZE);
+                }
+                
+                // Draw model votes (colored dots inside the grid cells)
+                let dotX = adj.x + 5;
+                if (isTree) {
+                    ctx.fillStyle = '#ffb703'; // Tree - Gold dot
+                    ctx.beginPath(); ctx.arc(dotX, adj.y + 15, 2.5, 0, Math.PI * 2); ctx.fill();
+                    dotX += 6;
+                }
+                if (isBayes) {
+                    ctx.fillStyle = '#fb8500'; // Bayes - Orange dot
+                    ctx.beginPath(); ctx.arc(dotX, adj.y + 15, 2.5, 0, Math.PI * 2); ctx.fill();
+                }
+            }
+            ctx.restore();
+        });
+
+        // 2. Render HUD Panel (now in a clean HTML container in the sidebar to the right of the board)
+        updateHTMLHUD(data, adjacents, isManual);
+    }
 }
 
 // WebSocket connection
@@ -98,6 +272,13 @@ function connectWebSocket() {
         if (data.predicted_next_score !== undefined) {
             document.getElementById('snakePredictedScore').innerText = data.predicted_next_score > 0 ? data.predicted_next_score + ' puncte' : '—';
         }
+
+        // Update model averages comparison
+        if (data.avg_scores) {
+            updateAverageBar('snakeAvgBarDQN', 'snakeAvgLabelDQN', data.avg_scores.dqn);
+            updateAverageBar('snakeAvgBarTree', 'snakeAvgLabelTree', data.avg_scores.tree);
+            updateAverageBar('snakeAvgBarBayes', 'snakeAvgLabelBayes', data.avg_scores.bayes);
+        }
     };
 
     ws.onclose = function(e) {
@@ -132,6 +313,19 @@ function updateRiskBar(barId, labelId, proba) {
         bar.style.backgroundColor = 'var(--accent)';
         label.style.color = 'var(--accent)';
     }
+}
+
+function updateAverageBar(barId, labelId, avg) {
+    const bar = document.getElementById(barId);
+    const label = document.getElementById(labelId);
+    if (!bar || !label) return;
+    
+    label.innerText = avg.toFixed(1) + ' pct';
+    
+    // Scale bar width (max expected average score of 25)
+    const maxVal = 25;
+    const pct = Math.min(100, Math.max(0, (avg / maxVal) * 100));
+    bar.style.width = pct + '%';
 }
 
 // --- AI Mode Selection for Snake ---
@@ -184,3 +378,55 @@ document.addEventListener('keydown', (e) => {
         }
     }
 });
+
+function updateHTMLHUD(data, adjacents, isManual) {
+    let modeName = "DQN (REȚEA)";
+    let modeColor = "#3b82f6";
+    if (isManual) { modeName = "MANUAL"; modeColor = "#ef4444"; }
+    else if (data.ai_mode === 'tree') { modeName = "DECISION TREE"; modeColor = "#ffb703"; }
+    else if (data.ai_mode === 'bayes') { modeName = "NAIVE BAYES"; modeColor = "#fb8500"; }
+    
+    const modeSpan = document.getElementById("snakeHudActiveMode");
+    if (modeSpan) {
+        modeSpan.innerText = modeName;
+        modeSpan.style.color = modeColor;
+    }
+
+    adjacents.forEach((adj) => {
+        const row = document.getElementById(`snakeHudRow${adj.idx}`);
+        const qEl = document.getElementById(`snakeHudQ${adj.idx}`);
+        const rEl = document.getElementById(`snakeHudR${adj.idx}`);
+        const tEl = document.getElementById(`snakeHudT${adj.idx}`);
+        if (!row || !qEl || !rEl || !tEl) return;
+
+        const isChosen = (data.chosen_action === adj.idx);
+        row.style.background = isChosen ? 'rgba(255,255,255,0.04)' : 'transparent';
+        row.style.borderLeft = isChosen ? `3px solid ${modeColor}` : 'none';
+        row.style.paddingLeft = isChosen ? `8px` : '0px';
+
+        // Q-DQN value
+        const isDqnActive = (!isManual && data.ai_mode === 'dqn');
+        qEl.innerText = adj.q.toFixed(2);
+        qEl.style.color = isChosen && isDqnActive ? '#60a5fa' : ((adj.q === Math.max(...data.dqn_q_values)) ? '#10b981' : '#94a3b8');
+        qEl.style.fontWeight = isChosen ? 'bold' : 'normal';
+
+        // Bayes risk pct
+        const isBayesActive = (!isManual && data.ai_mode === 'bayes');
+        const riskPct = Math.round(adj.r * 100);
+        rEl.innerText = riskPct + "%";
+        rEl.style.color = isChosen && isBayesActive ? '#fb8500' : (riskPct > 60 ? '#ef4444' : (riskPct > 20 ? '#f59e0b' : '#94a3b8'));
+        rEl.style.fontWeight = isChosen ? 'bold' : 'normal';
+
+        // Tree vote
+        const isTreeActive = (!isManual && data.ai_mode === 'tree');
+        if (data.tree_action === adj.idx) {
+            tEl.innerText = "★ VOT";
+            tEl.style.color = '#ffb703';
+            tEl.style.fontWeight = 'bold';
+        } else {
+            tEl.innerText = "—";
+            tEl.style.color = '#475569';
+            tEl.style.fontWeight = 'normal';
+        }
+    });
+}

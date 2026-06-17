@@ -33,8 +33,9 @@ header p { color: var(--text-muted); font-size: 1.1rem; margin-bottom: 2rem; }
 
 .panel { background: var(--bg-panel); padding: 2rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
 
-.chess-layout, .snake-layout, .tetris-layout { display: flex; gap: 40px; }
-.chess-sidebar, .tetris-sidebar { flex: 1; display: flex; flex-direction: column; gap: 20px; }
+.chess-layout, .snake-layout, .tetris-layout { display: flex; flex-wrap: wrap; gap: 24px; }
+.chess-sidebar, .tetris-sidebar, .tetris-metrics-sidebar, .snake-sidebar { flex: 1 1 280px; min-width: 280px; display: flex; flex-direction: column; gap: 20px; }
+.game-view, .tetris-view, .board-wrapper { flex-shrink: 0; }
 
 .status-card, .info-card { background: rgba(0,0,0,0.2); padding: 1.5rem; border-radius: 12px; }
 .status-card h3, .info-card h3 { color: var(--primary); margin-bottom: 10px; }
@@ -95,8 +96,8 @@ header p { color: var(--text-muted); font-size: 1.1rem; margin-bottom: 2rem; }
     font-size: 0.85rem; font-weight: 600;
 }
 
-/* Chess sidebar scroll */
-.chess-sidebar { max-height: 80vh; overflow-y: auto; scrollbar-width: thin; }
+/* Sidebar scrolls */
+.chess-sidebar, .tetris-sidebar, .tetris-metrics-sidebar, .snake-sidebar { max-height: 80vh; overflow-y: auto; scrollbar-width: thin; }
 
 /* Secondary btn without margin override for chess */
 .chess-sidebar .secondary-btn { margin-top: 0; }

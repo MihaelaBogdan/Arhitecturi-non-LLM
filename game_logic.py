@@ -51,21 +51,21 @@ class SnakeGameHeadless:
         game_over = False
         if self.is_collision() or self.frame_iteration > 100*len(self.snake):
             game_over = True
-            reward = -10
+            reward = -20
             return reward, game_over, self.score
 
         if self.head == self.food:
             self.score += 1
-            reward = 10
+            reward = 20
             self._place_food()
             self.prev_dist = self._get_dist_to_food()
         else:
             self.snake.pop()
             curr_dist = self._get_dist_to_food()
             if curr_dist < self.prev_dist:
-                reward = 1
+                reward = 0.1
             else:
-                reward = -1
+                reward = -0.15
             self.prev_dist = curr_dist
         
         return reward, game_over, self.score

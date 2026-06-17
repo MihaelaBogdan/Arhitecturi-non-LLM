@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Core | Non-LLM Models</title>
-    <link rel="stylesheet" href="/static/dashboard.css">
+    <link rel="stylesheet" href="/static/dashboard.css?v=8">
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <!-- Chart.js -->
@@ -155,7 +155,7 @@
                     <p>Deep Q-Network Agent Learning in Real-Time</p>
                 </header>
                 <div class="panel snake-layout">
-                    <div class="game-view" style="width: 400px; display: flex; flex-direction: column; gap: 10px;">
+                    <div class="game-view" style="flex: 0 0 400px; width: 400px; min-width: 400px; max-width: 400px; display: flex; flex-direction: column; gap: 10px;">
                         <div class="stats-row">
                             <div class="stat-box">Scor: <span id="score">0</span></div>
                             <div class="stat-box record">Record: <span id="record">0</span></div>
@@ -166,7 +166,7 @@
                     </div>
 
                     <!-- Snake Sidebar (Decision Tree, Naive Bayes, RNN) -->
-                    <div class="snake-sidebar" style="flex: 1.2; display: flex; flex-direction: column; gap: 15px; max-height: 80vh; overflow-y: auto; padding-right: 5px;">
+                    <div class="snake-sidebar" style="flex: 1.2 1 280px; min-width: 280px; display: flex; flex-direction: column; gap: 15px; max-height: 80vh; overflow-y: auto; padding-right: 5px;">
                         <!-- AI Mode Toggle -->
                         <div class="info-card">
                             <h3>Mod AI Snake</h3>
@@ -178,6 +178,46 @@
                             <p id="snakeAiModeDesc" style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">
                                 DQN folosește o rețea neurală profundă pentru a aproxima calitatea deciziilor (Q-Values).
                             </p>
+                        </div>
+
+                        <!-- Real-time Action HUD (Decizii Model) -->
+                        <div class="info-card" id="snakeHudCard">
+                            <h3>🖥️ HUD: Decizii Modele în Timp Real</h3>
+                            <div style="font-size:0.8rem; color:var(--text-muted); margin-top:4px; margin-bottom:8px;">
+                                Mod activ: <span id="snakeHudActiveMode" style="font-weight:600; color:var(--primary);">DQN (REȚEA)</span>
+                            </div>
+                            <div style="font-size:0.85rem; margin-top:10px; overflow-x:auto;">
+                                <table style="width:100%; border-collapse:collapse; text-align:left; font-family:monospace; font-size:0.8rem;">
+                                    <thead>
+                                        <tr style="color:var(--text-muted); border-bottom:1px solid rgba(255,255,255,0.08); font-size:0.75rem;">
+                                            <th style="padding:4px 0;">CALE</th>
+                                            <th style="padding:4px 0; text-align:right;">Q-DQN (Net)</th>
+                                            <th style="padding:4px 0; text-align:right;">NB-RISC</th>
+                                            <th style="padding:4px 0; text-align:right;">TREE VOT</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="snakeHudBody" style="font-size:0.8rem;">
+                                        <tr id="snakeHudRow0" style="transition: all 0.2s;">
+                                            <td style="padding:6px 0; color:var(--text-muted); font-weight:bold;">ÎNAINTE</td>
+                                            <td id="snakeHudQ0" style="padding:6px 0; text-align:right; color:var(--text-muted);">0.0</td>
+                                            <td id="snakeHudR0" style="padding:6px 0; text-align:right; color:var(--text-muted);">0%</td>
+                                            <td id="snakeHudT0" style="padding:6px 0; text-align:right; color:var(--text-muted);">—</td>
+                                        </tr>
+                                        <tr id="snakeHudRow1" style="transition: all 0.2s;">
+                                            <td style="padding:6px 0; color:var(--text-muted); font-weight:bold;">DREAPTA</td>
+                                            <td id="snakeHudQ1" style="padding:6px 0; text-align:right; color:var(--text-muted);">0.0</td>
+                                            <td id="snakeHudR1" style="padding:6px 0; text-align:right; color:var(--text-muted);">0%</td>
+                                            <td id="snakeHudT1" style="padding:6px 0; text-align:right; color:var(--text-muted);">—</td>
+                                        </tr>
+                                        <tr id="snakeHudRow2" style="transition: all 0.2s;">
+                                            <td style="padding:6px 0; color:var(--text-muted); font-weight:bold;">STÂNGA</td>
+                                            <td id="snakeHudQ2" style="padding:6px 0; text-align:right; color:var(--text-muted);">0.0</td>
+                                            <td id="snakeHudR2" style="padding:6px 0; text-align:right; color:var(--text-muted);">0%</td>
+                                            <td id="snakeHudT2" style="padding:6px 0; text-align:right; color:var(--text-muted);">—</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
 
                         <!-- Decision Tree Rule (Explainable AI) -->
@@ -233,11 +273,45 @@
                                 <span id="snakePredictedScore" style="color: var(--primary); font-weight: bold; font-size: 1.25rem; display: block; margin-top: 6px;">—</span>
                             </div>
                         </div>
+
+                        <!-- Model Comparison -->
+                        <div class="info-card">
+                            <h3>📊 Comparare Medii Modele (Ultimele 50)</h3>
+                            <div style="display:flex; flex-direction:column; gap:8px; margin-top: 8px;">
+                                <div>
+                                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom: 2px;">
+                                        <span>DQN (Rețea)</span>
+                                        <span id="snakeAvgLabelDQN" style="font-weight:600; color:var(--primary);">0.0</span>
+                                    </div>
+                                    <div class="eval-bar-outer" style="height: 10px; background: rgba(255,255,255,0.05);">
+                                        <div id="snakeAvgBarDQN" style="width: 0%; background: var(--primary); height: 100%; transition: width 0.3s ease;"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom: 2px;">
+                                        <span>Decision Tree</span>
+                                        <span id="snakeAvgLabelTree" style="font-weight:600; color:#ffb703;">0.0</span>
+                                    </div>
+                                    <div class="eval-bar-outer" style="height: 10px; background: rgba(255,255,255,0.05);">
+                                        <div id="snakeAvgBarTree" style="width: 0%; background: #ffb703; height: 100%; transition: width 0.3s ease;"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom: 2px;">
+                                        <span>Naive Bayes Risk</span>
+                                        <span id="snakeAvgLabelBayes" style="font-weight:600; color:#fb8500;">0.0</span>
+                                    </div>
+                                    <div class="eval-bar-outer" style="height: 10px; background: rgba(255,255,255,0.05);">
+                                        <div id="snakeAvgBarBayes" style="width: 0%; background: #fb8500; height: 100%; transition: width 0.3s ease;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Performance Chart -->
-                    <div class="chart-view" style="flex: 1.2; display: flex; flex-direction: column; gap: 15px;">
-                        <div style="height: 250px; background: rgba(0,0,0,0.15); padding: 10px; border-radius: 12px;">
+                    <div class="chart-view" style="flex: 1.5 1 300px; min-width: 300px; display: flex; flex-direction: column; gap: 15px;">
+                        <div style="height: 400px; background: rgba(0,0,0,0.15); padding: 15px; border-radius: 12px;">
                             <canvas id="chartCanvas"></canvas>
                         </div>
                         <div class="info-card">
@@ -253,17 +327,37 @@
             <!-- TETRIS TAB -->
             <section id="tetris-tab" class="tab-pane" style="display:none;">
                 <header>
-                    <h1>Tetris <span>KNN AI & Review</span></h1>
-                    <p>Evaluare bazată pe Vecini (Slide 15) + Clasificare și Explicații în Timp Real</p>
+                    <h1>Tetris <span>Heuristics & ML Models</span></h1>
+                    <p>Evaluare bazată pe Vecini (KNN), MLP, Arbori de Decizie sau Algoritm Genetic online</p>
                 </header>
                 <div class="panel tetris-layout">
-                    <div class="tetris-view" style="width: 300px; display: flex; flex-direction: column; gap: 10px;">
-                        <div class="stat-box">Scor: <span id="tetris-score">0</span></div>
-                        <canvas id="tetrisCanvas" width="300" height="600" style="background: black; border-radius: 8px; border: 2px solid #333;"></canvas>
+                    <div class="tetris-view" style="flex: 0 0 450px; width: 450px; min-width: 450px; max-width: 450px; display: flex; flex-direction: column; gap: 10px;">
+                        <div class="stats-row">
+                            <div class="stat-box">Scor: <span id="tetris-score">0</span></div>
+                            <div class="stat-box">Linii: <span id="tetrisLinesDisplay">0</span></div>
+                            <div class="stat-box">Nivel: <span id="tetrisLevelDisplay">1</span></div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 12px; align-items: flex-start;">
+                            <canvas id="tetrisCanvas" style="background: #0a0e1a; border-radius: 8px; border: 2px solid #1e293b; box-shadow: 0 4px 20px rgba(0,0,0,0.6);"></canvas>
+                            <div style="display: flex; flex-direction: column; gap: 10px; width: 110px;">
+                                <div class="info-card" style="padding: 10px; text-align: center;">
+                                    <h4 style="font-size:0.75rem; color: var(--primary); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px;">Următoarea</h4>
+                                    <canvas id="tetrisNextCanvas" width="90" height="90" style="background: #0a0e1a; border-radius: 6px; border: 1px solid #1e293b;"></canvas>
+                                </div>
+                                <div class="info-card" style="padding: 10px; text-align: center;">
+                                    <h4 style="font-size:0.75rem; color: var(--accent); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px;">Record</h4>
+                                    <div id="tetrisBestDisplay" style="font-size: 1.1rem; font-weight: bold; color: var(--accent);">0</div>
+                                </div>
+                                <div id="tetrisComboDisplay" style="font-size: 0.75rem; font-weight: bold; color: #ff3d5a; text-align: center; opacity: 0; transition: opacity 0.3s; background: rgba(255, 61, 90, 0.1); padding: 6px; border-radius: 6px; border: 1px solid rgba(255, 61, 90, 0.2);">
+                                    🔥 Combo!
+                                </div>
+                            </div>
+                        </div>
                         
                         <!-- Auto/Manual Mode Selector -->
                         <div style="display:flex; flex-direction:column; gap:8px; margin-top: 5px;">
-                            <button id="btnStartTetrisAI" class="btn primary-btn" onclick="startTetrisAI()">🤖 Pornire KNN AI</button>
+                            <button id="btnStartTetrisAI" class="btn primary-btn" onclick="startTetrisAI()">🤖 Pornire AI</button>
                             <button id="btnToggleTetrisManual" class="btn secondary-btn" onclick="toggleTetrisManualMode()" style="margin-top:0;">🎮 Joacă tu (Mod Manual)</button>
                         </div>
 
@@ -279,7 +373,55 @@
                         </div>
                     </div>
                     
-                    <div class="tetris-sidebar" style="flex: 1.2; display: flex; flex-direction: column; gap: 15px; max-height: 80vh; overflow-y: auto;">
+                    <div class="tetris-sidebar" style="flex: 1.1 1 280px; min-width: 280px; display: flex; flex-direction: column; gap: 15px; max-height: 80vh; overflow-y: auto; padding-right: 5px;">
+                        <!-- AI Model Selector -->
+                        <div class="info-card">
+                            <h3>Mod AI Tetris</h3>
+                            <div class="ai-mode-toggle" style="margin-top: 8px;">
+                                <button id="btnTetrisKNN" class="mode-btn active" onclick="setTetrisAIMode('knn')">👥 KNN (Vecini)</button>
+                                <button id="btnTetrisTree" class="mode-btn" onclick="setTetrisAIMode('tree')">🌲 Dec. Tree</button>
+                                <button id="btnTetrisMLP" class="mode-btn" onclick="setTetrisAIMode('mlp')">🧠 MLP (Rețea)</button>
+                                <button id="btnTetrisGenetic" class="mode-btn" onclick="setTetrisAIMode('genetic')">🧬 Genetic (ES)</button>
+                            </div>
+                            <p id="tetrisAiModeDesc" style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">
+                                KNN evaluează starea tablei comparând-o cu cele mai similare 5 table din baza de date istorică (TD-Learning).
+                            </p>
+                        </div>
+
+                        <!-- Learning Curve Chart -->
+                        <div class="info-card">
+                            <h3>📈 Curbă Învățare Tetris</h3>
+                            <div style="height: 250px; background: rgba(0,0,0,0.15); padding: 12px; border-radius: 12px; margin-top:8px;">
+                                <canvas id="tetrisChartCanvas"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Heuristic Weights Display -->
+                        <div class="info-card" id="tetrisGeneticWeightsCard" style="display: none;">
+                            <h3>🧬 Ponderi Heuristice (Evoluție ES)</h3>
+                            <div style="font-size:0.85rem; color:var(--text-muted); display:flex; flex-direction:column; gap:6px; margin-top: 8px;">
+                                <div style="display:flex; justify-content:space-between;">
+                                    <span>Înălțime (Height):</span>
+                                    <span id="weightHeight" style="color:var(--danger); font-weight:600;">-0.51</span>
+                                </div>
+                                <div style="display:flex; justify-content:space-between;">
+                                    <span>Linii Curățate (Lines):</span>
+                                    <span id="weightLines" style="color:var(--accent); font-weight:600;">0.76</span>
+                                </div>
+                                <div style="display:flex; justify-content:space-between;">
+                                    <span>Goluri (Holes):</span>
+                                    <span id="weightHoles" style="color:var(--danger); font-weight:600;">-0.36</span>
+                                </div>
+                                <div style="display:flex; justify-content:space-between;">
+                                    <span>Denivelare (Bumpiness):</span>
+                                    <span id="weightBumpiness" style="color:var(--danger); font-weight:600;">-0.18</span>
+                                </div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted); border-top: 1px solid rgba(255,255,255,0.05); padding-top: 6px; margin-top: 4px;">
+                                    Ponderile evoluează online folosind o strategie evolutivă (ES) bazată pe scorul meciurilor.
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Real-time Move Review (Explainable AI) -->
                         <div class="info-card" id="tetrisReviewCard">
                             <h3>🔍 Review Mutare (Explainable AI)</h3>
@@ -294,14 +436,17 @@
                             </div>
                         </div>
 
-                        <!-- Learning Curve Chart -->
+                        <!-- Explanation card -->
                         <div class="info-card">
-                            <h3>📈 Curbă Învățare Tetris</h3>
-                            <div style="height: 180px; background: rgba(0,0,0,0.15); padding: 8px; border-radius: 12px; margin-top:8px;">
-                                <canvas id="tetrisChartCanvas"></canvas>
-                            </div>
+                            <h3>Mecanism Model KNN (Slide 15)</h3>
+                            <p style="font-size: 0.8rem; line-height: 1.4; color: var(--text-muted);">
+                                Modelul K-Nearest Neighbors evaluează plasările analizând cele 200 de pătrățele ale grilei 20x10. Caută cele mai similare 5 table din baza de date și prezice calitatea mutării prin media scorurilor acestora.
+                            </p>
                         </div>
+                    </div>
 
+                    <!-- Column 3: Metrics & Chart Sidebar -->
+                    <div class="tetris-metrics-sidebar" style="flex: 1.3 1 280px; min-width: 280px; display: flex; flex-direction: column; gap: 15px; max-height: 80vh; overflow-y: auto; padding-right: 5px;">
                         <!-- Live Metrics -->
                         <div class="info-card">
                             <h3>📊 Metrici Tablă în Timp Real</h3>
@@ -312,32 +457,25 @@
                                 </div>
                                 <div style="display:flex; justify-content:space-between; align-items:center;">
                                     <span>Goluri Acoperite (Holes):</span>
-                                    <span id="tetrisMetricHoles" style="color:var(--danger); font-weight:600; font-size:1.1rem;">0</span>
+                                    <span id="tetrisMetricHoles" style="color:#f59e0b; font-weight:600; font-size:1.1rem;">0</span>
                                 </div>
                                 <div style="display:flex; justify-content:space-between; align-items:center;">
                                     <span>Denivelare (Bumpiness):</span>
-                                    <span id="tetrisMetricBumpiness" style="color:var(--danger); font-weight:600; font-size:1.1rem;">0</span>
+                                    <span id="tetrisMetricBumpiness" style="color:#3b82f6; font-weight:600; font-size:1.1rem;">0</span>
                                 </div>
                                 <div style="display:flex; justify-content:space-between; align-items:center;">
                                     <span>Tranziții Rânduri:</span>
-                                    <span id="tetrisMetricRowTransitions" style="color:var(--danger); font-weight:600; font-size:1.1rem;">0</span>
+                                    <span id="tetrisMetricRowTransitions" style="color:var(--accent); font-weight:600; font-size:1.1rem;">0</span>
                                 </div>
                                 <div style="display:flex; justify-content:space-between; align-items:center;">
                                     <span>Tranziții Coloane:</span>
-                                    <span id="tetrisMetricColTransitions" style="color:var(--danger); font-weight:600; font-size:1.1rem;">0</span>
+                                    <span id="tetrisMetricColTransitions" style="color:var(--accent); font-weight:600; font-size:1.1rem;">0</span>
                                 </div>
                                 <div style="display:flex; justify-content:space-between; align-items:center;">
                                     <span>Gropi/Canale (Wells):</span>
-                                    <span id="tetrisMetricWells" style="color:var(--danger); font-weight:600; font-size:1.1rem;">0</span>
+                                    <span id="tetrisMetricWells" style="color:var(--primary); font-weight:600; font-size:1.1rem;">0</span>
                                 </div>
                             </div>
-                        </div>
-
-                        <div class="info-card">
-                            <h3>Mecanism Model KNN (Slide 15)</h3>
-                            <p style="font-size: 0.8rem; line-height: 1.4; color: var(--text-muted);">
-                                Modelul K-Nearest Neighbors evaluează plasările analizând cele 200 de pătrățele ale grilei 20x10. Caută cele mai similare 5 table din baza de date și prezice calitatea mutării prin media scorurilor acestora.
-                            </p>
                         </div>
                     </div>
                 </div>
@@ -348,10 +486,10 @@
     </div>
 
     <!-- Scripts -->
-    <script src="/static/app.js?v=3"></script>
-    <script src="/static/chess_module.js?v=3"></script>
-    <script src="/static/snake_module.js?v=3"></script>
-    <script src="/static/tetris_module.js?v=3"></script>
+    <script src="/static/app.js?v=9"></script>
+    <script src="/static/chess_module.js?v=5"></script>
+    <script src="/static/snake_module.js?v=18"></script>
+    <script src="/static/tetris_module.js?v=19"></script>
 
 </body>
 </html>

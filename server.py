@@ -117,6 +117,11 @@ collision_data_x = deque(maxlen=MAX_BUFFER)
 collision_data_y = deque(maxlen=MAX_BUFFER)
 
 scores_history = []
+snake_scores_by_mode = {
+    "dqn": [],
+    "tree": [],
+    "bayes": []
+}
 
 tree_model = None
 bayes_model = None
@@ -274,8 +279,24 @@ async def training_loop():
 
         state_old = agent.get_state(game)
         
-        # Calculate Naive Bayes risks for current step
+        # Calculate Q-values for current state (always calculated for visual comparison)
+        state_tensor = torch.tensor(state_old, dtype=torch.float)
+        with torch.no_grad():
+            pred = agent.model(state_tensor)
+        dqn_q_values = [float(q) for q in pred.tolist()]
+        greedy_action_idx = int(torch.argmax(pred).item())
+
+        # Determine Decision Tree prediction
+        tree_action_idx = greedy_action_idx
+        if tree_model is not None:
+            try:
+                tree_action_idx = int(tree_model.predict(state_old.reshape(1, -1))[0])
+            except:
+                pass
+
+        # Calculate Naive Bayes risks and decision
         current_bayes_risks = {"straight": 0.0, "right": 0.0, "left": 0.0}
+        bayes_action_idx = greedy_action_idx
         if bayes_model is not None:
             try:
                 risks = []
@@ -284,6 +305,10 @@ async def training_loop():
                     proba = bayes_model.predict_proba(sample)[0][1]
                     risks.append(float(proba))
                 current_bayes_risks = {"straight": risks[0], "right": risks[1], "left": risks[2]}
+                
+                # Bayes decision logic: if DQN chosen action is risky (> 0.4), override with safest
+                if risks[bayes_action_idx] > 0.4:
+                    bayes_action_idx = int(np.argmin(risks))
             except:
                 pass
 
@@ -309,38 +334,17 @@ async def training_loop():
                 server_state["manual_key"] = None # consume key
             
             reward, done, score = game.play_step(action)
+            action_chosen_idx = int(np.argmax(action))
         else:
             # AI Control
             ai_mode = server_state.get("ai_mode", "dqn")
             
-            # Pre-calculate greedy DQN action (without exploration noise)
-            state_tensor = torch.tensor(state_old, dtype=torch.float)
-            with torch.no_grad():
-                pred = agent.model(state_tensor)
-            greedy_action_idx = torch.argmax(pred).item()
-            
             if ai_mode == "tree" and tree_model is not None:
-                try:
-                    action_idx = tree_model.predict(state_old.reshape(1, -1))[0]
-                    final_move = [0, 0, 0]
-                    final_move[action_idx] = 1
-                except:
-                    final_move = agent.get_action(state_old)
+                action_idx = tree_action_idx
+                final_move = [0, 0, 0]
+                final_move[action_idx] = 1
             elif ai_mode == "bayes":
-                # Start with greedy DQN action as baseline
-                action_idx = greedy_action_idx
-                if bayes_model is not None:
-                    try:
-                        risks = []
-                        for a in range(3):
-                            sample = np.append(state_old, a).reshape(1, -1)
-                            proba = bayes_model.predict_proba(sample)[0][1]
-                            risks.append(proba)
-                        # Safety override: if the greedy move is risky (> 0.4), choose the safest one!
-                        if risks[action_idx] > 0.4:
-                            action_idx = np.argmin(risks)
-                    except:
-                        pass
+                action_idx = bayes_action_idx
                 final_move = [0, 0, 0]
                 final_move[action_idx] = 1
             else:
@@ -348,14 +352,12 @@ async def training_loop():
                 final_move = agent.get_action(state_old)
             
             reward, done, score = game.play_step(final_move)
+            action_chosen_idx = int(np.argmax(final_move))
             
             # Data collection for tree and bayes (collect whenever AI plays)
-            # We train the Decision Tree ONLY on greedy/smart actions of DQN to avoid exploration noise
             training_data_x.append(state_old)
             training_data_y.append(greedy_action_idx)
             
-            # We record actual collision data based on the chosen move and its outcome
-            action_chosen_idx = np.argmax(final_move)
             collision_data_x.append(np.append(state_old, action_chosen_idx))
             collision_data_y.append(1 if done else 0)
 
@@ -364,6 +366,13 @@ async def training_loop():
                 state_new = agent.get_state(game)
                 agent.train_short_memory(state_old, final_move, reward, state_new, done)
                 agent.remember(state_old, final_move, reward, state_new, done)
+
+        # Calculate average score per mode for live bar comparison
+        avg_scores = {
+            "dqn": round(sum(snake_scores_by_mode["dqn"]) / len(snake_scores_by_mode["dqn"]), 1) if snake_scores_by_mode["dqn"] else 0.0,
+            "tree": round(sum(snake_scores_by_mode["tree"]) / len(snake_scores_by_mode["tree"]), 1) if snake_scores_by_mode["tree"] else 0.0,
+            "bayes": round(sum(snake_scores_by_mode["bayes"]) / len(snake_scores_by_mode["bayes"]), 1) if snake_scores_by_mode["bayes"] else 0.0
+        }
 
         # Broadcast state
         state_msg = {
@@ -377,7 +386,13 @@ async def training_loop():
             "ai_mode": server_state["ai_mode"],
             "tree_rule": explain_tree_decision(tree_model, state_old),
             "bayes_risks": current_bayes_risks,
-            "predicted_next_score": predicted_next_score
+            "predicted_next_score": predicted_next_score,
+            "direction": game.direction.name.lower(),
+            "dqn_q_values": dqn_q_values,
+            "tree_action": tree_action_idx,
+            "bayes_action": bayes_action_idx,
+            "chosen_action": action_chosen_idx,
+            "avg_scores": avg_scores
         }
         await manager.broadcast(state_msg)
         # Control speed for visualization
@@ -385,6 +400,12 @@ async def training_loop():
 
         if done:
             game.reset()
+            current_mode = "manual" if server_state["is_manual"] else server_state.get("ai_mode", "dqn")
+            if current_mode in snake_scores_by_mode:
+                snake_scores_by_mode[current_mode].append(score)
+                if len(snake_scores_by_mode[current_mode]) > 50:
+                    snake_scores_by_mode[current_mode].pop(0)
+
             if not server_state["is_manual"]:
                 agent.n_games += 1
                 if server_state["ai_mode"] == "dqn":
@@ -459,6 +480,8 @@ async def training_loop():
                         print(f"Error training Score Predictor: {e}")
 
 # --- Tetris AI Models & Helper Functions ---
+import random
+
 class TetrisMLP(nn.Module):
     def __init__(self):
         super().__init__()
@@ -473,11 +496,82 @@ class TetrisMLP(nn.Module):
 tetris_mlp_model = None
 tetris_tree_model = None
 tetris_knn_model = None
+tetris_replay_buffer = deque(maxlen=2000)
+
+# Base Heuristic Weights
+tetris_base_weights = {
+    "height": -0.510066,
+    "lines": 0.760666,
+    "holes": -0.35663,
+    "bumpiness": -0.184483
+}
+
+# Active weights (perturbed during current game for search)
+tetris_active_weights = dict(tetris_base_weights)
+tetris_perturbed = False
+tetris_perturbation = {
+    "height": 0.0,
+    "lines": 0.0,
+    "holes": 0.0,
+    "bumpiness": 0.0
+}
+tetris_avg_score = 0.0
+tetris_game_count = 0
+
+def perturb_weights():
+    global tetris_active_weights, tetris_perturbed, tetris_perturbation
+    # Normal distribution mutations
+    tetris_perturbation = {
+        "height": random.normalvariate(0, 0.08),
+        "lines": random.normalvariate(0, 0.08),
+        "holes": random.normalvariate(0, 0.08),
+        "bumpiness": random.normalvariate(0, 0.08)
+    }
+    # Perturb
+    tetris_active_weights = {
+        k: tetris_base_weights[k] + tetris_perturbation[k]
+        for k in tetris_base_weights
+    }
+    # Clamp signs to keep intuitive meaning (penalties must be negative, line clears positive)
+    tetris_active_weights["height"] = min(-0.02, tetris_active_weights["height"])
+    tetris_active_weights["holes"] = min(-0.02, tetris_active_weights["holes"])
+    tetris_active_weights["bumpiness"] = min(-0.02, tetris_active_weights["bumpiness"])
+    tetris_active_weights["lines"] = max(0.02, tetris_active_weights["lines"])
+    tetris_perturbed = True
+
+def update_weights(game_score: float):
+    global tetris_base_weights, tetris_avg_score, tetris_game_count, tetris_perturbed
+    tetris_game_count += 1
+    
+    if tetris_game_count == 1:
+        tetris_avg_score = float(game_score)
+    else:
+        # Running average of scores with momentum
+        tetris_avg_score = 0.85 * tetris_avg_score + 0.15 * game_score
+        
+    if tetris_perturbed:
+        score_diff = game_score - tetris_avg_score
+        # Calculate learning rate based on relative score improvement
+        # Higher improvement = larger weight update in that direction
+        lr = 0.12 * float(np.tanh(score_diff / 500.0)) if score_diff != 0 else 0.0
+        
+        for k in tetris_base_weights:
+            tetris_base_weights[k] += lr * tetris_perturbation[k]
+            
+        # Keep signs consistent
+        tetris_base_weights["height"] = min(-0.02, tetris_base_weights["height"])
+        tetris_base_weights["holes"] = min(-0.02, tetris_base_weights["holes"])
+        tetris_base_weights["bumpiness"] = min(-0.02, tetris_base_weights["bumpiness"])
+        tetris_base_weights["lines"] = max(0.02, tetris_base_weights["lines"])
+        
+    # Prepare active weights for next game
+    perturb_weights()
 
 class TetrisMoveRequest(BaseModel):
     board: list[list[int]]
     shape: list[list[int]]
-    model_type: str # "mlp" | "tree" | "knn"
+    model_type: str # "mlp" | "tree" | "knn" | "genetic"
+
 
 def rotate_matrix(shape):
     return [list(x) for x in zip(*shape[::-1])]
@@ -698,6 +792,13 @@ async def post_tetris_next_move(req: TetrisMoveRequest):
                 elif model_type == "knn" and tetris_knn_model is not None:
                     grid_flat = np.array(temp_board, dtype=float).flatten()
                     score = float(tetris_knn_model.predict([grid_flat])[0])
+                elif model_type == "genetic":
+                    score = (
+                        tetris_active_weights["height"] * h_agg
+                        + tetris_active_weights["lines"] * lines
+                        + tetris_active_weights["holes"] * holes
+                        + tetris_active_weights["bumpiness"] * bump
+                    )
                 else:
                     score = -0.510066 * h_agg + 0.760666 * lines - 0.35663 * holes - 0.184483 * bump
                     
@@ -714,14 +815,19 @@ async def post_tetris_next_move(req: TetrisMoveRequest):
     if model_type == "tree" and tetris_tree_model is not None:
         explanation = explain_tetris_tree_decision(tetris_tree_model, best_features)
     elif model_type == "knn" and tetris_knn_model is not None:
-        explanation = f"Evaluare KNN: Calitate prezisă din cele mai similare 5 grile de 20x10 din istoric (Scor = {round(best_score, 2)})."
-    elif model_type == "mlp":
+        explanation = f"Evaluare KNN: Calitate prezisă din cele mai similare 5 grile din istoric (Scor = {round(best_score, 2)})."
+    elif model_type == "mlp" and tetris_mlp_model is not None:
         explanation = f"Evaluare MLP: Scor plasare prezis = {round(best_score, 2)} pe baza metricilor tablei."
+    elif model_type == "genetic":
+        explanation = f"Evaluare Genetică (ES): Scor = {round(best_score, 2)} pe baza ponderilor active."
+    else:
+        explanation = f"Evaluare Euristică: Scor = {round(best_score, 2)}."
         
     return {
         "x": best_x,
         "shape": best_shape,
         "explanation": explanation,
+        "weights": tetris_active_weights,
         "metrics": {
             "height": int(best_features[0]),
             "lines": int(best_features[1]),
@@ -733,11 +839,13 @@ async def post_tetris_next_move(req: TetrisMoveRequest):
         }
     }
 
+
 class TetrisEvaluateRequest(BaseModel):
     board: list[list[int]]
     shape: list[list[int]]
     chosen_x: int
     chosen_shape: list[list[int]]
+    model_type: str # "mlp" | "tree" | "knn" | "genetic"
 
 @app.post("/api/tetris/evaluate-move")
 async def post_tetris_evaluate_move(req: TetrisEvaluateRequest):
@@ -745,8 +853,9 @@ async def post_tetris_evaluate_move(req: TetrisEvaluateRequest):
     original_shape = req.shape
     chosen_x = req.chosen_x
     chosen_shape = req.chosen_shape
+    model_type = req.model_type
     
-    # 1. Simulate all possible placements and evaluate them using KNN
+    # 1. Simulate all possible placements and evaluate them using chosen model
     placements = []
     current_shape = original_shape
     for rot in range(4):
@@ -769,11 +878,24 @@ async def post_tetris_evaluate_move(req: TetrisEvaluateRequest):
                 h_agg, lines, holes, bump, row_trans, col_trans, wells = calculate_tetris_features(temp_board)
                 features = [float(h_agg), float(lines), float(holes), float(bump)]
                 
-                # Predict score via KNN
+                # Predict score via chosen model
                 score = -999999.0
-                if tetris_knn_model is not None:
+                if model_type == "mlp" and tetris_mlp_model is not None:
+                    feat_tensor = torch.tensor([features], dtype=torch.float32)
+                    with torch.no_grad():
+                        score = float(tetris_mlp_model(feat_tensor).item())
+                elif model_type == "tree" and tetris_tree_model is not None:
+                    score = float(tetris_tree_model.predict([features])[0])
+                elif model_type == "knn" and tetris_knn_model is not None:
                     grid_flat = np.array(temp_board, dtype=float).flatten()
                     score = float(tetris_knn_model.predict([grid_flat])[0])
+                elif model_type == "genetic":
+                    score = (
+                        tetris_active_weights["height"] * h_agg
+                        + tetris_active_weights["lines"] * lines
+                        + tetris_active_weights["holes"] * holes
+                        + tetris_active_weights["bumpiness"] * bump
+                    )
                 else:
                     score = -0.510066 * h_agg + 0.760666 * lines - 0.35663 * holes - 0.184483 * bump
                     
@@ -812,9 +934,22 @@ async def post_tetris_evaluate_move(req: TetrisEvaluateRequest):
     chosen_features = [float(chosen_h_agg), float(chosen_lines), float(chosen_holes), float(chosen_bump)]
     
     chosen_score = -999999.0
-    if tetris_knn_model is not None:
+    if model_type == "mlp" and tetris_mlp_model is not None:
+        feat_tensor = torch.tensor([chosen_features], dtype=torch.float32)
+        with torch.no_grad():
+            chosen_score = float(tetris_mlp_model(feat_tensor).item())
+    elif model_type == "tree" and tetris_tree_model is not None:
+        chosen_score = float(tetris_tree_model.predict([chosen_features])[0])
+    elif model_type == "knn" and tetris_knn_model is not None:
         grid_flat = np.array(simulated_chosen_board, dtype=float).flatten()
         chosen_score = float(tetris_knn_model.predict([grid_flat])[0])
+    elif model_type == "genetic":
+        chosen_score = (
+            tetris_active_weights["height"] * chosen_h_agg
+            + tetris_active_weights["lines"] * chosen_lines
+            + tetris_active_weights["holes"] * chosen_holes
+            + tetris_active_weights["bumpiness"] * chosen_bump
+        )
     else:
         chosen_score = -0.510066 * chosen_h_agg + 0.760666 * chosen_lines - 0.35663 * chosen_holes - 0.184483 * chosen_bump
         
@@ -887,6 +1022,88 @@ async def post_tetris_evaluate_move(req: TetrisEvaluateRequest):
             "wells": int(chosen_wells)
         }
     }
+
+class TetrisGameOverRequest(BaseModel):
+    score: int
+    history: list[dict] # list of {"features": list, "grid": list, "reward": float}
+
+@app.post("/api/tetris/game-over")
+async def post_tetris_game_over(req: TetrisGameOverRequest):
+    global tetris_mlp_model, tetris_tree_model, tetris_knn_model
+    
+    # 1. Update Genetic ES weights
+    update_weights(req.score)
+    
+    # 2. Process history for TD-learning of MLP, Tree, KNN
+    history = req.history
+    if len(history) > 1:
+        gamma = 0.95
+        # Compute target values backwards (TD-style bootstrapping)
+        for i in range(len(history)):
+            state = history[i]
+            reward = state.get("reward", 0.0)
+            
+            if i == len(history) - 1:
+                # Terminal step penalty
+                target = reward - 100.0
+            else:
+                next_state = history[i+1]
+                h_agg, lines, holes, bump = next_state["features"]
+                # Bootstrap next state value from active heuristic weights
+                v_next = (
+                    tetris_base_weights["height"] * h_agg
+                    + tetris_base_weights["lines"] * lines
+                    + tetris_base_weights["holes"] * holes
+                    + tetris_base_weights["bumpiness"] * bump
+                )
+                target = reward + gamma * v_next
+                
+            tetris_replay_buffer.append({
+                "features": state["features"],
+                "grid": state["grid"],
+                "target": target
+            })
+            
+        # 3. Retrain ML models
+        if len(tetris_replay_buffer) >= 80:
+            try:
+                X_features = np.array([item["features"] for item in tetris_replay_buffer])
+                X_grids = np.array([item["grid"] for item in tetris_replay_buffer])
+                y = np.array([item["target"] for item in tetris_replay_buffer])
+                
+                # Fit Decision Tree
+                tetris_tree_model = DecisionTreeRegressor(max_depth=5, random_state=42)
+                tetris_tree_model.fit(X_features, y)
+                
+                # Fit KNN
+                tetris_knn_model = KNeighborsRegressor(n_neighbors=5, weights='distance')
+                tetris_knn_model.fit(X_grids, y)
+                
+                # Train MLP
+                if tetris_mlp_model is None:
+                    tetris_mlp_model = TetrisMLP()
+                opt = optim.Adam(tetris_mlp_model.parameters(), lr=0.01)
+                crit = nn.MSELoss()
+                X_t = torch.tensor(X_features, dtype=torch.float32)
+                y_t = torch.tensor(y, dtype=torch.float32).unsqueeze(1)
+                
+                tetris_mlp_model.train()
+                for _ in range(5):
+                    opt.zero_grad()
+                    loss = crit(tetris_mlp_model(X_t), y_t)
+                    loss.backward()
+                    opt.step()
+                tetris_mlp_model.eval()
+                print(f"Online learning done: retrained Tetris models on {len(X_features)} samples.")
+            except Exception as e:
+                print(f"Error training online Tetris models: {e}")
+                
+    return {
+        "status": "success",
+        "avg_score": round(tetris_avg_score, 1),
+        "weights": tetris_base_weights
+    }
+
 
 @app.on_event("startup")
 async def startup_event():
