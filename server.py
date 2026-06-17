@@ -4,7 +4,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 import os
-from game_logic import SnakeGameHeadless, MultiAgentSnakeGame, get_astar_path, Direction
+from game_logic import SnakeGameHeadless, MultiAgentSnakeGame, get_astar_path, Direction, Point
 from agent import Agent
 from pydantic import BaseModel
 import chess

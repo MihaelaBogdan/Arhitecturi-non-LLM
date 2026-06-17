@@ -89,7 +89,11 @@ function drawIndividualSnake(snake, headColor, bodyColor, direction) {
         }
         
         ctx.beginPath();
-        ctx.roundRect(pt.x + 1, pt.y + 1, BLOCK_SIZE - 2, BLOCK_SIZE - 2, index === 0 ? 5 : 3);
+        if (typeof ctx.roundRect === 'function') {
+            ctx.roundRect(pt.x + 1, pt.y + 1, BLOCK_SIZE - 2, BLOCK_SIZE - 2, index === 0 ? 5 : 3);
+        } else {
+            ctx.rect(pt.x + 1, pt.y + 1, BLOCK_SIZE - 2, BLOCK_SIZE - 2);
+        }
         ctx.fill();
         ctx.strokeStyle = '#0f172a';
         ctx.stroke();

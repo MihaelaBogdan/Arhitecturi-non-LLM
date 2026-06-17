@@ -177,6 +177,9 @@
                                                 <button id="btnMinimax" class="mode-btn active" onclick="setAIMode('minimax')">🌲 Minimax</button>
                                                 <button id="btnCNN" class="mode-btn" onclick="setAIMode('cnn')">🧠 CNN</button>
                                             </div>
+                                            <p id="aiModeDesc" style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">
+                                                Minimax explorează pozițiile viitoare sistematic cu Alpha-Beta Pruning.
+                                            </p>
                                         </div>
                                         <div class="info-card" id="chessAiConfigCard" style="display: none;">
                                             <h3>Configurare Modele AI</h3>
@@ -208,6 +211,17 @@
                                                 <div class="cnn-layer" data-layer="output"><span class="layer-dot"></span> Output (1 eval score)</div>
                                             </div>
                                         </div>
+                                        <!-- Difficulty -->
+                                        <div class="info-card">
+                                            <h3>Dificultate (Adâncime Minimax)</h3>
+                                            <select id="chessDifficulty" class="btn secondary-btn" style="text-align:left; background:rgba(0,0,0,0.5); width: 100%;">
+                                                <option value="1">Ușor (Depth 1)</option>
+                                                <option value="2">Mediu (Depth 2)</option>
+                                                <option value="3" selected>Greu (Depth 3)</option>
+                                                <option value="4">Grandmaster (Depth 4)</option>
+                                            </select>
+                                        </div>
+
                                         <div class="info-card">
                                             <h3>📊 Evaluare Poziție (CNN)</h3>
                                             <div class="eval-bar-outer">
@@ -220,6 +234,15 @@
                                                 <span>Negru</span>
                                             </div>
                                         </div>
+                                        <!-- Material Balance -->
+                                        <div class="info-card">
+                                            <h3>⚖️ Balanță Material</h3>
+                                            <div style="font-size:0.85rem;">
+                                                <div>Alb a capturat: <span id="whiteCaptured" style="font-size:1rem;">—</span></div>
+                                                <div>Negru a capturat: <span id="blackCaptured" style="font-size:1rem;">—</span></div>
+                                            </div>
+                                        </div>
+
                                         <div class="info-card">
                                             <h3>Deschidere</h3>
                                             <div id="openingName" class="opening-badge">Poziție de start</div>
@@ -364,6 +387,12 @@
                                                     </div>
                                                     <div class="eval-bar-outer" style="height:10px;"><div id="snakeAvgBarTree" style="width: 0%; background: #ffb703; height: 100%;"></div></div>
                                                 </div>
+                                                <div>
+                                                    <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
+                                                        <span>Bayes</span><span id="snakeAvgLabelBayes">0.0</span>
+                                                    </div>
+                                                    <div class="eval-bar-outer" style="height:10px;"><div id="snakeAvgBarBayes" style="width: 0%; background: #fb8500; height: 100%;"></div></div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -466,6 +495,9 @@
                                                 <div style="display:flex; justify-content:space-between;">
                                                     <span>Goluri:</span><span id="weightHoles" style="color:var(--danger); font-weight:bold;">-0.36</span>
                                                 </div>
+                                                <div style="display:flex; justify-content:space-between;">
+                                                    <span>Denivelare:</span><span id="weightBumpiness" style="color:var(--danger); font-weight:bold;">-0.18</span>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="info-card" id="tetrisReviewCard">
@@ -496,6 +528,9 @@
                                                 </div>
                                                 <div style="display:flex; justify-content:space-between;">
                                                     <span>Tranziții Rânduri:</span><span id="tetrisMetricRowTransitions" style="color:var(--accent); font-weight:bold;">0</span>
+                                                </div>
+                                                <div style="display:flex; justify-content:space-between;">
+                                                    <span>Tranziții Coloane:</span><span id="tetrisMetricColTransitions" style="color:var(--accent); font-weight:bold;">0</span>
                                                 </div>
                                                 <div style="display:flex; justify-content:space-between;">
                                                     <span>Gropi/Canale:</span><span id="tetrisMetricWells" style="color:var(--primary); font-weight:bold;">0</span>
@@ -562,5 +597,11 @@
             <button class="btn secondary-btn" style="margin-top:15px; border-color:var(--accent);" onclick="hideDumpsModal()">ÎNCHIDE FEREASTRA</button>
         </div>
     </div>
+
+    <!-- Scripts -->
+    <script src="/static/app.js?v=20"></script>
+    <script src="/static/chess_module.js?v=20"></script>
+    <script src="/static/snake_module.js?v=20"></script>
+    <script src="/static/tetris_module.js?v=20"></script>
 </body>
 </html>
