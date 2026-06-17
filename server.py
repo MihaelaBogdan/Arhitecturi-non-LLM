@@ -304,6 +304,7 @@ async def training_loop():
         
     agent.n_games = len(plot_scores)
     record = max(plot_scores) if plot_scores else 0
+    prev_ai_mode = server_state.get("ai_mode", "dqn")
     
     while True:
         if not manager.active_connections:
@@ -311,6 +312,12 @@ async def training_loop():
             continue
 
         ai_mode = server_state.get("ai_mode", "dqn")
+        if ai_mode != prev_ai_mode:
+            if ai_mode == "vs_tree":
+                multi_game.reset()
+            else:
+                game.reset()
+            prev_ai_mode = ai_mode
         
         # Determine current state representation
         if ai_mode == "vs_tree":

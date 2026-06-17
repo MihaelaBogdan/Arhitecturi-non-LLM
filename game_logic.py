@@ -256,7 +256,7 @@ class MultiAgentSnakeGame:
                self.frame_iteration_tree > 100 * len(self.snake_tree):
                 self.dead_tree = True
 
-        done = self.dead_dqn and self.dead_tree
+        done = self.dead_dqn or self.dead_tree
         return done, self.score_dqn, self.score_tree
 
     def _move(self, action, is_dqn=True):
