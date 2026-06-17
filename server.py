@@ -4,7 +4,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 import os
-from game_logic import SnakeGameHeadless
+from game_logic import SnakeGameHeadless, MultiAgentSnakeGame, get_astar_path, Direction
 from agent import Agent
 from pydantic import BaseModel
 import chess
@@ -257,10 +257,43 @@ def pretrain_models_at_startup():
     except Exception as e:
         print(f"Failed to pre-train Snake models at startup: {e}")
 
+class SnakeGameProxy:
+    def __init__(self, multi_game, is_dqn=True):
+        self.multi_game = multi_game
+        self.is_dqn = is_dqn
+        
+    @property
+    def snake(self):
+        return self.multi_game.snake_dqn if self.is_dqn else self.multi_game.snake_tree
+        
+    @property
+    def direction(self):
+        return self.multi_game.direction_dqn if self.is_dqn else self.multi_game.direction_tree
+        
+    @property
+    def food(self):
+        return self.multi_game.food
+        
+    @property
+    def head(self):
+        return self.multi_game.head_dqn if self.is_dqn else self.multi_game.head_tree
+        
+    def is_collision(self, pt=None):
+        if pt is None:
+            pt = self.head
+        return self.multi_game.is_collision(
+            pt, 
+            self.multi_game.snake_dqn if self.is_dqn else self.multi_game.snake_tree,
+            self.multi_game.snake_tree if self.is_dqn else self.multi_game.snake_dqn,
+            is_dqn=self.is_dqn
+        )
+
+
 async def training_loop():
     global server_state, tree_model, bayes_model, score_predictor_model, predicted_next_score
     agent = Agent()
     game = SnakeGameHeadless(w=400, h=400)
+    multi_game = MultiAgentSnakeGame(w=400, h=400)
     
     # Initialize plot scores from startup pre-training to populate the chart immediately
     plot_scores = list(scores_history)
@@ -277,7 +310,14 @@ async def training_loop():
             await asyncio.sleep(0.5)
             continue
 
-        state_old = agent.get_state(game)
+        ai_mode = server_state.get("ai_mode", "dqn")
+        
+        # Determine current state representation
+        if ai_mode == "vs_tree":
+            proxy_dqn = SnakeGameProxy(multi_game, is_dqn=True)
+            state_old = agent.get_state(proxy_dqn)
+        else:
+            state_old = agent.get_state(game)
         
         # Calculate Q-values for current state (always calculated for visual comparison)
         state_tensor = torch.tensor(state_old, dtype=torch.float)
@@ -312,13 +352,15 @@ async def training_loop():
             except:
                 pass
 
+        astar_path_data = []
+        action_chosen_idx = 0
+
         if server_state["is_manual"]:
             # Convert manual key to relative action
             action = [1, 0, 0] # default straight
             if server_state["manual_key"]:
                 k = server_state["manual_key"]
                 d = game.direction
-                from game_logic import Direction
                 if k == "ArrowUp" and d != Direction.DOWN:
                     if d == Direction.LEFT: action = [0, 1, 0] # turn right
                     elif d == Direction.RIGHT: action = [0, 0, 1] # turn left
@@ -337,35 +379,118 @@ async def training_loop():
             action_chosen_idx = int(np.argmax(action))
         else:
             # AI Control
-            ai_mode = server_state.get("ai_mode", "dqn")
-            
-            if ai_mode == "tree" and tree_model is not None:
-                action_idx = tree_action_idx
-                final_move = [0, 0, 0]
-                final_move[action_idx] = 1
-            elif ai_mode == "bayes":
-                action_idx = bayes_action_idx
-                final_move = [0, 0, 0]
-                final_move[action_idx] = 1
+            if ai_mode == "vs_tree":
+                # DQN move prediction
+                final_move_dqn = [1, 0, 0]
+                if not multi_game.dead_dqn:
+                    proxy_dqn = SnakeGameProxy(multi_game, is_dqn=True)
+                    st_dqn = agent.get_state(proxy_dqn)
+                    st_tensor = torch.tensor(st_dqn, dtype=torch.float)
+                    with torch.no_grad():
+                        pred_dqn = agent.model(st_tensor)
+                    move_dqn = torch.argmax(pred_dqn).item()
+                    final_move_dqn = [0, 0, 0]
+                    final_move_dqn[move_dqn] = 1
+                
+                # Tree move prediction
+                final_move_tree = [1, 0, 0]
+                if not multi_game.dead_tree:
+                    proxy_tree = SnakeGameProxy(multi_game, is_dqn=False)
+                    st_tree = agent.get_state(proxy_tree)
+                    if tree_model is not None:
+                        try:
+                            move_tree = int(tree_model.predict(st_tree.reshape(1, -1))[0])
+                        except:
+                            move_tree = 0
+                    else:
+                        move_tree = 0
+                    final_move_tree = [0, 0, 0]
+                    final_move_tree[move_tree] = 1
+                    
+                done, score_dqn, score_tree = multi_game.play_step(final_move_dqn, final_move_tree)
+                score = max(score_dqn, score_tree) # overall score for statistics
+            elif ai_mode == "astar":
+                # Compute A* path
+                path = get_astar_path(game.snake, game.head, game.food)
+                if path and len(path) > 0:
+                    astar_path_data = [{"x": pt.x, "y": pt.y} for pt in path]
+                    next_pt = path[0]
+                    if next_pt.x > game.head.x:
+                        next_dir = Direction.RIGHT
+                    elif next_pt.x < game.head.x:
+                        next_dir = Direction.LEFT
+                    elif next_pt.y > game.head.y:
+                        next_dir = Direction.DOWN
+                    else:
+                        next_dir = Direction.UP
+                    
+                    clock_wise = [Direction.RIGHT, Direction.DOWN, Direction.LEFT, Direction.UP]
+                    idx = clock_wise.index(game.direction)
+                    if next_dir == clock_wise[idx]:
+                        action_idx = 0
+                    elif next_dir == clock_wise[(idx + 1) % 4]:
+                        action_idx = 1
+                    else:
+                        action_idx = 2
+                    final_move = [0, 0, 0]
+                    final_move[action_idx] = 1
+                else:
+                    # Fallback to local collision-free heuristics
+                    clock_wise = [Direction.RIGHT, Direction.DOWN, Direction.LEFT, Direction.UP]
+                    idx = clock_wise.index(game.direction)
+                    best_action_idx = 0
+                    min_dist = float('inf')
+                    for a_idx in range(3):
+                        if a_idx == 0:
+                            new_dir = clock_wise[idx]
+                        elif a_idx == 1:
+                            new_dir = clock_wise[(idx + 1) % 4]
+                        else:
+                            new_dir = clock_wise[(idx - 1) % 4]
+                        x = game.head.x
+                        y = game.head.y
+                        if new_dir == Direction.RIGHT: x += 20
+                        elif new_dir == Direction.LEFT: x -= 20
+                        elif new_dir == Direction.DOWN: y += 20
+                        elif new_dir == Direction.UP: y -= 20
+                        next_pt = Point(x, y)
+                        if not game.is_collision(next_pt):
+                            dist = abs(next_pt.x - game.food.x) + abs(next_pt.y - game.food.y)
+                            if dist < min_dist:
+                                min_dist = dist
+                                best_action_idx = a_idx
+                    final_move = [0, 0, 0]
+                    final_move[best_action_idx] = 1
+                
+                reward, done, score = game.play_step(final_move)
+                action_chosen_idx = int(np.argmax(final_move))
             else:
-                # Default to DQN (includes exploration during training)
-                final_move = agent.get_action(state_old)
-            
-            reward, done, score = game.play_step(final_move)
-            action_chosen_idx = int(np.argmax(final_move))
-            
-            # Data collection for tree and bayes (collect whenever AI plays)
-            training_data_x.append(state_old)
-            training_data_y.append(greedy_action_idx)
-            
-            collision_data_x.append(np.append(state_old, action_chosen_idx))
-            collision_data_y.append(1 if done else 0)
-
-            # DQN updates (only if in DQN mode)
-            if ai_mode == "dqn":
-                state_new = agent.get_state(game)
-                agent.train_short_memory(state_old, final_move, reward, state_new, done)
-                agent.remember(state_old, final_move, reward, state_new, done)
+                # Other single AI modes
+                if ai_mode == "tree" and tree_model is not None:
+                    action_idx = tree_action_idx
+                    final_move = [0, 0, 0]
+                    final_move[action_idx] = 1
+                elif ai_mode == "bayes":
+                    action_idx = bayes_action_idx
+                    final_move = [0, 0, 0]
+                    final_move[action_idx] = 1
+                else:
+                    final_move = agent.get_action(state_old)
+                
+                reward, done, score = game.play_step(final_move)
+                action_chosen_idx = int(np.argmax(final_move))
+                
+                # Data collection for tree and bayes (collect whenever AI plays)
+                training_data_x.append(state_old)
+                training_data_y.append(greedy_action_idx)
+                collision_data_x.append(np.append(state_old, action_chosen_idx))
+                collision_data_y.append(1 if done else 0)
+                
+                # DQN updates (only if in DQN mode)
+                if ai_mode == "dqn":
+                    state_new = agent.get_state(game)
+                    agent.train_short_memory(state_old, final_move, reward, state_new, done)
+                    agent.remember(state_old, final_move, reward, state_new, done)
 
         # Calculate average score per mode for live bar comparison
         avg_scores = {
@@ -375,54 +500,93 @@ async def training_loop():
         }
 
         # Broadcast state
-        state_msg = {
-            "snake": [{"x": pt.x, "y": pt.y} for pt in game.snake],
-            "food": {"x": game.food.x, "y": game.food.y},
-            "score": score,
-            "games": agent.n_games,
-            "record": record,
-            "scores": plot_scores,
-            "mean_scores": plot_mean_scores,
-            "ai_mode": server_state["ai_mode"],
-            "tree_rule": explain_tree_decision(tree_model, state_old),
-            "bayes_risks": current_bayes_risks,
-            "predicted_next_score": predicted_next_score,
-            "direction": game.direction.name.lower(),
-            "dqn_q_values": dqn_q_values,
-            "tree_action": tree_action_idx,
-            "bayes_action": bayes_action_idx,
-            "chosen_action": action_chosen_idx,
-            "avg_scores": avg_scores
-        }
+        if ai_mode == "vs_tree" and not server_state["is_manual"]:
+            state_msg = {
+                "multi_agent": True,
+                "dqn_snake": [{"x": pt.x, "y": pt.y} for pt in multi_game.snake_dqn] if not multi_game.dead_dqn else [],
+                "tree_snake": [{"x": pt.x, "y": pt.y} for pt in multi_game.snake_tree] if not multi_game.dead_tree else [],
+                "food": {"x": multi_game.food.x, "y": multi_game.food.y},
+                "dqn_score": score_dqn,
+                "tree_score": score_tree,
+                "dead_dqn": multi_game.dead_dqn,
+                "dead_tree": multi_game.dead_tree,
+                "ai_mode": "vs_tree",
+                "direction_dqn": multi_game.direction_dqn.name.lower(),
+                "direction_tree": multi_game.direction_tree.name.lower(),
+                "games": agent.n_games,
+                "record": record,
+                "scores": plot_scores,
+                "mean_scores": plot_mean_scores,
+                "avg_scores": avg_scores
+            }
+        else:
+            state_msg = {
+                "snake": [{"x": pt.x, "y": pt.y} for pt in game.snake],
+                "food": {"x": game.food.x, "y": game.food.y},
+                "score": score,
+                "games": agent.n_games,
+                "record": record,
+                "scores": plot_scores,
+                "mean_scores": plot_mean_scores,
+                "ai_mode": server_state["ai_mode"],
+                "tree_rule": explain_tree_decision(tree_model, state_old),
+                "bayes_risks": current_bayes_risks,
+                "predicted_next_score": predicted_next_score,
+                "direction": game.direction.name.lower(),
+                "dqn_q_values": dqn_q_values,
+                "tree_action": tree_action_idx,
+                "bayes_action": bayes_action_idx,
+                "chosen_action": action_chosen_idx,
+                "avg_scores": avg_scores
+            }
+            if ai_mode == "astar":
+                state_msg["astar_path"] = astar_path_data
+                
         await manager.broadcast(state_msg)
-        # Control speed for visualization
         await asyncio.sleep(0.04) # 25 FPS
 
         if done:
-            game.reset()
-            current_mode = "manual" if server_state["is_manual"] else server_state.get("ai_mode", "dqn")
-            if current_mode in snake_scores_by_mode:
-                snake_scores_by_mode[current_mode].append(score)
-                if len(snake_scores_by_mode[current_mode]) > 50:
-                    snake_scores_by_mode[current_mode].pop(0)
-
-            if not server_state["is_manual"]:
+            if ai_mode == "vs_tree" and not server_state["is_manual"]:
+                snake_scores_by_mode["dqn"].append(score_dqn)
+                if len(snake_scores_by_mode["dqn"]) > 50:
+                    snake_scores_by_mode["dqn"].pop(0)
+                snake_scores_by_mode["tree"].append(score_tree)
+                if len(snake_scores_by_mode["tree"]) > 50:
+                    snake_scores_by_mode["tree"].pop(0)
+                    
+                multi_game.reset()
                 agent.n_games += 1
-                if server_state["ai_mode"] == "dqn":
-                    agent.train_long_memory()
+                
+                if score > record:
+                    record = score
+                plot_scores.append(score)
+                total_score += score
+                mean_score = total_score / max(1, agent.n_games)
+                plot_mean_scores.append(mean_score)
+                scores_history.append(score)
+            else:
+                game.reset()
+                current_mode = "manual" if server_state["is_manual"] else server_state.get("ai_mode", "dqn")
+                if current_mode in snake_scores_by_mode:
+                    snake_scores_by_mode[current_mode].append(score)
+                    if len(snake_scores_by_mode[current_mode]) > 50:
+                        snake_scores_by_mode[current_mode].pop(0)
 
-            if score > record:
-                record = score
-                if not server_state["is_manual"] and server_state["ai_mode"] == "dqn":
-                    agent.model.save()
-            
-            plot_scores.append(score)
-            total_score += score
-            mean_score = total_score / max(1, agent.n_games)
-            plot_mean_scores.append(mean_score)
-            
-            # Update scores history
-            scores_history.append(score)
+                if not server_state["is_manual"]:
+                    agent.n_games += 1
+                    if server_state["ai_mode"] == "dqn":
+                        agent.train_long_memory()
+
+                if score > record:
+                    record = score
+                    if not server_state["is_manual"] and server_state["ai_mode"] == "dqn":
+                        agent.model.save()
+                
+                plot_scores.append(score)
+                total_score += score
+                mean_score = total_score / max(1, agent.n_games)
+                plot_mean_scores.append(mean_score)
+                scores_history.append(score)
             if len(scores_history) > 100:
                 scores_history.pop(0)
 

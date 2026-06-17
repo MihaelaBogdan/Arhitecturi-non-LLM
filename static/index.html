@@ -205,6 +205,8 @@
                                 <button id="btnSnakeDQN" class="mode-btn active" onclick="setSnakeAIMode('dqn')">🧠 DQN (Rețea)</button>
                                 <button id="btnSnakeTree" class="mode-btn" onclick="setSnakeAIMode('tree')">🌲 Dec. Tree</button>
                                 <button id="btnSnakeBayes" class="mode-btn" onclick="setSnakeAIMode('bayes')">🔮 Bayes Risk</button>
+                                <button id="btnSnakeAStar" class="mode-btn" onclick="setSnakeAIMode('astar')">🌐 A* Path</button>
+                                <button id="btnSnakeVS" class="mode-btn" onclick="setSnakeAIMode('vs_tree')">⚔️ DQN vs Tree</button>
                             </div>
                             <p id="snakeAiModeDesc" style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">
                                 DQN folosește o rețea neurală profundă pentru a aproxima calitatea deciziilor (Q-Values).
@@ -519,7 +521,7 @@
     <!-- Scripts -->
     <script src="/static/app.js?v=9"></script>
     <script src="/static/chess_module.js?v=6"></script>
-    <script src="/static/snake_module.js?v=18"></script>
+    <script src="/static/snake_module.js?v=19"></script>
     <script src="/static/tetris_module.js?v=19"></script>
 
 </body>

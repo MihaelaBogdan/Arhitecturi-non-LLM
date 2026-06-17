@@ -80,38 +80,12 @@ function isCollision(x, y, snake) {
     return false;
 }
 
-function drawGame(data) {
-    const snake = data.snake;
-    const food = data.food;
-    
-    // Clear board
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    // Draw food
-    ctx.fillStyle = '#ef4444';
-    ctx.fillRect(food.x, food.y, BLOCK_SIZE, BLOCK_SIZE);
-    // Glow effect on food
-    ctx.shadowColor = '#ef4444';
-    ctx.shadowBlur = 8;
-    ctx.fillRect(food.x + 2, food.y + 2, BLOCK_SIZE - 4, BLOCK_SIZE - 4);
-    ctx.shadowBlur = 0; // reset
-    
-    // Draw snake body and head
+function drawIndividualSnake(snake, headColor, bodyColor, direction) {
     snake.forEach((pt, index) => {
         if (index === 0) {
-            // Head color represents active model
-            if (isManual) {
-                ctx.fillStyle = '#ef4444'; // Red for Manual
-            } else if (data.ai_mode === 'tree') {
-                ctx.fillStyle = '#ffb703'; // Gold for Decision Tree
-            } else if (data.ai_mode === 'bayes') {
-                ctx.fillStyle = '#fb8500'; // Orange for Naive Bayes
-            } else {
-                ctx.fillStyle = '#3b82f6'; // Blue for DQN
-            }
+            ctx.fillStyle = headColor;
         } else {
-            ctx.fillStyle = isManual ? '#f87171' : '#60a5fa';
+            ctx.fillStyle = bodyColor;
         }
         
         ctx.beginPath();
@@ -124,13 +98,13 @@ function drawGame(data) {
         if (index === 0) {
             ctx.fillStyle = '#ffffff';
             let eyeX1, eyeY1, eyeX2, eyeY2;
-            if (data.direction === 'up') {
+            if (direction === 'up') {
                 eyeX1 = pt.x + 5; eyeY1 = pt.y + 5;
                 eyeX2 = pt.x + 15; eyeY2 = pt.y + 5;
-            } else if (data.direction === 'down') {
+            } else if (direction === 'down') {
                 eyeX1 = pt.x + 5; eyeY1 = pt.y + 15;
                 eyeX2 = pt.x + 15; eyeY2 = pt.y + 15;
-            } else if (data.direction === 'left') {
+            } else if (direction === 'left') {
                 eyeX1 = pt.x + 5; eyeY1 = pt.y + 5;
                 eyeX2 = pt.x + 5; eyeY2 = pt.y + 15;
             } else {
@@ -150,89 +124,188 @@ function drawGame(data) {
             ctx.fill();
         }
     });
+}
 
-    // Draw Diagnostics (only if direction and Q-values exist)
-    if (snake.length > 0 && data.direction && data.dqn_q_values) {
-        const head = snake[0];
-        let dx = 0, dy = 0;
-        if (data.direction === 'up') { dx = 0; dy = -1; }
-        else if (data.direction === 'down') { dx = 0; dy = 1; }
-        else if (data.direction === 'left') { dx = -1; dy = 0; }
-        else if (data.direction === 'right') { dx = 1; dy = 0; }
-
-        // Compute adjacent positions
-        const sx = head.x + dx * BLOCK_SIZE;
-        const sy = head.y + dy * BLOCK_SIZE;
-
-        const rx = -dy, ry = dx;
-        const rx_c = head.x + rx * BLOCK_SIZE;
-        const ry_c = head.y + ry * BLOCK_SIZE;
-
-        const lx = dy, ly = -dx;
-        const lx_c = head.x + lx * BLOCK_SIZE;
-        const ly_c = head.y + ly * BLOCK_SIZE;
-
-        const adjacents = [
-            { name: "ÎNAINTE", x: sx, y: sy, idx: 0, q: data.dqn_q_values[0], r: data.bayes_risks ? data.bayes_risks.straight : 0.0 },
-            { name: "DREAPTA", x: rx_c, y: ry_c, idx: 1, q: data.dqn_q_values[1], r: data.bayes_risks ? data.bayes_risks.right : 0.0 },
-            { name: "STÂNGA", x: lx_c, y: ly_c, idx: 2, q: data.dqn_q_values[2], r: data.bayes_risks ? data.bayes_risks.left : 0.0 }
-        ];
-
-        // Draw overlays on board
-        adjacents.forEach(adj => {
-            // Check if this adjacent cell is a collision (wall or body hit)
-            const isColl = isCollision(adj.x, adj.y, snake);
-            
-            if (adj.x < 0 || adj.x >= canvas.width || adj.y < 0 || adj.y >= canvas.height) return;
-            
-            const isTree = (data.tree_action === adj.idx);
-            const isBayes = (data.bayes_action === adj.idx);
-            const isChosen = (data.chosen_action === adj.idx);
-            
+function drawGame(data) {
+    // Clear board
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw food
+    const food = data.food;
+    if (food) {
+        ctx.fillStyle = '#ef4444';
+        ctx.fillRect(food.x, food.y, BLOCK_SIZE, BLOCK_SIZE);
+        // Glow effect on food
+        ctx.shadowColor = '#ef4444';
+        ctx.shadowBlur = 8;
+        ctx.fillRect(food.x + 2, food.y + 2, BLOCK_SIZE - 4, BLOCK_SIZE - 4);
+        ctx.shadowBlur = 0; // reset
+    }
+    
+    const modeSpan = document.getElementById("snakeHudActiveMode");
+    
+    if (data.multi_agent) {
+        // Draw DQN snake (Blue)
+        if (data.dqn_snake && data.dqn_snake.length > 0) {
+            drawIndividualSnake(data.dqn_snake, '#3b82f6', '#60a5fa', data.direction_dqn);
+        }
+        // Draw Tree snake (Yellow/Orange)
+        if (data.tree_snake && data.tree_snake.length > 0) {
+            drawIndividualSnake(data.tree_snake, '#ffb703', '#fb8500', data.direction_tree);
+        }
+        
+        // Update stats labels
+        const scoreLabel = document.getElementById('score');
+        const recordLabel = document.getElementById('record');
+        if (scoreLabel && recordLabel) {
+            scoreLabel.innerText = data.dqn_score;
+            recordLabel.innerText = data.tree_score;
+            if (scoreLabel.previousSibling) scoreLabel.previousSibling.textContent = "DQN: ";
+            if (recordLabel.previousSibling) recordLabel.previousSibling.textContent = "Tree: ";
+        }
+        
+        if (modeSpan) {
+            modeSpan.innerText = "DQN vs DECISION TREE";
+            modeSpan.style.color = "#a855f7";
+        }
+    } else {
+        const snake = data.snake || [];
+        // Draw A* Path if active
+        if (data.astar_path && data.astar_path.length > 0 && snake.length > 0) {
             ctx.save();
-            
-            if (isColl) {
-                // If it is a collision block, draw danger overlay with a red cross (no choices here!)
-                ctx.fillStyle = 'rgba(239, 68, 68, 0.2)';
-                ctx.fillRect(adj.x, adj.y, BLOCK_SIZE, BLOCK_SIZE);
-                ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
-                ctx.strokeRect(adj.x, adj.y, BLOCK_SIZE, BLOCK_SIZE);
-                
-                ctx.font = 'bold 9px sans-serif';
-                ctx.fillStyle = '#ef4444';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText("✕", adj.x + BLOCK_SIZE/2, adj.y + BLOCK_SIZE/2);
-            } else {
-                if (isChosen) {
-                    // Highlight action chosen by active mode
-                    ctx.fillStyle = 'rgba(59, 130, 246, 0.12)';
-                    ctx.fillRect(adj.x, adj.y, BLOCK_SIZE, BLOCK_SIZE);
-                    ctx.strokeStyle = isManual ? '#ef4444' : (data.ai_mode === 'tree' ? '#ffb703' : (data.ai_mode === 'bayes' ? '#fb8500' : '#3b82f6'));
-                    ctx.lineWidth = 2.5;
-                    ctx.strokeRect(adj.x + 1, adj.y + 1, BLOCK_SIZE - 2, BLOCK_SIZE - 2);
-                } else {
-                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
-                    ctx.strokeRect(adj.x, adj.y, BLOCK_SIZE, BLOCK_SIZE);
-                }
-                
-                // Draw model votes (colored dots inside the grid cells)
-                let dotX = adj.x + 5;
-                if (isTree) {
-                    ctx.fillStyle = '#ffb703'; // Tree - Gold dot
-                    ctx.beginPath(); ctx.arc(dotX, adj.y + 15, 2.5, 0, Math.PI * 2); ctx.fill();
-                    dotX += 6;
-                }
-                if (isBayes) {
-                    ctx.fillStyle = '#fb8500'; // Bayes - Orange dot
-                    ctx.beginPath(); ctx.arc(dotX, adj.y + 15, 2.5, 0, Math.PI * 2); ctx.fill();
-                }
-            }
+            ctx.strokeStyle = 'rgba(16, 185, 129, 0.6)';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([4, 4]);
+            ctx.shadowColor = '#10b981';
+            ctx.shadowBlur = 4;
+            ctx.beginPath();
+            ctx.moveTo(snake[0].x + BLOCK_SIZE/2, snake[0].y + BLOCK_SIZE/2);
+            data.astar_path.forEach(pt => {
+                ctx.lineTo(pt.x + BLOCK_SIZE/2, pt.y + BLOCK_SIZE/2);
+            });
+            ctx.stroke();
             ctx.restore();
-        });
+        }
+        
+        // Draw single snake
+        let headColor = '#3b82f6';
+        let bodyColor = '#60a5fa';
+        if (isManual) {
+            headColor = '#ef4444';
+            bodyColor = '#f87171';
+        } else if (data.ai_mode === 'tree') {
+            headColor = '#ffb703';
+            bodyColor = '#ffc300';
+        } else if (data.ai_mode === 'bayes') {
+            headColor = '#fb8500';
+            bodyColor = '#ffb703';
+        } else if (data.ai_mode === 'astar') {
+            headColor = '#10b981';
+            bodyColor = '#34d399';
+        }
+        
+        drawIndividualSnake(snake, headColor, bodyColor, data.direction);
 
-        // 2. Render HUD Panel (now in a clean HTML container in the sidebar to the right of the board)
-        updateHTMLHUD(data, adjacents, isManual);
+        // Update stats labels back to normal
+        const scoreLabel = document.getElementById('score');
+        const recordLabel = document.getElementById('record');
+        if (scoreLabel && recordLabel) {
+            scoreLabel.innerText = data.score;
+            recordLabel.innerText = data.record;
+            if (scoreLabel.previousSibling) scoreLabel.previousSibling.textContent = "Scor: ";
+            if (recordLabel.previousSibling) recordLabel.previousSibling.textContent = "Record: ";
+        }
+        
+        if (modeSpan) {
+            let modeName = "DQN (REȚEA)";
+            let modeColor = "#3b82f6";
+            if (isManual) { modeName = "MANUAL"; modeColor = "#ef4444"; }
+            else if (data.ai_mode === 'tree') { modeName = "DECISION TREE"; modeColor = "#ffb703"; }
+            else if (data.ai_mode === 'bayes') { modeName = "NAIVE BAYES"; modeColor = "#fb8500"; }
+            else if (data.ai_mode === 'astar') { modeName = "A* PATHFINDING"; modeColor = "#10b981"; }
+            modeSpan.innerText = modeName;
+            modeSpan.style.color = modeColor;
+        }
+        
+        // Draw Diagnostics (only if direction and Q-values exist)
+        if (snake.length > 0 && data.direction && data.dqn_q_values) {
+            const head = snake[0];
+            let dx = 0, dy = 0;
+            if (data.direction === 'up') { dx = 0; dy = -1; }
+            else if (data.direction === 'down') { dx = 0; dy = 1; }
+            else if (data.direction === 'left') { dx = -1; dy = 0; }
+            else if (data.direction === 'right') { dx = 1; dy = 0; }
+
+            // Compute adjacent positions
+            const sx = head.x + dx * BLOCK_SIZE;
+            const sy = head.y + dy * BLOCK_SIZE;
+
+            const rx = -dy, ry = dx;
+            const rx_c = head.x + rx * BLOCK_SIZE;
+            const ry_c = head.y + ry * BLOCK_SIZE;
+
+            const lx = dy, ly = -dx;
+            const lx_c = head.x + lx * BLOCK_SIZE;
+            const ly_c = head.y + ly * BLOCK_SIZE;
+
+            const adjacents = [
+                { name: "ÎNAINTE", x: sx, y: sy, idx: 0, q: data.dqn_q_values[0], r: data.bayes_risks ? data.bayes_risks.straight : 0.0 },
+                { name: "DREAPTA", x: rx_c, y: ry_c, idx: 1, q: data.dqn_q_values[1], r: data.bayes_risks ? data.bayes_risks.right : 0.0 },
+                { name: "STÂNGA", x: lx_c, y: ly_c, idx: 2, q: data.dqn_q_values[2], r: data.bayes_risks ? data.bayes_risks.left : 0.0 }
+            ];
+
+            // Draw overlays on board
+            adjacents.forEach(adj => {
+                const isColl = isCollision(adj.x, adj.y, snake);
+                
+                if (adj.x < 0 || adj.x >= canvas.width || adj.y < 0 || adj.y >= canvas.height) return;
+                
+                const isTree = (data.tree_action === adj.idx);
+                const isBayes = (data.bayes_action === adj.idx);
+                const isChosen = (data.chosen_action === adj.idx);
+                
+                ctx.save();
+                
+                if (isColl) {
+                    ctx.fillStyle = 'rgba(239, 68, 68, 0.2)';
+                    ctx.fillRect(adj.x, adj.y, BLOCK_SIZE, BLOCK_SIZE);
+                    ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
+                    ctx.strokeRect(adj.x, adj.y, BLOCK_SIZE, BLOCK_SIZE);
+                    
+                    ctx.font = 'bold 9px sans-serif';
+                    ctx.fillStyle = '#ef4444';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText("✕", adj.x + BLOCK_SIZE/2, adj.y + BLOCK_SIZE/2);
+                } else {
+                    if (isChosen) {
+                        ctx.fillStyle = 'rgba(59, 130, 246, 0.12)';
+                        ctx.fillRect(adj.x, adj.y, BLOCK_SIZE, BLOCK_SIZE);
+                        ctx.strokeStyle = isManual ? '#ef4444' : (data.ai_mode === 'tree' ? '#ffb703' : (data.ai_mode === 'bayes' ? '#fb8500' : (data.ai_mode === 'astar' ? '#10b981' : '#3b82f6')));
+                        ctx.lineWidth = 2.5;
+                        ctx.strokeRect(adj.x + 1, adj.y + 1, BLOCK_SIZE - 2, BLOCK_SIZE - 2);
+                    } else {
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+                        ctx.strokeRect(adj.x, adj.y, BLOCK_SIZE, BLOCK_SIZE);
+                    }
+                    
+                    let dotX = adj.x + 5;
+                    if (isTree) {
+                        ctx.fillStyle = '#ffb703';
+                        ctx.beginPath(); ctx.arc(dotX, adj.y + 15, 2.5, 0, Math.PI * 2); ctx.fill();
+                        dotX += 6;
+                    }
+                    if (isBayes) {
+                        ctx.fillStyle = '#fb8500';
+                        ctx.beginPath(); ctx.arc(dotX, adj.y + 15, 2.5, 0, Math.PI * 2); ctx.fill();
+                    }
+                }
+                ctx.restore();
+            });
+
+            updateHTMLHUD(data, adjacents, isManual);
+        }
     }
 }
 
@@ -336,6 +409,8 @@ function setSnakeAIMode(mode) {
     document.getElementById('btnSnakeDQN').classList.toggle('active', mode === 'dqn');
     document.getElementById('btnSnakeTree').classList.toggle('active', mode === 'tree');
     document.getElementById('btnSnakeBayes').classList.toggle('active', mode === 'bayes');
+    document.getElementById('btnSnakeAStar').classList.toggle('active', mode === 'astar');
+    document.getElementById('btnSnakeVS').classList.toggle('active', mode === 'vs_tree');
     
     const desc = document.getElementById('snakeAiModeDesc');
     if (mode === 'dqn') {
@@ -344,6 +419,10 @@ function setSnakeAIMode(mode) {
         desc.textContent = 'Decision Tree ia decizii pe baza unui arbore logic extras din experiențele anterioare ale DQN-ului.';
     } else if (mode === 'bayes') {
         desc.textContent = 'Naive Bayes folosește probabilități condiționate pentru a măsura și evita riscul de coliziune pe fiecare cale.';
+    } else if (mode === 'astar') {
+        desc.textContent = 'A* Search este un algoritm clasic de pathfinding care calculează cel mai scurt drum de la capul șarpelui la mâncare, evitând obstacolele.';
+    } else if (mode === 'vs_tree') {
+        desc.textContent = 'Modul Multi-Agent simulează o competiție intensă între modelul DQN (albastru) și Decision Tree (galben) pe aceeași tablă.';
     }
     
     if (ws && ws.readyState === WebSocket.OPEN) {
@@ -385,6 +464,8 @@ function updateHTMLHUD(data, adjacents, isManual) {
     if (isManual) { modeName = "MANUAL"; modeColor = "#ef4444"; }
     else if (data.ai_mode === 'tree') { modeName = "DECISION TREE"; modeColor = "#ffb703"; }
     else if (data.ai_mode === 'bayes') { modeName = "NAIVE BAYES"; modeColor = "#fb8500"; }
+    else if (data.ai_mode === 'astar') { modeName = "A* PATHFINDING"; modeColor = "#10b981"; }
+    else if (data.ai_mode === 'vs_tree') { modeName = "DQN vs TREE"; modeColor = "#a855f7"; }
     
     const modeSpan = document.getElementById("snakeHudActiveMode");
     if (modeSpan) {
