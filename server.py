@@ -105,7 +105,8 @@ manager = ConnectionManager()
 server_state = {
     "is_manual": False,
     "manual_key": None,
-    "ai_mode": "dqn"  # "dqn" | "tree" | "bayes"
+    "ai_mode": "dqn",  # "dqn" | "tree" | "bayes"
+    "reset_requested": False
 }
 
 # --- Snake AI Models & Data Buffers ---
@@ -318,6 +319,11 @@ async def training_loop():
             else:
                 game.reset()
             prev_ai_mode = ai_mode
+            
+        if server_state.get("reset_requested", False):
+            game.reset()
+            multi_game.reset()
+            server_state["reset_requested"] = False
         
         # Determine current state representation
         if ai_mode == "vs_tree":
@@ -1296,6 +1302,8 @@ async def websocket_endpoint(websocket: WebSocket):
                     server_state["ai_mode"] = data.get("ai_mode", "dqn")
                 elif data.get("type") == "action":
                     server_state["manual_key"] = data.get("key")
+                elif data.get("type") == "reset":
+                    server_state["reset_requested"] = True
             except:
                 pass
     except WebSocketDisconnect:

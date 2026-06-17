@@ -207,9 +207,13 @@ function makeAIMove() {
     .then(data => {
         const moveKey = data.move;
         if (moveKey) {
-            chessGame.move(moveKey, { sloppy: true });
+            const move = chessGame.move(moveKey, { sloppy: true });
             chessBoard.position(chessGame.fen());
             lastAIMove = moveKey;
+            if (typeof addTerminalLog === 'function') {
+                const moveSan = move ? move.san : moveKey;
+                addTerminalLog(`[CHESS] AI (${currentAIMode.toUpperCase()}) move: ${moveSan}`);
+            }
             // Auto-analyze after every AI move
             analyzePosition(moveKey);
         }
@@ -255,6 +259,9 @@ function onDrop(source, target) {
     removeHighlights();
     const move = chessGame.move({ from: source, to: target, promotion: 'q' });
     if (move === null) return 'snapback';
+    if (typeof addTerminalLog === 'function') {
+        addTerminalLog(`[CHESS] Player move: ${move.san} (${source}->${target})`);
+    }
     lastAIMove = null;
     updateChessStatus(false);
     analyzePosition(null);

@@ -544,6 +544,9 @@ function merge() {
         }
 
         const count = clearedRows.length;
+        if (typeof addTerminalLog === 'function') {
+            addTerminalLog(`[TETRIS] Cleared ${count} lines! Score: ${score}`);
+        }
         linesCleared += count;
         level = Math.floor(linesCleared / 10) + 1;
         combo++;
@@ -667,7 +670,9 @@ async function handleMergeAndNext() {
 
     // Game Over Check
     if (collide(currentPos.x, currentPos.y, currentPiece.shape)) {
-        // Send logs to trigger online learning
+        if (typeof addTerminalLog === 'function') {
+            addTerminalLog(`[TETRIS] Game Over! Final Score: ${score}`);
+        }
         sendGameOver(score, tetrisHistory);
         tetrisHistory = [];
 

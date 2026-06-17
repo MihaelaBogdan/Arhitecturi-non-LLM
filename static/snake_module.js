@@ -145,6 +145,15 @@ function drawGame(data) {
     
     const modeSpan = document.getElementById("snakeHudActiveMode");
     
+    // Update virtual joystick direction automatically when AI moves
+    const joystick = document.getElementById('arcadeJoystick');
+    if (joystick) {
+        const currentDir = data.multi_agent ? data.direction_dqn : data.direction;
+        if (currentDir) {
+            joystick.className = `joystick-shaft tilt-${currentDir}`;
+        }
+    }
+    
     if (data.multi_agent) {
         // Draw DQN snake (Blue)
         if (data.dqn_snake && data.dqn_snake.length > 0) {
@@ -311,6 +320,8 @@ function drawGame(data) {
 
 // WebSocket connection
 let ws;
+let prevScore = 0;
+let prevGames = 0;
 function connectWebSocket() {
     ws = new WebSocket(`ws://${window.location.host}/ws`);
     
@@ -322,9 +333,28 @@ function connectWebSocket() {
     ws.onmessage = function(event) {
         const data = JSON.parse(event.data);
         
-        document.getElementById('score').innerText = data.score;
-        document.getElementById('record').innerText = data.record;
-        document.getElementById('games').innerText = data.games;
+        const score = data.multi_agent ? Math.max(data.dqn_score || 0, data.tree_score || 0) : (data.score || 0);
+        const games = data.games || 0;
+        
+        if (score !== prevScore && score > prevScore) {
+            if (typeof addTerminalLog === 'function') {
+                addTerminalLog(`[SNAKE] Target Eaten! Score: ${score}`);
+            }
+            prevScore = score;
+        }
+        if (games !== prevGames) {
+            if (typeof addTerminalLog === 'function') {
+                addTerminalLog(`[SNAKE] Episode ${games} complete. Resettled.`);
+            }
+            prevGames = games;
+            prevScore = 0;
+        }
+        
+        if (!data.multi_agent) {
+            document.getElementById('score').innerText = data.score;
+            document.getElementById('record').innerText = data.record;
+            document.getElementById('games').innerText = data.games;
+        }
         
         drawGame(data);
         updateChart(data.scores || data.plot_scores, data.mean_scores || data.plot_mean_scores);
