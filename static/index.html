@@ -51,8 +51,17 @@
                             <div id="chessStatus" class="status-badge">Rândul tău (Alb)</div>
                         </div>
 
-                        <!-- AI Mode Toggle -->
+                        <!-- Game Mode Selector -->
                         <div class="info-card">
+                            <h3>Mod de Joc</h3>
+                            <div class="ai-mode-toggle" style="margin-top: 8px;">
+                                <button id="btnPlayerVSai" class="mode-btn active" onclick="setChessGameMode('pvai')">🎮 Om vs AI</button>
+                                <button id="btnAIvsAI" class="mode-btn" onclick="setChessGameMode('aivsai')">🤖 AI vs AI</button>
+                            </div>
+                        </div>
+
+                        <!-- AI Mode Toggle (Player vs AI) -->
+                        <div class="info-card" id="chessPlayerAiModeCard">
                             <h3>Mod AI</h3>
                             <div class="ai-mode-toggle">
                                 <button id="btnMinimax" class="mode-btn active" onclick="setAIMode('minimax')">🌲 Minimax</button>
@@ -61,6 +70,27 @@
                             <p id="aiModeDesc" style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">
                                 Minimax explorează pozițiile viitoare sistematic cu Alpha-Beta Pruning.
                             </p>
+                        </div>
+
+                        <!-- AI vs AI Setup Panel (Only visible in AI vs AI mode) -->
+                        <div class="info-card" id="chessAiConfigCard" style="display: none;">
+                            <h3>Configurare Modele AI</h3>
+                            <div style="display:flex; flex-direction:column; gap:10px; margin-top: 8px;">
+                                <div>
+                                    <span style="font-size:0.85rem; color:var(--text-muted); display:block; margin-bottom:4px;">Alb AI (White):</span>
+                                    <div class="ai-mode-toggle">
+                                        <button id="btnWhiteMinimax" class="mode-btn active" style="padding:6px 10px;" onclick="setWhiteAI('minimax')">🌲 Minimax</button>
+                                        <button id="btnWhiteCNN" class="mode-btn" style="padding:6px 10px;" onclick="setWhiteAI('cnn')">🧠 CNN</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <span style="font-size:0.85rem; color:var(--text-muted); display:block; margin-bottom:4px;">Negru AI (Black):</span>
+                                    <div class="ai-mode-toggle">
+                                        <button id="btnBlackMinimax" class="mode-btn active" style="padding:6px 10px;" onclick="setBlackAI('minimax')">🌲 Minimax</button>
+                                        <button id="btnBlackCNN" class="mode-btn" style="padding:6px 10px;" onclick="setBlackAI('cnn')">🧠 CNN</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- CNN Architecture visualizer -->
@@ -139,9 +169,10 @@
 
                         <!-- Buttons -->
                         <div style="display:flex; flex-direction:column; gap:8px;">
-                            <button class="btn secondary-btn" onclick="requestHint()">💡 Sugerează-mi o mutare</button>
-                            <button class="btn secondary-btn" onclick="analyzePosition()">🔍 Analizează Poziția</button>
-                            <button class="btn primary-btn" onclick="resetChessGame()">🔄 Joc Nou</button>
+                            <button id="btnStartAIvsAI" class="btn primary-btn" style="display:none; background: var(--accent); margin-top:0;" onclick="toggleAIvsAIAutoPlay()">▶ Pornire AI contra AI</button>
+                            <button id="btnChessHint" class="btn secondary-btn" style="margin-top:0;" onclick="requestHint()">💡 Sugerează-mi o mutare</button>
+                            <button class="btn secondary-btn" style="margin-top:0;" onclick="analyzePosition()">🔍 Analizează Poziția</button>
+                            <button class="btn primary-btn" style="margin-top:0;" onclick="resetChessGame()">🔄 Joc Nou</button>
                         </div>
 
                     </div>
@@ -487,7 +518,7 @@
 
     <!-- Scripts -->
     <script src="/static/app.js?v=9"></script>
-    <script src="/static/chess_module.js?v=5"></script>
+    <script src="/static/chess_module.js?v=6"></script>
     <script src="/static/snake_module.js?v=18"></script>
     <script src="/static/tetris_module.js?v=19"></script>
 

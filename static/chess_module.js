@@ -1,7 +1,12 @@
 // --- Chess Module: Minimax + CNN + Educational Features ---
 let chessBoard = null;
 const chessGame = new Chess();
-let currentAIMode = 'minimax';  // 'minimax' | 'cnn'
+let currentAIMode = 'minimax';  // 'minimax' | 'cnn' (Player vs AI)
+let chessGameMode = 'pvai';     // 'pvai' | 'aivsai'
+let whiteAIMode = 'minimax';    // 'minimax' | 'cnn'
+let blackAIMode = 'minimax';    // 'minimax' | 'cnn'
+let isAIvsAIPlaying = false;
+let aivsaiTimeout = null;
 let lastAIMove = null;
 
 let cnnAnimationInterval = null;
@@ -75,7 +80,7 @@ function updateChessStatus(isAIThinking) {
     if (!statusEl) return;
 
     if (chessGame.in_checkmate()) {
-        statusEl.innerText = `Șah Mat! A câștigat ${chessGame.turn() === 'w' ? 'Negrul (AI)' : 'Albul (Tu)'}.`;
+        statusEl.innerText = `Șah Mat! A câștigat ${chessGame.turn() === 'w' ? 'Negrul (AI)' : (chessGameMode === 'aivsai' ? 'Albul (AI)' : 'Albul (Tu)')}.`;
         statusEl.style.color = 'var(--danger)';
         statusEl.style.background = 'rgba(239,68,68,0.2)';
     } else if (chessGame.in_draw() || chessGame.in_stalemate() || chessGame.in_threefold_repetition()) {
@@ -84,11 +89,17 @@ function updateChessStatus(isAIThinking) {
         statusEl.style.background = '';
     } else {
         if (isAIThinking) {
-            statusEl.innerText = currentAIMode === 'cnn' ? '🧠 CNN calculează...' : '🌲 Minimax calculează...';
+            const turn = chessGame.turn(); // 'w' or 'b'
+            const model = (chessGameMode === 'aivsai') ? (turn === 'w' ? whiteAIMode : blackAIMode) : currentAIMode;
+            statusEl.innerText = model === 'cnn' ? '🧠 CNN calculează...' : '🌲 Minimax calculează...';
             statusEl.style.color = 'var(--primary)';
             statusEl.style.background = '';
         } else {
-            statusEl.innerText = 'Rândul tău (Alb)';
+            if (chessGameMode === 'aivsai') {
+                statusEl.innerText = chessGame.turn() === 'w' ? 'Rândul Albului (AI)' : 'Rândul Negrului (AI)';
+            } else {
+                statusEl.innerText = 'Rândul tău (Alb)';
+            }
             if (chessGame.in_check()) {
                 statusEl.innerText += ' — ȘAH!';
                 statusEl.style.color = 'var(--danger)';
@@ -221,6 +232,7 @@ function removeHighlights() {
 
 function onDragStart(source, piece) {
     if (chessGame.game_over()) return false;
+    if (chessGameMode === 'aivsai') return false; // block drag in AI vs AI mode
     if (piece.search(/^b/) !== -1) return false;
 }
 
@@ -271,6 +283,9 @@ $(document).ready(function () {
 });
 
 function resetChessGame() {
+    if (isAIvsAIPlaying) {
+        toggleAIvsAIAutoPlay();
+    }
     chessGame.reset();
     chessBoard.start();
     lastAIMove = null;
@@ -282,4 +297,162 @@ function resetChessGame() {
     document.getElementById('blackCaptured').textContent = '—';
     updateEvalBar(0);
     stopCNNAnimation();
+}
+
+// ---- AI vs AI controls ----
+function setChessGameMode(mode) {
+    chessGameMode = mode;
+    
+    if (isAIvsAIPlaying) {
+        toggleAIvsAIAutoPlay();
+    }
+    
+    document.getElementById('btnPlayerVSai').classList.toggle('active', mode === 'pvai');
+    document.getElementById('btnAIvsAI').classList.toggle('active', mode === 'aivsai');
+    
+    const playerAiCard = document.getElementById('chessPlayerAiModeCard');
+    const aiConfigCard = document.getElementById('chessAiConfigCard');
+    const hintBtn = document.getElementById('btnChessHint');
+    const startBtn = document.getElementById('btnStartAIvsAI');
+    const visualizer = document.getElementById('cnnVisualizer');
+    
+    if (mode === 'pvai') {
+        if (playerAiCard) playerAiCard.style.display = 'block';
+        if (aiConfigCard) aiConfigCard.style.display = 'none';
+        if (hintBtn) hintBtn.style.display = 'block';
+        if (startBtn) startBtn.style.display = 'none';
+        
+        if (currentAIMode === 'cnn') {
+            if (visualizer) $(visualizer).slideDown(300);
+        } else {
+            if (visualizer) $(visualizer).slideUp(300);
+        }
+    } else {
+        if (playerAiCard) playerAiCard.style.display = 'none';
+        if (aiConfigCard) aiConfigCard.style.display = 'block';
+        if (hintBtn) hintBtn.style.display = 'none';
+        if (startBtn) startBtn.style.display = 'block';
+        
+        if (whiteAIMode === 'cnn' || blackAIMode === 'cnn') {
+            if (visualizer) $(visualizer).slideDown(300);
+        } else {
+            if (visualizer) $(visualizer).slideUp(300);
+        }
+    }
+    updateChessStatus(false);
+}
+
+function setWhiteAI(mode) {
+    whiteAIMode = mode;
+    document.getElementById('btnWhiteMinimax').classList.toggle('active', mode === 'minimax');
+    document.getElementById('btnWhiteCNN').classList.toggle('active', mode === 'cnn');
+    
+    const visualizer = document.getElementById('cnnVisualizer');
+    if (whiteAIMode === 'cnn' || blackAIMode === 'cnn') {
+        if (visualizer) $(visualizer).slideDown(300);
+    } else {
+        if (visualizer) $(visualizer).slideUp(300);
+    }
+}
+
+function setBlackAI(mode) {
+    blackAIMode = mode;
+    document.getElementById('btnBlackMinimax').classList.toggle('active', mode === 'minimax');
+    document.getElementById('btnBlackCNN').classList.toggle('active', mode === 'cnn');
+    
+    const visualizer = document.getElementById('cnnVisualizer');
+    if (whiteAIMode === 'cnn' || blackAIMode === 'cnn') {
+        if (visualizer) $(visualizer).slideDown(300);
+    } else {
+        if (visualizer) $(visualizer).slideUp(300);
+    }
+}
+
+function toggleAIvsAIAutoPlay() {
+    isAIvsAIPlaying = !isAIvsAIPlaying;
+    updateAIvsAIButtonState();
+    
+    if (isAIvsAIPlaying) {
+        if (chessGame.game_over()) {
+            resetChessGame();
+            isAIvsAIPlaying = true;
+            updateAIvsAIButtonState();
+        }
+        stepAIvsAI();
+    } else {
+        if (aivsaiTimeout) {
+            clearTimeout(aivsaiTimeout);
+            aivsaiTimeout = null;
+        }
+        updateChessStatus(false);
+        stopCNNAnimation();
+    }
+}
+
+function updateAIvsAIButtonState() {
+    const btn = document.getElementById('btnStartAIvsAI');
+    if (!btn) return;
+    if (isAIvsAIPlaying) {
+        btn.innerHTML = '⏸ Oprire AI contra AI';
+        btn.style.backgroundColor = 'var(--danger)';
+    } else {
+        btn.innerHTML = '▶ Pornire AI contra AI';
+        btn.style.backgroundColor = 'var(--accent)';
+    }
+}
+
+function stepAIvsAI() {
+    if (!isAIvsAIPlaying || chessGame.game_over()) {
+        isAIvsAIPlaying = false;
+        updateAIvsAIButtonState();
+        updateChessStatus(false);
+        return;
+    }
+
+    const turn = chessGame.turn(); // 'w' or 'b'
+    const model = (turn === 'w') ? whiteAIMode : blackAIMode;
+    
+    updateChessStatus(true);
+    if (model === 'cnn') {
+        startCNNAnimation();
+    } else {
+        stopCNNAnimation();
+    }
+
+    const depth = parseInt(document.getElementById('chessDifficulty').value) || 3;
+    const endpoint = model === 'cnn' ? '/api/chess/cnn-move' : '/api/chess/move';
+
+    fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fen: chessGame.fen(), depth: model === 'cnn' ? Math.min(depth, 2) : depth })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (!isAIvsAIPlaying) return;
+
+        const moveKey = data.move;
+        if (moveKey) {
+            chessGame.move(moveKey, { sloppy: true });
+            chessBoard.position(chessGame.fen());
+            lastAIMove = moveKey;
+            analyzePosition(moveKey);
+        }
+        
+        updateChessStatus(false);
+        stopCNNAnimation();
+
+        if (!chessGame.game_over() && isAIvsAIPlaying) {
+            aivsaiTimeout = window.setTimeout(stepAIvsAI, 1000);
+        } else {
+            isAIvsAIPlaying = false;
+            updateAIvsAIButtonState();
+        }
+    })
+    .catch(err => {
+        console.error("AI vs AI move error:", err);
+        isAIvsAIPlaying = false;
+        updateAIvsAIButtonState();
+        stopCNNAnimation();
+    });
 }
