@@ -68,13 +68,17 @@ class SmartAnalyzeRequest(BaseModel):
 async def post_chess_move(req: ChessMoveRequest):
     board = chess.Board(req.fen)
     best_move = await asyncio.to_thread(get_best_move, board, req.depth)
-    return {"move": best_move}
+    from chess_cnn import get_cnn_saliency
+    saliency = await asyncio.to_thread(get_cnn_saliency, board)
+    return {"move": best_move, "saliency": saliency}
 
 @app.post("/api/chess/cnn-move")
 async def post_chess_cnn_move(req: ChessMoveRequest):
     board = chess.Board(req.fen)
     best_move = await asyncio.to_thread(get_best_move_cnn, board, min(req.depth, 2))
-    return {"move": best_move}
+    from chess_cnn import get_cnn_saliency
+    saliency = await asyncio.to_thread(get_cnn_saliency, board)
+    return {"move": best_move, "saliency": saliency}
 
 @app.post("/api/chess/analyze")
 async def post_chess_analyze(req: ChessAnalyzeRequest):
@@ -335,7 +339,7 @@ async def post_smart_analyze(req: SmartAnalyzeRequest):
             "material": material,
             "predictions": predictions,
             "opening": {
-                "name": opening_info.get("name", "Necunoscută"),
+                "name": opening_info.get("name_en", "Unknown"),
                 "eco": opening_info.get("eco", "?"),
                 "description": opening_info.get("description", ""),
                 "suggestions": opening_info.get("suggestions", [])[:3],
@@ -352,19 +356,19 @@ def _score_description(score: float) -> str:
     """Convert a score to a human-readable description."""
     s = score * 100
     if s > 200:
-        return "⬜ Albul câștigă decisiv"
+        return "White wins decisively"
     elif s > 100:
-        return "⬜ Avantaj mare pentru Alb"
+        return "Huge advantage for White"
     elif s > 30:
-        return "⬜ Slight advantage for White"
+        return "Slight advantage for White"
     elif s > -30:
-        return "= Poziție egală"
+        return "Equal position"
     elif s > -100:
-        return "⬛ Slight advantage for Black"
+        return "Slight advantage for Black"
     elif s > -200:
-        return "⬛ Avantaj mare pentru Negru"
+        return "Huge advantage for Black"
     else:
-        return "⬛ Negrul câștigă decisiv"
+        return "Black wins decisively"
 
 
 def _detect_tactics(board: chess.Board) -> list[str]:
@@ -372,7 +376,7 @@ def _detect_tactics(board: chess.Board) -> list[str]:
     tactics = []
     
     if board.is_check():
-        tactics.append("♚ King este în ȘAH!")
+        tactics.append("King is in CHECK!")
     
     # Check for possible forks, pins, etc.
     for move in board.legal_moves:
@@ -382,14 +386,14 @@ def _detect_tactics(board: chess.Board) -> list[str]:
             board.pop()
             piece = board.piece_at(move.from_square)
             sq = chess.square_name(move.to_square).upper()
-            tactics.append(f"💀 MAT posibil: {sq}!")
+            tactics.append(f"Possible MATE: {sq}!")
             continue
         
         if board.is_check():
             # Check if this also attacks another piece (fork/discovered attack)
             board.pop()
             if board.is_capture(move):
-                tactics.append(f"⚡ Șah cu captură posibil!")
+                tactics.append(f"Check with capture is possible!")
                 continue
         
         board.pop()
@@ -406,10 +410,10 @@ def _detect_tactics(board: chess.Board) -> list[str]:
                         chess.QUEEN: "Queen", chess.KING: "King"
                     }.get(piece.piece_type, "Piece")
                     sq_name = chess.square_name(sq).upper()
-                    tactics.append(f"🎯 Undefended {piece_name} on {sq_name}!")
+                    tactics.append(f"Undefended {piece_name} on {sq_name}!")
     
     if not tactics:
-        tactics.append("🔍 No immediate tactics detected")
+        tactics.append("No immediate tactics detected")
     
     return tactics[:5]
 
@@ -486,17 +490,17 @@ def explain_tree_decision(model, x):
     
     action_names = ["FORWARD", "RIGHT", "LEFT"]
     feature_names = [
-        "Pericol Forward",
-        "Pericol Right",
-        "Pericol Left",
-        "Direcție Left",
-        "Direcție Right",
-        "Direcție Sus",
-        "Direcție Jos",
-        "Mâncare Left",
-        "Mâncare Right",
-        "Mâncare Sus",
-        "Mâncare Jos"
+        "Danger Forward",
+        "Danger Right",
+        "Danger Left",
+        "Direction Left",
+        "Direction Right",
+        "Direction Up",
+        "Direction Down",
+        "Food Left",
+        "Food Right",
+        "Food Up",
+        "Food Down"
     ]
     
     while tree_.children_left[node] != -1:
@@ -505,7 +509,7 @@ def explain_tree_decision(model, x):
         thresh = tree_.threshold[node]
         
         if val <= thresh:
-            conditions.append(f"FĂRĂ {feature_names[feat]}")
+            conditions.append(f"NO {feature_names[feat]}")
             node = tree_.children_left[node]
         else:
             conditions.append(feature_names[feat])
@@ -515,7 +519,7 @@ def explain_tree_decision(model, x):
     action_idx = int(np.argmax(val_at_leaf))
     action_name = action_names[action_idx]
     
-    explanation = "Dacă " + " ȘI ".join(conditions) + " ➜ " + action_name
+    explanation = "If " + " AND ".join(conditions) + " ➜ " + action_name
     return explanation
 
 def pretrain_models_at_startup():
@@ -1169,12 +1173,12 @@ def calculate_tetris_features(board):
 
 def explain_tetris_tree_decision(model, x):
     if model is None:
-        return "Arborele se antrenează..."
+        return "Tree is training..."
     
     tree_ = model.tree_
     node = 0
     conditions = []
-    feature_names = ["Înălțime", "Linii Curățate", "Goluri", "Denivelare"]
+    feature_names = ["Height", "Cleared Lines", "Holes", "Bumpiness"]
     
     while tree_.children_left[node] != -1:
         feat = tree_.feature[node]
@@ -1189,7 +1193,7 @@ def explain_tetris_tree_decision(model, x):
             node = tree_.children_right[node]
             
     val_at_leaf = float(tree_.value[node][0][0])
-    explanation = "Dacă " + " ȘI ".join(conditions) + " ➜ Scor Estimator: " + f"{round(val_at_leaf, 2)}"
+    explanation = "If " + " AND ".join(conditions) + " ➜ Score Forecast: " + f"{round(val_at_leaf, 2)}"
     return explanation
 
 def pretrain_tetris_models():

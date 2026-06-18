@@ -97,7 +97,7 @@ function updateChessStatus(isAIThinking) {
         if (isAIThinking) {
             const turn = chessGame.turn(); // 'w' or 'b'
             const model = (chessGameMode === 'aivsai') ? (turn === 'w' ? whiteAIMode : blackAIMode) : currentAIMode;
-            statusEl.innerText = model === 'cnn' ? '🧠 CNN calculating...' : '🌲 Minimax calculating...';
+            statusEl.innerText = model === 'cnn' ? 'CNN calculează...' : 'Minimax calculează...';
             statusEl.style.color = 'var(--primary)';
             statusEl.style.background = '';
         } else {
@@ -178,20 +178,46 @@ function fetchOpeningDetails() {
     })
     .then(r => r.json())
     .then(data => {
-        if (data.success && data.detected) {
-            document.getElementById('openingName').textContent = `${data.eco} — ${data.name}`;
-            
+        if (data.success) {
             const detailsEl = document.getElementById('openingDetails');
             detailsEl.style.display = 'block';
             
-            document.getElementById('openingDescription').textContent = data.description || '';
-            document.getElementById('openingStrategy').textContent = data.strategy ? `📋 Strategie: ${data.strategy}` : '';
-            
-            const diffBadge = document.getElementById('openingDifficulty');
-            if (data.difficulty) {
-                diffBadge.textContent = data.difficulty;
-                diffBadge.className = `difficulty-badge diff-${data.difficulty}`;
-                diffBadge.style.display = 'inline-block';
+            if (data.detected) {
+                document.getElementById('openingName').textContent = `${data.eco} — ${data.name}`;
+                document.getElementById('openingDescription').textContent = data.description || '';
+                document.getElementById('openingStrategy').textContent = data.strategy ? `Strategy: ${data.strategy}` : '';
+                
+                const diffBadge = document.getElementById('openingDifficulty');
+                if (data.difficulty) {
+                    diffBadge.textContent = data.difficulty;
+                    diffBadge.className = `difficulty-badge diff-${data.difficulty}`;
+                    diffBadge.style.display = 'inline-block';
+                } else {
+                    diffBadge.style.display = 'none';
+                }
+            } else {
+                document.getElementById('openingName').textContent = 'Custom / Open Play';
+                document.getElementById('openingDescription').textContent = 'No standard opening matches this exact move order yet.';
+                document.getElementById('openingStrategy').textContent = 'Strategy: Keep developing pieces, control the center, and prepare castling.';
+                
+                const diffBadge = document.getElementById('openingDifficulty');
+                diffBadge.style.display = 'none';
+            }
+
+            // Render continuations/suggestions in the sidebar card
+            const suggPanel = document.getElementById('openingSuggestions');
+            const suggList = document.getElementById('openingSuggestionsList');
+            if (suggPanel && suggList) {
+                if (data.suggestions && data.suggestions.length > 0) {
+                    suggPanel.style.display = 'block';
+                    suggList.innerHTML = data.suggestions.map(s => `
+                        <div class="continuation-item" style="font-size:0.75rem; padding:4px 6px; cursor:pointer;" onclick="highlightPrediction('${s.next_move}')">
+                            <strong>${s.eco}</strong> ${s.name} <span class="cont-move" style="color:var(--accent);">→ ${s.next_move.toUpperCase()}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    suggPanel.style.display = 'none';
+                }
             }
         } else {
             document.getElementById('openingDetails').style.display = 'none';
@@ -207,7 +233,7 @@ function fetchOpeningDetails() {
 function requestHint() {
     const depth = parseInt(document.getElementById('chessDifficulty').value) || 2;
     const hintBtn = document.querySelector('button[onclick="requestHint()"]');
-    if (hintBtn) hintBtn.textContent = '⏳ Calculating...';
+    if (hintBtn) hintBtn.textContent = 'Calculating...';
 
     fetch('/api/chess/hint', {
         method: 'POST',
@@ -216,7 +242,7 @@ function requestHint() {
     })
     .then(r => r.json())
     .then(data => {
-        if (hintBtn) hintBtn.textContent = '💡 Suggest a Move';
+        if (hintBtn) hintBtn.textContent = 'Suggest a Move';
         if (data.hint) {
             const from = data.hint.substring(0, 2);
             const to   = data.hint.substring(2, 4);
@@ -224,12 +250,13 @@ function requestHint() {
             $('.square-' + from).addClass('highlight-hint-from');
             $('.square-' + to).addClass('highlight-hint-to');
             document.getElementById('moveExplanation').textContent =
-                `💡 Suggestion: move from ${from.toUpperCase()} to ${to.toUpperCase()}`;
+                `Suggestion: move from ${from.toUpperCase()} to ${to.toUpperCase()}`;
+            // Remove hint highlight after 3s
             setTimeout(removeHighlights, 3000);
         }
     })
     .catch(err => {
-        if (hintBtn) hintBtn.textContent = '💡 Suggest a Move';
+        if (hintBtn) hintBtn.textContent = 'Suggest a Move';
         console.error('Hint error:', err);
     });
 }
@@ -259,6 +286,12 @@ function makeAIMove() {
             chessBoard.position(chessGame.fen());
             lastAIMove = moveKey;
             moveHistory.push(moveKey);
+            
+            // Draw attention heatmap for the AI's move (Black AI)
+            if (data.saliency) {
+                drawSaliencyHeatmap(data.saliency, 'b');
+            }
+
             if (typeof addTerminalLog === 'function') {
                 const moveSan = move ? move.san : moveKey;
                 addTerminalLog(`[CHESS] AI (${currentAIMode.toUpperCase()}) move: ${moveSan}`);
@@ -270,7 +303,7 @@ function makeAIMove() {
     })
     .catch(err => {
         console.error(err);
-        document.getElementById('chessStatus').innerText = 'Eroare la AI.';
+        document.getElementById('chessStatus').innerText = 'AI Error.';
         stopCNNAnimation();
     });
 }
@@ -283,12 +316,17 @@ function removeHighlights() {
     $('#board .square-55d63').removeClass(
         'highlight-square highlight-source highlight-hint-from highlight-hint-to'
     );
+    $('#board .square-55d63').css('box-shadow', '');
+    $('#board .square-55d63').css('background-color', '');
 }
 
 function onDragStart(source, piece) {
     if (chessGame.game_over()) return false;
     if (chessGameMode === 'aivsai') return false; // block drag in AI vs AI mode
     if (piece.search(/^b/) !== -1) return false;
+    
+    // Clear heatmap highlights when player starts moving
+    removeHighlights();
 }
 
 function onMouseoverSquare(square, piece) {
@@ -331,7 +369,7 @@ function onSnapEnd() {
 function smartAnalyze() {
     const btn = document.querySelector('button[onclick="smartAnalyze()"]');
     if (btn) {
-        btn.textContent = '⏳ Analyzing...';
+        btn.textContent = 'Analyzing...';
         btn.disabled = true;
     }
 
@@ -348,7 +386,7 @@ function smartAnalyze() {
     .then(r => r.json())
     .then(data => {
         if (btn) {
-            btn.textContent = '🧠 Full AI Analysis';
+            btn.textContent = 'Full AI Analysis';
             btn.disabled = false;
         }
 
@@ -423,7 +461,7 @@ function smartAnalyze() {
     })
     .catch(err => {
         if (btn) {
-            btn.textContent = '🧠 Full AI Analysis';
+            btn.textContent = 'Full AI Analysis';
             btn.disabled = false;
         }
         console.error('Smart analyze error:', err);
@@ -460,7 +498,7 @@ function showOpeningLesson() {
         const lesson = data.lesson || {};
 
         card.style.display = 'block';
-        document.getElementById('lessonTitle').textContent = lesson.title || '📖 Lesson';
+        document.getElementById('lessonTitle').textContent = lesson.title || 'Lesson';
 
         let html = '';
         
@@ -468,20 +506,20 @@ function showOpeningLesson() {
             html += `<div class="lesson-name">${lesson.english_name}</div>`;
         }
         if (lesson.theory) {
-            html += `<div class="lesson-section"><strong>📝 Teorie:</strong> ${lesson.theory}</div>`;
+            html += `<div class="lesson-section"><strong>Theory:</strong> ${lesson.theory}</div>`;
         }
         if (lesson.strategy) {
-            html += `<div class="lesson-section"><strong>📋 Strategie:</strong> ${lesson.strategy}</div>`;
+            html += `<div class="lesson-section"><strong>Strategy:</strong> ${lesson.strategy}</div>`;
         }
         if (lesson.key_ideas && lesson.key_ideas.length > 0) {
-            html += `<div class="lesson-section"><strong>💡 Idei cheie:</strong><ul>`;
+            html += `<div class="lesson-section"><strong>Key ideas:</strong><ul>`;
             lesson.key_ideas.forEach(idea => {
                 html += `<li>${idea}</li>`;
             });
             html += `</ul></div>`;
         }
         if (lesson.common_mistakes && lesson.common_mistakes.length > 0) {
-            html += `<div class="lesson-section"><strong>⚠️ Common mistakes:</strong><ul>`;
+            html += `<div class="lesson-section"><strong>Common mistakes:</strong><ul>`;
             lesson.common_mistakes.forEach(mistake => {
                 html += `<li>${mistake}</li>`;
             });
@@ -493,7 +531,7 @@ function showOpeningLesson() {
 
         // Show continuations/suggestions
         if (data.suggestions && data.suggestions.length > 0) {
-            html += `<div class="lesson-section"><strong>🔀 Theoretical continuations:</strong><ul>`;
+            html += `<div class="lesson-section"><strong>Theoretical continuations:</strong><ul>`;
             data.suggestions.forEach(s => {
                 html += `<li class="continuation-item" onclick="highlightPrediction('${s.next_move}')">
                     <strong>${s.eco}</strong> ${s.name} 
@@ -558,7 +596,7 @@ function processUploadedImage(file) {
     zone.innerHTML = `
         <div class="upload-processing">
             <div class="spinner"></div>
-            <p>🧠 Analyzing image...</p>
+            <p>Analyzing image...</p>
         </div>
     `;
 
@@ -584,11 +622,11 @@ function processUploadedImage(file) {
                 // Update UI
                 zone.innerHTML = `
                     <div class="upload-success">
-                        <div class="success-icon">✅</div>
+                        <div class="success-icon">Ready</div>
                         <p>Position recognized!</p>
                         <p class="confidence-text">Confidence: ${data.confidence}%</p>
                         <p class="fen-text">${fenParts[0]}</p>
-                        <button class="btn secondary-btn btn-sm" onclick="resetUploadZone()">📷 Another image</button>
+                        <button class="btn secondary-btn btn-sm" onclick="resetUploadZone()">Another image</button>
                     </div>
                 `;
 
@@ -598,14 +636,14 @@ function processUploadedImage(file) {
                 moveHistory = [];
                 
                 document.getElementById('moveExplanation').textContent = 
-                    `📷 Position recognized from image (confidence: ${data.confidence}%)`;
+                    `Position recognized from image (confidence: ${data.confidence}%)`;
             } else {
                 zone.innerHTML = `
                     <div class="upload-error">
-                        <div class="error-icon">❌</div>
+                        <div class="error-icon">X</div>
                         <p>Could not recognize position</p>
                         <p class="error-text">${data.error || 'Unknown error'}</p>
-                        <button class="btn secondary-btn btn-sm" onclick="resetUploadZone()">🔄 Try again</button>
+                        <button class="btn secondary-btn btn-sm" onclick="resetUploadZone()">Try again</button>
                     </div>
                 `;
             }
@@ -614,9 +652,9 @@ function processUploadedImage(file) {
             console.error('Recognition error:', err);
             zone.innerHTML = `
                 <div class="upload-error">
-                    <div class="error-icon">❌</div>
+                    <div class="error-icon">X</div>
                     <p>Recognition error</p>
-                    <button class="btn secondary-btn btn-sm" onclick="resetUploadZone()">🔄 Try again</button>
+                    <button class="btn secondary-btn btn-sm" onclick="resetUploadZone()">Try again</button>
                 </div>
             `;
         });
@@ -627,7 +665,7 @@ function processUploadedImage(file) {
 function resetUploadZone() {
     const zone = document.getElementById('imageUploadZone');
     zone.innerHTML = `
-        <div class="upload-icon">📷</div>
+        <div class="upload-icon">[IMAGE]</div>
         <p>Drag an image here or <label for="imageFileInput" class="upload-link">choose a file</label></p>
         <p class="upload-hint">Screenshot from Chess.com, Lichess, or any chess board</p>
         <input type="file" id="imageFileInput" accept="image/*" style="display:none;">
@@ -701,6 +739,7 @@ function setChessGameMode(mode) {
     const aiConfigCard = document.getElementById('chessAiConfigCard');
     const hintBtn = document.getElementById('btnChessHint');
     const startBtn = document.getElementById('btnStartAIvsAI');
+    const stepBtn = document.getElementById('btnStepAIvsAI');
     const visualizer = document.getElementById('cnnVisualizer');
     
     if (mode === 'pvai') {
@@ -708,6 +747,7 @@ function setChessGameMode(mode) {
         if (aiConfigCard) aiConfigCard.style.display = 'none';
         if (hintBtn) hintBtn.style.display = 'block';
         if (startBtn) startBtn.style.display = 'none';
+        if (stepBtn) stepBtn.style.display = 'none';
         
         if (currentAIMode === 'cnn') {
             if (visualizer) $(visualizer).slideDown(300);
@@ -719,6 +759,7 @@ function setChessGameMode(mode) {
         if (aiConfigCard) aiConfigCard.style.display = 'block';
         if (hintBtn) hintBtn.style.display = 'none';
         if (startBtn) startBtn.style.display = 'block';
+        if (stepBtn) stepBtn.style.display = 'block';
         
         if (whiteAIMode === 'cnn' || blackAIMode === 'cnn') {
             if (visualizer) $(visualizer).slideDown(300);
@@ -780,19 +821,21 @@ function updateAIvsAIButtonState() {
     const btn = document.getElementById('btnStartAIvsAI');
     if (!btn) return;
     if (isAIvsAIPlaying) {
-        btn.innerHTML = '⏸ Oprire AI contra AI';
+        btn.innerHTML = 'Stop AI vs AI';
         btn.style.backgroundColor = 'var(--danger)';
     } else {
-        btn.innerHTML = '▶ Pornire AI contra AI';
+        btn.innerHTML = 'Start AI vs AI';
         btn.style.backgroundColor = 'var(--accent)';
     }
 }
 
-function stepAIvsAI() {
-    if (!isAIvsAIPlaying || chessGame.game_over()) {
-        isAIvsAIPlaying = false;
-        updateAIvsAIButtonState();
+function stepAIvsAI(isManualStep = false) {
+    if (chessGame.game_over()) {
         updateChessStatus(false);
+        return;
+    }
+
+    if (!isAIvsAIPlaying && !isManualStep) {
         return;
     }
 
@@ -816,24 +859,42 @@ function stepAIvsAI() {
     })
     .then(r => r.json())
     .then(data => {
-        if (!isAIvsAIPlaying) return;
+        if (!isAIvsAIPlaying && !isManualStep) {
+            stopCNNAnimation();
+            return;
+        }
 
         const moveKey = data.move;
         if (moveKey) {
             chessGame.move(moveKey, { sloppy: true });
             chessBoard.position(chessGame.fen());
             lastAIMove = moveKey;
+            
+            // Draw attention heatmap with respective colors
+            if (data.saliency) {
+                drawSaliencyHeatmap(data.saliency, turn);
+            }
+
+            if (typeof addTerminalLog === 'function') {
+                const turnName = turn === 'w' ? 'White' : 'Black';
+                addTerminalLog(`[CHESS] AI (${model.toUpperCase()}) ${turnName} move: ${moveKey}`);
+            }
             analyzePosition(moveKey);
         }
         
         updateChessStatus(false);
         stopCNNAnimation();
 
-        if (!chessGame.game_over() && isAIvsAIPlaying) {
-            aivsaiTimeout = window.setTimeout(stepAIvsAI, 1000);
-        } else {
+        if (isManualStep) {
             isAIvsAIPlaying = false;
             updateAIvsAIButtonState();
+        } else {
+            if (!chessGame.game_over() && isAIvsAIPlaying) {
+                aivsaiTimeout = window.setTimeout(() => stepAIvsAI(false), 3000);
+            } else {
+                isAIvsAIPlaying = false;
+                updateAIvsAIButtonState();
+            }
         }
     })
     .catch(err => {
@@ -842,4 +903,35 @@ function stepAIvsAI() {
         updateAIvsAIButtonState();
         stopCNNAnimation();
     });
+}
+
+function drawSaliencyHeatmap(saliency, turn) {
+    // Clear old heatmap styles
+    $('#board .square-55d63').css('box-shadow', '');
+    $('#board .square-55d63').css('background-color', '');
+    
+    if (!saliency || saliency.length !== 64) return;
+    
+    // White: Cyan (rgba(0, 243, 255, alpha))
+    // Black: Magenta (rgba(255, 0, 127, alpha))
+    const color = (turn === 'w') ? '0, 243, 255' : '255, 0, 127';
+    
+    const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+    const ranks = ['1', '2', '3', '4', '5', '6', '7', '8'];
+    
+    for (let sq = 0; sq < 64; sq++) {
+        const val = saliency[sq];
+        if (val > 0.05) {
+            const fileIdx = sq % 8;
+            const rankIdx = Math.floor(sq / 8);
+            const squareName = files[fileIdx] + ranks[rankIdx];
+            
+            const squareEl = $('#board .square-' + squareName);
+            if (squareEl.length > 0) {
+                const alpha = (val * 0.45).toFixed(2);
+                squareEl.css('background-color', `rgba(${color}, ${alpha})`);
+                squareEl.css('box-shadow', `inset 0 0 10px rgba(${color}, ${(val * 0.75).toFixed(2)})`);
+            }
+        }
+    }
 }

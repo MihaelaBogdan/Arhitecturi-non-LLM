@@ -301,7 +301,7 @@ function powerOffOS() {
         monitor.classList.add('power-off');
         setTimeout(() => {
             // Re-enable monitor after 4 seconds to allow user to continue
-            alert("NEON_OS is shutting down. Press OK to reboot.");
+            alert("ARCADE_OS is shutting down. Press OK to reboot.");
             monitor.classList.remove('power-off');
             window.location.reload();
         }, 1500);

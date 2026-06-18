@@ -237,7 +237,7 @@ class OpeningCoach:
     def _get_opening_lesson(self, opening: Opening) -> dict:
         """Generate a detailed lesson about the opening."""
         return {
-            "title": f"📖 Lesson: {opening.name}",
+            "title": f"Lesson: {opening.name_en}",
             "eco": opening.eco,
             "english_name": opening.name_en,
             "theory": opening.description,
@@ -254,30 +254,30 @@ class OpeningCoach:
         moves = opening.moves_san.lower()
 
         if 'e4' in moves and 'e5' in moves:
-            ideas.append("🎯 Classic center control with e4/e5 pawns")
+            ideas.append("Classic center control with e4/e5 pawns")
         if 'd4' in moves and 'd5' in moves:
-            ideas.append("🏰 Closed structure — long-term positional play")
+            ideas.append("Closed structure — long-term positional play")
         if 'nf3' in moves.lower():
-            ideas.append("🐴 Natural knight development — controls the center")
+            ideas.append("Natural knight development — controls the center")
         if 'bc4' in moves.lower() or 'bb5' in moves.lower():
-            ideas.append("📐 Active bishop — pressure on the diagonal")
+            ideas.append("Active bishop — pressure on the diagonal")
         if 'o-o' in moves.lower() or 'kg1' in moves.lower():
-            ideas.append("🏠 Early castling — king safety")
+            ideas.append("Early castling — king safety")
         if 'c4' in moves:
-            ideas.append("⚔️ Control of the d5 square — queenside strategy")
+            ideas.append("Control of the d5 square — queenside strategy")
         if 'f4' in moves or 'f5' in moves:
-            ideas.append("🔥 Attack on the kingside — aggressive play")
+            ideas.append("Attack on the kingside — aggressive play")
         if 'g6' in moves or 'bg7' in moves.lower():
-            ideas.append("🐉 Fianchetto — powerful bishop on the long diagonal")
+            ideas.append("Fianchetto — powerful bishop on the long diagonal")
         if 'b4' in moves or 'b5' in moves:
-            ideas.append("🚀 Queenside expansion")
+            ideas.append("Queenside expansion")
         if 'bb4' in moves.lower():
-            ideas.append("📌 Knight pin — positional pressure")
+            ideas.append("Knight pin — positional pressure")
 
         if not ideas:
-            ideas.append("🎯 Harmonious development of pieces")
-            ideas.append("🏰 King safety via castling")
-            ideas.append("⚔️ Center control")
+            ideas.append("Harmonious development of pieces")
+            ideas.append("King safety via castling")
+            ideas.append("Center control")
 
         return ideas[:5]
 
@@ -287,21 +287,21 @@ class OpeningCoach:
         eco = opening.eco
 
         if eco.startswith('B2') or eco.startswith('B3') or eco.startswith('B5'):  # Sicilian
-            mistakes.append("❌ Do not play d3 too early — you lose tempo")
-            mistakes.append("❌ Do not neglect development for premature attacks")
+            mistakes.append("Do not play d3 too early — you lose tempo")
+            mistakes.append("Do not neglect development for premature attacks")
         elif eco.startswith('C6') or eco.startswith('C7') or eco.startswith('C8'):  # Ruy Lopez
-            mistakes.append("❌ Do not take the e5 pawn too early with the bishop")
-            mistakes.append("❌ Do not lose tempo with the bishop on a4-b3")
+            mistakes.append("Do not take the e5 pawn too early with the bishop")
+            mistakes.append("Do not lose tempo with the bishop on a4-b3")
         elif eco.startswith('D0') or eco.startswith('D1'):  # QGD
-            mistakes.append("❌ Do not block the c8 bishop with a premature e6")
-            mistakes.append("❌ Do not neglect the kingside")
+            mistakes.append("Do not block the c8 bishop with a premature e6")
+            mistakes.append("Do not neglect the kingside")
         elif eco.startswith('E6') or eco.startswith('E7') or eco.startswith('E9'):  # KID
-            mistakes.append("❌ Do not delay f5 — it is essential for a counterattack")
-            mistakes.append("❌ Do not let White advance freely on the queenside")
+            mistakes.append("Do not delay f5 — it is essential for a counterattack")
+            mistakes.append("Do not let White advance freely on the queenside")
 
-        mistakes.append("❌ Do not neglect the development of minor pieces")
-        mistakes.append("❌ Do not move the same piece twice in the opening")
-        mistakes.append("❌ Do not bring the queen out too early")
+        mistakes.append("Do not neglect the development of minor pieces")
+        mistakes.append("Do not move the same piece twice in the opening")
+        mistakes.append("Do not bring the queen out too early")
 
         return mistakes[:4]
 
@@ -309,31 +309,31 @@ class OpeningCoach:
         """Who should play this opening."""
         diff = opening.difficulty
         if diff == "easy":
-            return "👤 Recommended for beginners and intermediate players. Easy to learn and play."
+            return "Recommended for beginners and intermediate players. Easy to learn and play."
         elif diff == "intermediate":
-            return "👥 Recommended for intermediate players. Requires basic knowledge."
+            return "Recommended for intermediate players. Requires basic knowledge."
         else:
-            return "🏆 Recommended for advanced players. Requires deep study."
+            return "Recommended for advanced players. Requires deep study."
 
     def _get_general_opening_tips(self) -> dict:
         """General opening tips when no specific opening is detected."""
         return {
-            "title": "📖 General Opening Principles",
+            "title": "General Opening Principles",
             "theory": "No specific opening detected.",
             "strategy": "Follow the fundamental principles.",
             "key_ideas": [
-                "🎯 Control the center (e4, d4, e5, d5)",
-                "🐴 Develop minor pieces (knights, bishops) first",
-                "🏠 Castle early for king safety",
-                "👸 Do not bring the queen out too early",
-                "🔗 Connect the rooks",
+                "Control the center (e4, d4, e5, d5)",
+                "Develop minor pieces (knights, bishops) first",
+                "Castle early for king safety",
+                "Do not bring the queen out too early",
+                "Connect the rooks",
             ],
             "common_mistakes": [
-                "❌ Do not move the same piece twice",
-                "❌ Do not hunt pawns in the opening",
-                "❌ Do not neglect development",
+                "Do not move the same piece twice",
+                "Do not hunt pawns in the opening",
+                "Do not neglect development",
             ],
-            "recommended_for": "👤 Universal principles for all players.",
+            "recommended_for": "Universal principles for all players.",
         }
 
     def get_all_openings(self, difficulty: Optional[str] = None) -> list[dict]:
