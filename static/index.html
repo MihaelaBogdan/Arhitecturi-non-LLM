@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NEON_OS v1.0.4 | Virtual Arcade OS</title>
-    <link rel="stylesheet" href="/static/dashboard.css?v=20">
+    <link rel="stylesheet" href="/static/dashboard.css?v=21">
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <!-- Chart.js -->
@@ -142,46 +142,64 @@
                             <div class="window-body">
                                 <header>
                                     <h1>Chess AI <span>Platform</span></h1>
-                                    <p id="chessSubtitle">Minimax cu Alpha-Beta Pruning + CNN Evaluator</p>
+                                    <p id="chessSubtitle">Minimax with Alpha-Beta Pruning + CNN Evaluator</p>
                                 </header>
                                 <div class="panel chess-layout">
+                                    <!-- Sticky Top Action Bar -->
+                                    <div style="grid-column: 1 / -1; position: sticky; top: 0; z-index: 100; background: rgba(8, 9, 15, 0.95); padding: 10px; border-radius: 8px; border: 1px solid rgba(0, 243, 255, 0.3); display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
+                                        <button id="btnStartAIvsAI" class="btn primary-btn" style="display:none; width: auto; padding: 8px 16px;" onclick="toggleAIvsAIAutoPlay()">▶ Start AI vs AI</button>
+                                        <button class="btn accent-btn" onclick="smartAnalyze()" style="font-weight: bold; width: auto; padding: 8px 16px;">🧠 Full AI Analysis</button>
+                                        <button id="btnChessHint" class="btn secondary-btn" onclick="requestHint()" style="width: auto; padding: 8px 16px;">💡 Suggest a Move</button>
+                                        <button class="btn secondary-btn" onclick="showOpeningLesson()" style="width: auto; padding: 8px 16px;">📖 Opening Lesson</button>
+                                        <button class="btn primary-btn" onclick="resetChessGame()" style="width: auto; padding: 8px 16px;">🔄 New Game</button>
+                                    </div>
                                     <div class="board-wrapper">
                                         <div id="board" style="width: 440px;"></div>
+
+                                        <!-- Image Upload Zone -->
+                                        <div id="imageUploadZone" class="image-upload-zone">
+                                            <div class="upload-icon">📷</div>
+                                            <p>Drag an image here or <label for="imageFileInput" class="upload-link">choose a file</label></p>
+                                            <p class="upload-hint">Screenshot from Chess.com, Lichess, or any chess board</p>
+                                            <input type="file" id="imageFileInput" accept="image/*" style="display:none;">
+                                        </div>
                                     </div>
-                                    <div class="chess-sidebar">
+                                    <div class="chess-sidebar-middle">
                                         <div class="status-card">
-                                            <h3>Status Joc</h3>
-                                            <div id="chessStatus" class="status-badge">Rândul tău (Alb)</div>
+                                            <h3>Game Status</h3>
+                                            <div id="chessStatus" class="status-badge">Your Turn (White)</div>
                                         </div>
                                         <div class="info-card">
-                                            <h3>Mod de Joc</h3>
+                                            <h3>Game Mode</h3>
                                             <div class="ai-mode-toggle" style="margin-top: 6px;">
-                                                <button id="btnPlayerVSai" class="mode-btn active" onclick="setChessGameMode('pvai')">🎮 Om vs AI</button>
+                                                <button id="btnPlayerVSai" class="mode-btn active" onclick="setChessGameMode('pvai')">🎮 Player vs AI</button>
                                                 <button id="btnAIvsAI" class="mode-btn" onclick="setChessGameMode('aivsai')">🤖 AI vs AI</button>
                                             </div>
                                         </div>
+                                        
+
                                         <div class="info-card" id="chessPlayerAiModeCard">
-                                            <h3>Mod AI</h3>
+                                            <h3>AI Mode</h3>
                                             <div class="ai-mode-toggle">
                                                 <button id="btnMinimax" class="mode-btn active" onclick="setAIMode('minimax')">🌲 Minimax</button>
                                                 <button id="btnCNN" class="mode-btn" onclick="setAIMode('cnn')">🧠 CNN</button>
                                             </div>
                                             <p id="aiModeDesc" style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">
-                                                Minimax explorează pozițiile viitoare sistematic cu Alpha-Beta Pruning.
+                                                Minimax systematically explores future positions with Alpha-Beta Pruning.
                                             </p>
                                         </div>
                                         <div class="info-card" id="chessAiConfigCard" style="display: none;">
-                                            <h3>Configurare Modele AI</h3>
+                                            <h3>AI Model Configuration</h3>
                                             <div style="display:flex; flex-direction:column; gap:8px;">
                                                 <div>
-                                                    <span style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:2px;">Alb AI:</span>
+                                                    <span style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:2px;">White AI:</span>
                                                     <div class="ai-mode-toggle">
                                                         <button id="btnWhiteMinimax" class="mode-btn active" onclick="setWhiteAI('minimax')">🌲 Minimax</button>
                                                         <button id="btnWhiteCNN" class="mode-btn" onclick="setWhiteAI('cnn')">🧠 CNN</button>
                                                     </div>
                                                 </div>
                                                 <div>
-                                                    <span style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:2px;">Negru AI:</span>
+                                                    <span style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:2px;">Black AI:</span>
                                                     <div class="ai-mode-toggle">
                                                         <button id="btnBlackMinimax" class="mode-btn active" onclick="setBlackAI('minimax')">🌲 Minimax</button>
                                                         <button id="btnBlackCNN" class="mode-btn" onclick="setBlackAI('cnn')">🧠 CNN</button>
@@ -190,7 +208,7 @@
                                             </div>
                                         </div>
                                         <div class="info-card" id="cnnVisualizer" style="display: none;">
-                                            <h3>Arhitectură Rețea CNN</h3>
+                                            <h3>CNN Network Architecture</h3>
                                             <div class="cnn-architecture-wrapper">
                                                 <div class="cnn-layer" data-layer="input"><span class="layer-dot"></span> Input: 12×8×8</div>
                                                 <div class="cnn-layer" data-layer="conv1"><span class="layer-dot"></span> Conv2d (32 filtre)</div>
@@ -202,17 +220,17 @@
                                         </div>
                                         <!-- Difficulty -->
                                         <div class="info-card">
-                                            <h3>Dificultate (Adâncime Minimax)</h3>
+                                            <h3>Difficulty (Minimax Depth)</h3>
                                             <select id="chessDifficulty" class="btn secondary-btn" style="text-align:left; background:rgba(0,0,0,0.5); width: 100%;">
-                                                <option value="1">Ușor (Depth 1)</option>
-                                                <option value="2">Mediu (Depth 2)</option>
-                                                <option value="3" selected>Greu (Depth 3)</option>
+                                                <option value="1">Easy (Depth 1)</option>
+                                                <option value="2">Medium (Depth 2)</option>
+                                                <option value="3" selected>Hard (Depth 3)</option>
                                                 <option value="4">Grandmaster (Depth 4)</option>
                                             </select>
                                         </div>
 
                                         <div class="info-card">
-                                            <h3>📊 Evaluare Poziție (CNN)</h3>
+                                            <h3>📊 Position Evaluation (CNN)</h3>
                                             <div class="eval-bar-outer">
                                                 <div id="evalBarWhite" class="eval-bar-white"></div>
                                                 <div id="evalBarBlack" class="eval-bar-black"></div>
@@ -225,25 +243,52 @@
                                         </div>
                                         <!-- Material Balance -->
                                         <div class="info-card">
-                                            <h3>⚖️ Balanță Material</h3>
+                                            <h3>⚖️ Material Balance</h3>
                                             <div style="font-size:0.85rem;">
-                                                <div>Alb a capturat: <span id="whiteCaptured" style="font-size:1rem;">—</span></div>
-                                                <div>Negru a capturat: <span id="blackCaptured" style="font-size:1rem;">—</span></div>
+                                                <div>White captured: <span id="whiteCaptured" style="font-size:1rem;">—</span></div>
+                                                <div>Black captured: <span id="blackCaptured" style="font-size:1rem;">—</span></div>
                                             </div>
                                         </div>
 
+                                    </div>
+                                    <div class="chess-sidebar-right">
                                         <div class="info-card">
-                                            <h3>Deschidere</h3>
-                                            <div id="openingName" class="opening-badge">Poziție de start</div>
+                                            <h3>Opening</h3>
+                                            <div id="openingName" class="opening-badge">Starting Position</div>
+                                            <div id="openingDetails" class="opening-details" style="display:none;">
+                                                <p id="openingDescription" class="opening-desc"></p>
+                                                <p id="openingStrategy" class="opening-strategy"></p>
+                                                <span id="openingDifficulty" class="difficulty-badge"></span>
+                                            </div>
                                         </div>
+
+                                        <!-- Smart Analysis Panel -->
+                                        <div class="info-card smart-analysis-card">
+                                            <h3>🧠 Advanced AI Analysis</h3>
+                                            <div id="smartAnalysisContent">
+                                                <p style="font-size:0.85rem; color:var(--text-muted);">Press the button below for full analysis.</p>
+                                            </div>
+                                            <!-- Next Move Predictions -->
+                                            <div id="predictionsPanel" style="display:none;">
+                                                <h4 style="margin:8px 0 4px; font-size:0.85rem; color:var(--accent);">🎯 Suggested Moves (from real games)</h4>
+                                                <div id="predictionsList" class="predictions-list"></div>
+                                            </div>
+                                            <!-- Tactics -->
+                                            <div id="tacticsPanel" style="display:none;">
+                                                <h4 style="margin:8px 0 4px; font-size:0.85rem; color:var(--danger);">⚡ Detected Tactics</h4>
+                                                <div id="tacticsList" class="tactics-list"></div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Opening Lesson -->
+                                        <div class="info-card opening-lesson-card" id="openingLessonCard" style="display:none;">
+                                            <h3 id="lessonTitle">📖 Lesson</h3>
+                                            <div id="lessonContent" class="lesson-content"></div>
+                                        </div>
+
                                         <div class="info-card">
-                                            <h3>💬 Ultima mutare AI</h3>
-                                            <p id="moveExplanation" style="font-size:0.85rem; color:var(--text-muted); margin:0;">Jocul nu a început.</p>
-                                        </div>
-                                        <div style="display:flex; flex-direction:column; gap:8px;">
-                                            <button id="btnStartAIvsAI" class="btn primary-btn" style="display:none;" onclick="toggleAIvsAIAutoPlay()">▶ Pornire AI vs AI</button>
-                                            <button id="btnChessHint" class="btn secondary-btn" onclick="requestHint()">💡 Sugerează-mi o mutare</button>
-                                            <button class="btn secondary-btn" onclick="resetChessGame()">🔄 Joc Nou</button>
+                                            <h3>💬 Last AI Move</h3>
+                                            <p id="moveExplanation" style="font-size:0.85rem; color:var(--text-muted); margin:0;">Game has not started.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -269,16 +314,16 @@
                                 <div class="panel snake-layout">
                                     <div class="game-view" style="flex: 0 0 400px; width: 400px; min-width: 400px; max-width: 400px; display: flex; flex-direction: column; gap: 10px;">
                                         <div class="stats-row">
-                                            <div class="stat-box">Scor: <span id="score">0</span></div>
+                                            <div class="stat-box">Score: <span id="score">0</span></div>
                                             <div class="stat-box record">Record: <span id="record">0</span></div>
-                                            <div class="stat-box">Episod: <span id="games">0</span></div>
+                                            <div class="stat-box">Episode: <span id="games">0</span></div>
                                         </div>
                                         <canvas id="gameCanvas" width="400" height="400" style="background: black; border-radius: 8px;"></canvas>
                                         <button id="snakeModeBtn" class="btn secondary-btn" onclick="toggleSnakeMode()" style="margin-top: 5px;">🤖 Auto Mode (AI)</button>
                                     </div>
                                     <div class="snake-sidebar" style="flex: 1.2 1 280px; min-width: 280px; display: flex; flex-direction: column; gap: 15px;">
                                         <div class="info-card">
-                                            <h3>Mod AI Snake</h3>
+                                            <h3>AI Mode Snake</h3>
                                             <div class="ai-mode-toggle" style="margin-top: 6px;">
                                                 <button id="btnSnakeDQN" class="mode-btn active" onclick="setSnakeAIMode('dqn')">🧠 DQN</button>
                                                 <button id="btnSnakeTree" class="mode-btn" onclick="setSnakeAIMode('tree')">🌲 Tree</button>
@@ -287,39 +332,39 @@
                                                 <button id="btnSnakeVS" class="mode-btn" onclick="setSnakeAIMode('vs_tree')">⚔️ VS Tree</button>
                                             </div>
                                             <p id="snakeAiModeDesc" style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">
-                                                DQN folosește o rețea neurală profundă pentru a aproxima calitatea deciziilor (Q-Values).
+                                                DQN uses a deep neural network to approximate decision quality (Q-Values).
                                             </p>
                                         </div>
                                         <div class="info-card" id="snakeHudCard">
-                                            <h3>🖥️ Decizii Modele în Timp Real</h3>
+                                            <h3>🖥️ Real-Time Model Decisions</h3>
                                             <div style="font-size:0.8rem; color:var(--text-muted); margin-top:4px; margin-bottom:8px;">
-                                                Mod activ: <span id="snakeHudActiveMode" style="font-weight:bold; color:var(--primary);">DQN (REȚEA)</span>
+                                                Active mode: <span id="snakeHudActiveMode" style="font-weight:bold; color:var(--primary);">DQN (NETWORK)</span>
                                             </div>
                                             <div style="font-size:0.85rem; margin-top:10px;">
                                                 <table style="width:100%; border-collapse:collapse; text-align:left; font-family:monospace; font-size:0.8rem;">
                                                     <thead>
                                                         <tr style="color:var(--text-muted); border-bottom:1px solid rgba(255,255,255,0.08); font-size:0.75rem;">
-                                                            <th style="padding:4px 0;">CALE</th>
+                                                            <th style="padding:4px 0;">PATH</th>
                                                             <th style="padding:4px 0; text-align:right;">Q-DQN</th>
                                                             <th style="padding:4px 0; text-align:right;">NB-RISC</th>
-                                                            <th style="padding:4px 0; text-align:right;">VOT</th>
+                                                            <th style="padding:4px 0; text-align:right;">VOTE</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody id="snakeHudBody" style="font-size:0.8rem;">
                                                         <tr id="snakeHudRow0">
-                                                            <td style="padding:6px 0; font-weight:bold;">ÎNAINTE</td>
+                                                            <td style="padding:6px 0; font-weight:bold;">FORWARD</td>
                                                             <td id="snakeHudQ0" style="text-align:right;">0.0</td>
                                                             <td id="snakeHudR0" style="text-align:right;">0%</td>
                                                             <td id="snakeHudT0" style="text-align:right;">—</td>
                                                         </tr>
                                                         <tr id="snakeHudRow1">
-                                                            <td style="padding:6px 0; font-weight:bold;">DREAPTA</td>
+                                                            <td style="padding:6px 0; font-weight:bold;">RIGHT</td>
                                                             <td id="snakeHudQ1" style="text-align:right;">0.0</td>
                                                             <td id="snakeHudR1" style="text-align:right;">0%</td>
                                                             <td id="snakeHudT1" style="text-align:right;">—</td>
                                                         </tr>
                                                         <tr id="snakeHudRow2">
-                                                            <td style="padding:6px 0; font-weight:bold;">STÂNGA</td>
+                                                            <td style="padding:6px 0; font-weight:bold;">LEFT</td>
                                                             <td id="snakeHudQ2" style="text-align:right;">0.0</td>
                                                             <td id="snakeHudR2" style="text-align:right;">0%</td>
                                                             <td id="snakeHudT2" style="text-align:right;">—</td>
@@ -331,38 +376,38 @@
                                         <div class="info-card" id="snakeTreeRulesCard">
                                             <h3>🌲 Explainable AI (Decision Tree)</h3>
                                             <div id="snakeActiveRule" style="font-family: monospace; font-size:0.8rem; color: var(--accent); margin-top: 8px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; border-left: 3px solid var(--accent);">
-                                                Arborele se antrenează... Așteaptă finalul primului joc.
+                                                Tree is training... Wait for the first game to end.
                                             </div>
                                         </div>
                                         <div class="info-card" id="snakeBayesRisksCard">
-                                            <h3>🔮 Naive Bayes (Riscuri de Coliziune)</h3>
+                                            <h3>🔮 Naive Bayes (Collision Risks)</h3>
                                             <div style="display:flex; flex-direction:column; gap:8px;">
                                                 <div>
                                                     <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
-                                                        <span>Înainte</span><span id="riskLabelStraight">0%</span>
+                                                        <span>Forward</span><span id="riskLabelStraight">0%</span>
                                                     </div>
                                                     <div class="eval-bar-outer" style="height: 10px;"><div id="riskBarStraight" style="width: 0%; background: var(--accent); height: 100%;"></div></div>
                                                 </div>
                                                 <div>
                                                     <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
-                                                        <span>Dreapta</span><span id="riskLabelRight">0%</span>
+                                                        <span>Right</span><span id="riskLabelRight">0%</span>
                                                     </div>
                                                     <div class="eval-bar-outer" style="height: 10px;"><div id="riskBarRight" style="width: 0%; background: var(--accent); height: 100%;"></div></div>
                                                 </div>
                                                 <div>
                                                     <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
-                                                        <span>Stânga</span><span id="riskLabelLeft">0%</span>
+                                                        <span>Left</span><span id="riskLabelLeft">0%</span>
                                                     </div>
                                                     <div class="eval-bar-outer" style="height: 10px;"><div id="riskBarLeft" style="width: 0%; background: var(--accent); height: 100%;"></div></div>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="info-card">
-                                            <h3>📈 Prognoză Scor Următor (RNN)</h3>
+                                            <h3>📈 Next Score Forecast (RNN)</h3>
                                             <span id="snakePredictedScore" style="color: var(--primary); font-weight: bold; font-size: 1.25rem;">—</span>
                                         </div>
                                         <div class="info-card">
-                                            <h3>📊 Comparare Medii Modele (Ultimele 50)</h3>
+                                            <h3>📊 Model Average Comparison (Last 50)</h3>
                                             <div style="display:flex; flex-direction:column; gap:8px;">
                                                 <div>
                                                     <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
@@ -390,9 +435,9 @@
                                             <canvas id="chartCanvas"></canvas>
                                         </div>
                                         <div class="info-card">
-                                            <h3>Mecanism Învățare (DQN)</h3>
+                                            <h3>Learning Mechanism (DQN)</h3>
                                             <p style="font-size: 0.8rem; line-height: 1.4; color: var(--text-muted);">
-                                                Agentul primește recompense/penalizări și optimizează Q-Values prin Backpropagation pe o rețea neuronală lineară.
+                                                The agent receives rewards/penalties and optimizes Q-Values via Backpropagation on a linear neural network.
                                             </p>
                                         </div>
                                     </div>
@@ -414,20 +459,20 @@
                             <div class="window-body">
                                 <header>
                                     <h1>Tetris <span>Heuristics & ML Models</span></h1>
-                                    <p>Evaluare bazată pe Vecini (KNN), MLP, Arbori de Decizie sau Algoritm Genetic online</p>
+                                    <p>Evaluation based on Neighbors (KNN), MLP, Decision Trees or online Genetic Algorithm</p>
                                 </header>
                                 <div class="panel tetris-layout">
                                     <div class="tetris-view" style="flex: 0 0 450px; width: 450px; min-width: 450px; max-width: 450px; display: flex; flex-direction: column; gap: 10px;">
                                         <div class="stats-row">
-                                            <div class="stat-box">Scor: <span id="tetris-score">0</span></div>
-                                            <div class="stat-box">Linii: <span id="tetrisLinesDisplay">0</span></div>
-                                            <div class="stat-box">Nivel: <span id="tetrisLevelDisplay">1</span></div>
+                                            <div class="stat-box">Score: <span id="tetris-score">0</span></div>
+                                            <div class="stat-box">Lines: <span id="tetrisLinesDisplay">0</span></div>
+                                            <div class="stat-box">Level: <span id="tetrisLevelDisplay">1</span></div>
                                         </div>
                                         <div style="display: flex; gap: 12px; align-items: flex-start;">
                                             <canvas id="tetrisCanvas" style="background: #0a0e1a; border-radius: 8px; border: 2px solid #1e293b;"></canvas>
                                             <div style="display: flex; flex-direction: column; gap: 10px; width: 110px;">
                                                 <div class="info-card" style="padding: 10px; text-align: center;">
-                                                    <h4 style="font-size:0.75rem; color: var(--primary); margin-bottom: 5px; text-transform: uppercase;">Următoarea</h4>
+                                                    <h4 style="font-size:0.75rem; color: var(--primary); margin-bottom: 5px; text-transform: uppercase;">Next</h4>
                                                     <canvas id="tetrisNextCanvas" width="90" height="90" style="background: #0a0e1a; border-radius: 6px; border: 1px solid #1e293b;"></canvas>
                                                 </div>
                                                 <div class="info-card" style="padding: 10px; text-align: center;">
@@ -440,13 +485,13 @@
                                             </div>
                                         </div>
                                         <div style="display:flex; flex-direction:column; gap:8px;">
-                                            <button id="btnStartTetrisAI" class="btn primary-btn" onclick="startTetrisAI()">🤖 Pornire AI</button>
-                                            <button id="btnToggleTetrisManual" class="btn secondary-btn" onclick="toggleTetrisManualMode()">🎮 Joacă tu (Manual)</button>
+                                            <button id="btnStartTetrisAI" class="btn primary-btn" onclick="startTetrisAI()">🤖 Start AI</button>
+                                            <button id="btnToggleTetrisManual" class="btn secondary-btn" onclick="toggleTetrisManualMode()">🎮 Play (Manual)</button>
                                         </div>
                                         <div class="info-card" style="padding: 12px;">
-                                            <h3>⚡ Viteza Jocului</h3>
+                                            <h3>⚡ Game Speed</h3>
                                             <select id="tetrisSpeed" class="btn secondary-btn" style="padding: 8px 12px; background: rgba(0,0,0,0.4);" onchange="updateTetrisSpeed()">
-                                                <option value="slow">Încet (Slow)</option>
+                                                <option value="slow">Slow</option>
                                                 <option value="normal" selected>Normal</option>
                                                 <option value="fast">Rapid (Fast)</option>
                                                 <option value="turbo">Ultra (Turbo)</option>
@@ -455,7 +500,7 @@
                                     </div>
                                     <div class="tetris-sidebar" style="flex: 1.1 1 280px; min-width: 280px; display: flex; flex-direction: column; gap: 15px;">
                                         <div class="info-card">
-                                            <h3>Mod AI Tetris</h3>
+                                            <h3>AI Mode Tetris</h3>
                                             <div class="ai-mode-toggle" style="margin-top: 6px;">
                                                 <button id="btnTetrisKNN" class="mode-btn active" onclick="setTetrisAIMode('knn')">👥 KNN</button>
                                                 <button id="btnTetrisTree" class="mode-btn" onclick="setTetrisAIMode('tree')">🌲 Tree</button>
@@ -463,66 +508,66 @@
                                                 <button id="btnTetrisGenetic" class="mode-btn" onclick="setTetrisAIMode('genetic')">🧬 Genetic</button>
                                             </div>
                                             <p id="tetrisAiModeDesc" style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">
-                                                KNN evaluează starea tablei comparând-o cu cele mai similare 5 table din baza de date istorică (TD-Learning).
+                                                KNN evaluates the board state by comparing it with the 5 most similar boards from the historical database (TD-Learning).
                                             </p>
                                         </div>
                                         <div class="info-card">
-                                            <h3>📈 Curbă Învățare Tetris</h3>
+                                            <h3>📈 Tetris Learning Curve</h3>
                                             <div style="height: 200px; background: rgba(0,0,0,0.15); padding: 12px; border-radius: 12px;">
                                                 <canvas id="tetrisChartCanvas"></canvas>
                                             </div>
                                         </div>
                                         <div class="info-card" id="tetrisGeneticWeightsCard" style="display: none;">
-                                            <h3>🧬 Ponderi Heuristice (Evoluție ES)</h3>
+                                            <h3>🧬 Heuristic Weights (ES Evolution)</h3>
                                             <div style="font-size:0.85rem; color:var(--text-muted); display:flex; flex-direction:column; gap:6px;">
                                                 <div style="display:flex; justify-content:space-between;">
-                                                    <span>Înălțime:</span><span id="weightHeight" style="color:var(--danger); font-weight:bold;">-0.51</span>
+                                                    <span>Height:</span><span id="weightHeight" style="color:var(--danger); font-weight:bold;">-0.51</span>
                                                 </div>
                                                 <div style="display:flex; justify-content:space-between;">
-                                                    <span>Linii:</span><span id="weightLines" style="color:var(--primary); font-weight:bold;">0.76</span>
+                                                    <span>Lines:</span><span id="weightLines" style="color:var(--primary); font-weight:bold;">0.76</span>
                                                 </div>
                                                 <div style="display:flex; justify-content:space-between;">
-                                                    <span>Goluri:</span><span id="weightHoles" style="color:var(--danger); font-weight:bold;">-0.36</span>
+                                                    <span>Holes:</span><span id="weightHoles" style="color:var(--danger); font-weight:bold;">-0.36</span>
                                                 </div>
                                                 <div style="display:flex; justify-content:space-between;">
-                                                    <span>Denivelare:</span><span id="weightBumpiness" style="color:var(--danger); font-weight:bold;">-0.18</span>
+                                                    <span>Bumpiness:</span><span id="weightBumpiness" style="color:var(--danger); font-weight:bold;">-0.18</span>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="info-card" id="tetrisReviewCard">
-                                            <h3>🔍 Review Mutare (Explainable AI)</h3>
+                                            <h3>🔍 Move Review (Explainable AI)</h3>
                                             <div style="margin-top: 6px;">
                                                 <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
-                                                    <span style="font-size:0.85rem;">Calitate:</span>
-                                                    <span id="tetrisMoveBadge" class="move-badge badge-neutral">Așteptare...</span>
+                                                    <span style="font-size:0.85rem;">Quality:</span>
+                                                    <span id="tetrisMoveBadge" class="move-badge badge-neutral">Waiting...</span>
                                                 </div>
                                                 <div id="tetrisMoveExplanation" style="font-size:0.85rem; color:var(--text-muted); line-height: 1.4; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; border-left: 3px solid var(--primary);">
-                                                    Plasează o piesă sau pornește AI pentru a vedea analiza KNN.
+                                                    Place a piece or start AI to see KNN analysis.
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="tetris-metrics-sidebar" style="flex: 1.3 1 280px; min-width: 280px; display: flex; flex-direction: column; gap: 15px;">
                                         <div class="info-card">
-                                            <h3>📊 Metrici Tablă în Timp Real</h3>
+                                            <h3>📊 Real-Time Board Metrics</h3>
                                             <div style="font-size:0.9rem; color:var(--text-muted); display:flex; flex-direction:column; gap:8px;">
                                                 <div style="display:flex; justify-content:space-between;">
-                                                    <span>Înălțime Totală:</span><span id="tetrisMetricHeight" style="color:var(--danger); font-weight:bold;">0</span>
+                                                    <span>Total Height:</span><span id="tetrisMetricHeight" style="color:var(--danger); font-weight:bold;">0</span>
                                                 </div>
                                                 <div style="display:flex; justify-content:space-between;">
-                                                    <span>Goluri Acoperite:</span><span id="tetrisMetricHoles" style="color:#f59e0b; font-weight:bold;">0</span>
+                                                    <span>Covered Holes:</span><span id="tetrisMetricHoles" style="color:#f59e0b; font-weight:bold;">0</span>
                                                 </div>
                                                 <div style="display:flex; justify-content:space-between;">
-                                                    <span>Denivelare:</span><span id="tetrisMetricBumpiness" style="color:#3b82f6; font-weight:bold;">0</span>
+                                                    <span>Bumpiness:</span><span id="tetrisMetricBumpiness" style="color:#3b82f6; font-weight:bold;">0</span>
                                                 </div>
                                                 <div style="display:flex; justify-content:space-between;">
-                                                    <span>Tranziții Rânduri:</span><span id="tetrisMetricRowTransitions" style="color:var(--accent); font-weight:bold;">0</span>
+                                                    <span>Row Transitions:</span><span id="tetrisMetricRowTransitions" style="color:var(--accent); font-weight:bold;">0</span>
                                                 </div>
                                                 <div style="display:flex; justify-content:space-between;">
-                                                    <span>Tranziții Coloane:</span><span id="tetrisMetricColTransitions" style="color:var(--accent); font-weight:bold;">0</span>
+                                                    <span>Column Transitions:</span><span id="tetrisMetricColTransitions" style="color:var(--accent); font-weight:bold;">0</span>
                                                 </div>
                                                 <div style="display:flex; justify-content:space-between;">
-                                                    <span>Gropi/Canale:</span><span id="tetrisMetricWells" style="color:var(--primary); font-weight:bold;">0</span>
+                                                    <span>Wells/Trenches:</span><span id="tetrisMetricWells" style="color:var(--primary); font-weight:bold;">0</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -558,10 +603,10 @@
         </div>
         <div class="window-body" style="padding:15px; font-size:0.85rem; line-height:1.5;">
             <p style="color:var(--primary); font-weight:bold; margin-bottom:8px;">NEON_OS SYSTEM INSTRUCTIONS:</p>
-            <p style="margin-bottom:8px;">1. **INSERT COIN**: Apasă pe slotul de monede din sidebar pentru a adăuga credite decorative și a activa chiptune-ul retro.</p>
-            <p style="margin-bottom:8px;">2. **APP SHORTCUTS**: Pornește jocurile dând click pe pictogramele de pe desktop (SPACE_V, PAC_GRID, BLOCK_X).</p>
-            <p style="margin-bottom:8px;">3. **OS CONTROL**: Folosește butoanele de REBOOT și SHUTDOWN din bara de jos pentru animații retro autentice.</p>
-            <button class="btn secondary-btn" style="margin-top:10px;" onclick="hideHelpModal()">AM ÎNȚELES</button>
+            <p style="margin-bottom:8px;">1. **INSERT COIN**: Click the coin slot in the sidebar to add decorative credits and activate retro chiptune.</p>
+            <p style="margin-bottom:8px;">2. **APP SHORTCUTS**: Start games by clicking the desktop icons (SPACE_V, PAC_GRID, BLOCK_X).</p>
+            <p style="margin-bottom:8px;">3. **OS CONTROL**: Use the REBOOT and SHUTDOWN buttons from the bottom bar for authentic retro animations.</p>
+            <button class="btn secondary-btn" style="margin-top:10px;" onclick="hideHelpModal()">UNDERSTOOD</button>
         </div>
     </div>
 
@@ -574,7 +619,7 @@
             </div>
         </div>
         <div class="window-body" style="padding:15px;">
-            <p style="color:var(--accent); font-weight:bold; margin-bottom:12px; font-size:0.85rem;">DIRECTOR PROIECT (FILE LIST):</p>
+            <p style="color:var(--accent); font-weight:bold; margin-bottom:12px; font-size:0.85rem;">PROJECT DIRECTORY (FILE LIST):</p>
             <div class="dumps-list">
                 <div class="dumps-item highlight-file"><span>📄 game_logic.py</span> <span>10.0 KB</span></div>
                 <div class="dumps-item highlight-file"><span>📄 server.py</span> <span>52.0 KB</span></div>
@@ -583,14 +628,15 @@
                 <div class="dumps-item"><span>📄 static/index.html</span> <span>41.0 KB</span></div>
                 <div class="dumps-item"><span>📄 static/dashboard.css</span> <span>8.0 KB</span></div>
             </div>
-            <button class="btn secondary-btn" style="margin-top:15px; border-color:var(--accent);" onclick="hideDumpsModal()">ÎNCHIDE FEREASTRA</button>
+            <button class="btn secondary-btn" style="margin-top:15px; border-color:var(--accent);" onclick="hideDumpsModal()">CLOSE WINDOW</button>
         </div>
+    </div>
     </div>
 
     <!-- Scripts -->
-    <script src="/static/app.js?v=21"></script>
-    <script src="/static/chess_module.js?v=21"></script>
-    <script src="/static/snake_module.js?v=21"></script>
-    <script src="/static/tetris_module.js?v=21"></script>
+    <script src="/static/app.js?v=28"></script>
+    <script src="/static/chess_module.js?v=28"></script>
+    <script src="/static/snake_module.js?v=28"></script>
+    <script src="/static/tetris_module.js?v=28"></script>
 </body>
 </html>

@@ -116,7 +116,8 @@ def _minimax_cnn(board: chess.Board, depth: int, alpha: float, beta: float, maxi
 
 def get_best_move_cnn(board: chess.Board, depth: int = 2) -> str | None:
     """Return the best move UCI string using CNN evaluation inside Minimax."""
-    best_move = None
+    import random
+    best_moves = []
     if board.turn == chess.WHITE:
         best_val = -float("inf")
         for move in board.legal_moves:
@@ -125,7 +126,9 @@ def get_best_move_cnn(board: chess.Board, depth: int = 2) -> str | None:
             board.pop()
             if val > best_val:
                 best_val = val
-                best_move = move
+                best_moves = [move]
+            elif val == best_val:
+                best_moves.append(move)
     else:
         best_val = float("inf")
         for move in board.legal_moves:
@@ -134,5 +137,7 @@ def get_best_move_cnn(board: chess.Board, depth: int = 2) -> str | None:
             board.pop()
             if val < best_val:
                 best_val = val
-                best_move = move
-    return best_move.uci() if best_move else None
+                best_moves = [move]
+            elif val == best_val:
+                best_moves.append(move)
+    return random.choice(best_moves).uci() if best_moves else None

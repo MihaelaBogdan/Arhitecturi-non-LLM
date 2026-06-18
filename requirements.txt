@@ -9,4 +9,9 @@ fastapi
 uvicorn
 websockets
 chess
+opencv-python-headless 
+pillow
+tqdm 
+python-multipart
+pandas
 scikit-learn
