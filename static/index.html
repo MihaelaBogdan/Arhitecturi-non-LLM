@@ -148,6 +148,7 @@
                                     <!-- Sticky Top Action Bar -->
                                     <div style="grid-column: 1 / -1; position: sticky; top: 0; z-index: 100; background: rgba(8, 9, 15, 0.95); padding: 10px; border-radius: 8px; border: 1px solid rgba(0, 243, 255, 0.3); display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
                                         <button id="btnStartAIvsAI" class="btn primary-btn" style="display:none; width: auto; padding: 8px 16px;" onclick="toggleAIvsAIAutoPlay()">▶ Start AI vs AI</button>
+                                        <button id="btnStepAIvsAI" class="btn secondary-btn" style="display:none; width: auto; padding: 8px 16px;" onclick="stepAIvsAI(true)">⏭️ Next AI Move</button>
                                         <button class="btn accent-btn" onclick="smartAnalyze()" style="font-weight: bold; width: auto; padding: 8px 16px;">🧠 Full AI Analysis</button>
                                         <button id="btnChessHint" class="btn secondary-btn" onclick="requestHint()" style="width: auto; padding: 8px 16px;">💡 Suggest a Move</button>
                                         <button class="btn secondary-btn" onclick="showOpeningLesson()" style="width: auto; padding: 8px 16px;">📖 Opening Lesson</button>
@@ -259,6 +260,10 @@
                                                 <p id="openingDescription" class="opening-desc"></p>
                                                 <p id="openingStrategy" class="opening-strategy"></p>
                                                 <span id="openingDifficulty" class="difficulty-badge"></span>
+                                                <div id="openingSuggestions" style="margin-top: 15px; display: none;">
+                                                    <h4 style="margin: 5px 0; font-size: 0.8rem; color: var(--accent);">🔄 Possible Continuations:</h4>
+                                                    <div id="openingSuggestionsList" style="display: flex; flex-direction: column; gap: 4px;"></div>
+                                                </div>
                                             </div>
                                         </div>
 
@@ -634,9 +639,9 @@
     </div>
 
     <!-- Scripts -->
-    <script src="/static/app.js?v=28"></script>
-    <script src="/static/chess_module.js?v=28"></script>
-    <script src="/static/snake_module.js?v=28"></script>
-    <script src="/static/tetris_module.js?v=28"></script>
+    <script src="/static/app.js?v=30"></script>
+    <script src="/static/chess_module.js?v=30"></script>
+    <script src="/static/snake_module.js?v=30"></script>
+    <script src="/static/tetris_module.js?v=30"></script>
 </body>
 </html>

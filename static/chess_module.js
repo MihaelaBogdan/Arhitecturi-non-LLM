@@ -178,20 +178,46 @@ function fetchOpeningDetails() {
     })
     .then(r => r.json())
     .then(data => {
-        if (data.success && data.detected) {
-            document.getElementById('openingName').textContent = `${data.eco} — ${data.name}`;
-            
+        if (data.success) {
             const detailsEl = document.getElementById('openingDetails');
             detailsEl.style.display = 'block';
             
-            document.getElementById('openingDescription').textContent = data.description || '';
-            document.getElementById('openingStrategy').textContent = data.strategy ? `📋 Strategie: ${data.strategy}` : '';
-            
-            const diffBadge = document.getElementById('openingDifficulty');
-            if (data.difficulty) {
-                diffBadge.textContent = data.difficulty;
-                diffBadge.className = `difficulty-badge diff-${data.difficulty}`;
-                diffBadge.style.display = 'inline-block';
+            if (data.detected) {
+                document.getElementById('openingName').textContent = `${data.eco} — ${data.name}`;
+                document.getElementById('openingDescription').textContent = data.description || '';
+                document.getElementById('openingStrategy').textContent = data.strategy ? `📋 Strategy: ${data.strategy}` : '';
+                
+                const diffBadge = document.getElementById('openingDifficulty');
+                if (data.difficulty) {
+                    diffBadge.textContent = data.difficulty;
+                    diffBadge.className = `difficulty-badge diff-${data.difficulty}`;
+                    diffBadge.style.display = 'inline-block';
+                } else {
+                    diffBadge.style.display = 'none';
+                }
+            } else {
+                document.getElementById('openingName').textContent = 'Custom / Open Play';
+                document.getElementById('openingDescription').textContent = 'No standard opening matches this exact move order yet.';
+                document.getElementById('openingStrategy').textContent = '📋 Strategy: Keep developing pieces, control the center, and prepare castling.';
+                
+                const diffBadge = document.getElementById('openingDifficulty');
+                diffBadge.style.display = 'none';
+            }
+
+            // Render continuations/suggestions in the sidebar card
+            const suggPanel = document.getElementById('openingSuggestions');
+            const suggList = document.getElementById('openingSuggestionsList');
+            if (suggPanel && suggList) {
+                if (data.suggestions && data.suggestions.length > 0) {
+                    suggPanel.style.display = 'block';
+                    suggList.innerHTML = data.suggestions.map(s => `
+                        <div class="continuation-item" style="font-size:0.75rem; padding:4px 6px; cursor:pointer;" onclick="highlightPrediction('${s.next_move}')">
+                            <strong>${s.eco}</strong> ${s.name} <span class="cont-move" style="color:var(--accent);">→ ${s.next_move.toUpperCase()}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    suggPanel.style.display = 'none';
+                }
             }
         } else {
             document.getElementById('openingDetails').style.display = 'none';
@@ -259,6 +285,12 @@ function makeAIMove() {
             chessBoard.position(chessGame.fen());
             lastAIMove = moveKey;
             moveHistory.push(moveKey);
+            
+            // Draw attention heatmap for the AI's move (Black AI)
+            if (data.saliency) {
+                drawSaliencyHeatmap(data.saliency, 'b');
+            }
+
             if (typeof addTerminalLog === 'function') {
                 const moveSan = move ? move.san : moveKey;
                 addTerminalLog(`[CHESS] AI (${currentAIMode.toUpperCase()}) move: ${moveSan}`);
@@ -270,7 +302,7 @@ function makeAIMove() {
     })
     .catch(err => {
         console.error(err);
-        document.getElementById('chessStatus').innerText = 'Eroare la AI.';
+        document.getElementById('chessStatus').innerText = 'AI Error.';
         stopCNNAnimation();
     });
 }
@@ -283,12 +315,17 @@ function removeHighlights() {
     $('#board .square-55d63').removeClass(
         'highlight-square highlight-source highlight-hint-from highlight-hint-to'
     );
+    $('#board .square-55d63').css('box-shadow', '');
+    $('#board .square-55d63').css('background-color', '');
 }
 
 function onDragStart(source, piece) {
     if (chessGame.game_over()) return false;
     if (chessGameMode === 'aivsai') return false; // block drag in AI vs AI mode
     if (piece.search(/^b/) !== -1) return false;
+    
+    // Clear heatmap highlights when player starts moving
+    removeHighlights();
 }
 
 function onMouseoverSquare(square, piece) {
@@ -701,6 +738,7 @@ function setChessGameMode(mode) {
     const aiConfigCard = document.getElementById('chessAiConfigCard');
     const hintBtn = document.getElementById('btnChessHint');
     const startBtn = document.getElementById('btnStartAIvsAI');
+    const stepBtn = document.getElementById('btnStepAIvsAI');
     const visualizer = document.getElementById('cnnVisualizer');
     
     if (mode === 'pvai') {
@@ -708,6 +746,7 @@ function setChessGameMode(mode) {
         if (aiConfigCard) aiConfigCard.style.display = 'none';
         if (hintBtn) hintBtn.style.display = 'block';
         if (startBtn) startBtn.style.display = 'none';
+        if (stepBtn) stepBtn.style.display = 'none';
         
         if (currentAIMode === 'cnn') {
             if (visualizer) $(visualizer).slideDown(300);
@@ -719,6 +758,7 @@ function setChessGameMode(mode) {
         if (aiConfigCard) aiConfigCard.style.display = 'block';
         if (hintBtn) hintBtn.style.display = 'none';
         if (startBtn) startBtn.style.display = 'block';
+        if (stepBtn) stepBtn.style.display = 'block';
         
         if (whiteAIMode === 'cnn' || blackAIMode === 'cnn') {
             if (visualizer) $(visualizer).slideDown(300);
@@ -788,11 +828,13 @@ function updateAIvsAIButtonState() {
     }
 }
 
-function stepAIvsAI() {
-    if (!isAIvsAIPlaying || chessGame.game_over()) {
-        isAIvsAIPlaying = false;
-        updateAIvsAIButtonState();
+function stepAIvsAI(isManualStep = false) {
+    if (chessGame.game_over()) {
         updateChessStatus(false);
+        return;
+    }
+
+    if (!isAIvsAIPlaying && !isManualStep) {
         return;
     }
 
@@ -816,24 +858,42 @@ function stepAIvsAI() {
     })
     .then(r => r.json())
     .then(data => {
-        if (!isAIvsAIPlaying) return;
+        if (!isAIvsAIPlaying && !isManualStep) {
+            stopCNNAnimation();
+            return;
+        }
 
         const moveKey = data.move;
         if (moveKey) {
             chessGame.move(moveKey, { sloppy: true });
             chessBoard.position(chessGame.fen());
             lastAIMove = moveKey;
+            
+            // Draw attention heatmap with respective colors
+            if (data.saliency) {
+                drawSaliencyHeatmap(data.saliency, turn);
+            }
+
+            if (typeof addTerminalLog === 'function') {
+                const turnName = turn === 'w' ? 'White' : 'Black';
+                addTerminalLog(`[CHESS] AI (${model.toUpperCase()}) ${turnName} move: ${moveKey}`);
+            }
             analyzePosition(moveKey);
         }
         
         updateChessStatus(false);
         stopCNNAnimation();
 
-        if (!chessGame.game_over() && isAIvsAIPlaying) {
-            aivsaiTimeout = window.setTimeout(stepAIvsAI, 1000);
-        } else {
+        if (isManualStep) {
             isAIvsAIPlaying = false;
             updateAIvsAIButtonState();
+        } else {
+            if (!chessGame.game_over() && isAIvsAIPlaying) {
+                aivsaiTimeout = window.setTimeout(() => stepAIvsAI(false), 3000);
+            } else {
+                isAIvsAIPlaying = false;
+                updateAIvsAIButtonState();
+            }
         }
     })
     .catch(err => {
@@ -842,4 +902,35 @@ function stepAIvsAI() {
         updateAIvsAIButtonState();
         stopCNNAnimation();
     });
+}
+
+function drawSaliencyHeatmap(saliency, turn) {
+    // Clear old heatmap styles
+    $('#board .square-55d63').css('box-shadow', '');
+    $('#board .square-55d63').css('background-color', '');
+    
+    if (!saliency || saliency.length !== 64) return;
+    
+    // White: Cyan (rgba(0, 243, 255, alpha))
+    // Black: Magenta (rgba(255, 0, 127, alpha))
+    const color = (turn === 'w') ? '0, 243, 255' : '255, 0, 127';
+    
+    const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+    const ranks = ['1', '2', '3', '4', '5', '6', '7', '8'];
+    
+    for (let sq = 0; sq < 64; sq++) {
+        const val = saliency[sq];
+        if (val > 0.05) {
+            const fileIdx = sq % 8;
+            const rankIdx = Math.floor(sq / 8);
+            const squareName = files[fileIdx] + ranks[rankIdx];
+            
+            const squareEl = $('#board .square-' + squareName);
+            if (squareEl.length > 0) {
+                const alpha = (val * 0.45).toFixed(2);
+                squareEl.css('background-color', `rgba(${color}, ${alpha})`);
+                squareEl.css('box-shadow', `inset 0 0 10px rgba(${color}, ${(val * 0.75).toFixed(2)})`);
+            }
+        }
+    }
 }

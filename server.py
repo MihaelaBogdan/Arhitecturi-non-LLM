@@ -68,13 +68,17 @@ class SmartAnalyzeRequest(BaseModel):
 async def post_chess_move(req: ChessMoveRequest):
     board = chess.Board(req.fen)
     best_move = await asyncio.to_thread(get_best_move, board, req.depth)
-    return {"move": best_move}
+    from chess_cnn import get_cnn_saliency
+    saliency = await asyncio.to_thread(get_cnn_saliency, board)
+    return {"move": best_move, "saliency": saliency}
 
 @app.post("/api/chess/cnn-move")
 async def post_chess_cnn_move(req: ChessMoveRequest):
     board = chess.Board(req.fen)
     best_move = await asyncio.to_thread(get_best_move_cnn, board, min(req.depth, 2))
-    return {"move": best_move}
+    from chess_cnn import get_cnn_saliency
+    saliency = await asyncio.to_thread(get_cnn_saliency, board)
+    return {"move": best_move, "saliency": saliency}
 
 @app.post("/api/chess/analyze")
 async def post_chess_analyze(req: ChessAnalyzeRequest):
