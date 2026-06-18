@@ -484,10 +484,18 @@ function toggleSnakeMode() {
 }
 
 document.addEventListener('keydown', (e) => {
-    if (isManual && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-        e.preventDefault();
-        if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({type: "action", key: e.key}));
+    if (isManual) {
+        let key = e.key;
+        if (key === 'w' || key === 'W') key = 'ArrowUp';
+        else if (key === 's' || key === 'S') key = 'ArrowDown';
+        else if (key === 'a' || key === 'A') key = 'ArrowLeft';
+        else if (key === 'd' || key === 'D') key = 'ArrowRight';
+
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key)) {
+            e.preventDefault();
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({type: "action", key: key}));
+            }
         }
     }
 });

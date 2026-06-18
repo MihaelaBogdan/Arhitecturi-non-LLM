@@ -556,7 +556,10 @@ async def training_loop():
                 state_msg["astar_path"] = astar_path_data
                 
         await manager.broadcast(state_msg)
-        await asyncio.sleep(0.04) # 25 FPS
+        if server_state.get("is_manual", False):
+            await asyncio.sleep(0.12) # ~8 FPS for human play
+        else:
+            await asyncio.sleep(0.04) # 25 FPS for AI
 
         if done:
             if ai_mode == "vs_tree" and not server_state["is_manual"]:
@@ -1298,6 +1301,9 @@ async def websocket_endpoint(websocket: WebSocket):
                 data = json.loads(data_str)
                 if data.get("type") == "mode":
                     server_state["is_manual"] = data.get("manual", False)
+                    if server_state["is_manual"]:
+                        server_state["manual_key"] = None
+                        server_state["reset_requested"] = True
                 elif data.get("type") == "ai_mode":
                     server_state["ai_mode"] = data.get("ai_mode", "dqn")
                 elif data.get("type") == "action":
