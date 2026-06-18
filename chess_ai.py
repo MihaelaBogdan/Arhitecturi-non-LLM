@@ -148,7 +148,8 @@ def minimax(board, depth, alpha, beta, maximizing_player):
 
 
 def get_best_move(board: chess.Board, depth: int = 3) -> str | None:
-    best_move = None
+    import random
+    best_moves = []
     if board.turn == chess.WHITE:
         best_value = -float('inf')
         for move in board.legal_moves:
@@ -157,7 +158,9 @@ def get_best_move(board: chess.Board, depth: int = 3) -> str | None:
             board.pop()
             if board_value > best_value:
                 best_value = board_value
-                best_move = move
+                best_moves = [move]
+            elif board_value == best_value:
+                best_moves.append(move)
     else:
         best_value = float('inf')
         for move in board.legal_moves:
@@ -166,8 +169,10 @@ def get_best_move(board: chess.Board, depth: int = 3) -> str | None:
             board.pop()
             if board_value < best_value:
                 best_value = board_value
-                best_move = move
-    return best_move.uci() if best_move else None
+                best_moves = [move]
+            elif board_value == best_value:
+                best_moves.append(move)
+    return random.choice(best_moves).uci() if best_moves else None
 
 
 # --- Opening recognition ---
