@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEON_OS v1.0.4 | Virtual Arcade OS</title>
+    <title>ARCADE_OS v1.0.4 | Virtual Arcade OS</title>
     <link rel="stylesheet" href="/static/dashboard.css?v=21">
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
@@ -24,12 +24,12 @@
 
             <!-- Top Header Status Bar -->
             <header class="os-header">
-                <div class="os-version"># NEON_OS v1.0.4</div>
+                <div class="os-version"># ARCADE_OS v1.0.4</div>
                 <div class="os-status-icons">
                     <span style="font-size:0.8rem; margin-right:5px; color:var(--text-muted);">SYS_STATUS: ACTIVE</span>
-                    <span class="status-icon">📶</span>
-                    <span class="status-icon">🔋</span>
-                    <span class="status-icon">🔊</span>
+                    <span class="status-icon" style="font-size:0.8rem; color:var(--primary); margin-left:8px;">NET</span>
+                    <span class="status-icon" style="font-size:0.8rem; color:var(--primary); margin-left:8px;">BAT</span>
+                    <span class="status-icon" style="font-size:0.8rem; color:var(--primary); margin-left:8px;">VOL</span>
                 </div>
             </header>
 
@@ -76,7 +76,7 @@
                                     </div>
                                 </div>
                                 <div class="window-body terminal-body" id="sysTerminal">
-                                    <div class="term-line">> INITIALIZING NEON_OS BIOS...</div>
+                                    <div class="term-line">> INITIALIZING ARCADE_OS BIOS...</div>
                                     <div class="term-line">> CPU CHECK: OK [Intel 80486DX simulated]</div>
                                     <div class="term-line">> RAM CHECK: 640KB... OK</div>
                                     <div class="term-line">> LOADING ARCADE_CORE.SYS... DONE</div>
@@ -231,7 +231,7 @@
                                         </div>
 
                                         <div class="info-card">
-                                            <h3>Evaluare Poziție (CNN)</h3>
+                                            <h3>Position Evaluation (CNN)</h3>
                                             <div class="eval-bar-outer">
                                                 <div id="evalBarWhite" class="eval-bar-white"></div>
                                                 <div id="evalBarBlack" class="eval-bar-black"></div>
@@ -318,8 +318,7 @@
                             </div>
                             <div class="window-body">
                                 <header>
-                                    <h1>Snake <span>Reinforcement Learning</span></h1>
-                                    <p>Deep Q-Network Agent Learning in Real-Time</p>
+                                    <h1>Snake</h1>
                                 </header>
                                 <div class="panel snake-layout">
                                     <div class="game-view" style="flex: 0 0 400px; width: 400px; min-width: 400px; max-width: 400px; display: flex; flex-direction: column; gap: 10px;">
@@ -390,7 +389,7 @@
                                             </div>
                                         </div>
                                         <div class="info-card" id="snakeBayesRisksCard">
-                                            <h3>Naive Bayes (Riscuri de Coliziune)</h3>
+                                            <h3>Naive Bayes (Collision Risks)</h3>
                                             <div style="display:flex; flex-direction:column; gap:8px;">
                                                 <div>
                                                     <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
@@ -463,8 +462,7 @@
                             </div>
                             <div class="window-body">
                                 <header>
-                                    <h1>Tetris <span>Heuristics & ML Models</span></h1>
-                                    <p>Evaluation based on Neighbors (KNN), MLP, Decision Trees or online Genetic Algorithm</p>
+                                    <h1>Tetris</h1>
                                 </header>
                                 <div class="panel tetris-layout">
                                     <div class="tetris-view" style="flex: 0 0 450px; width: 450px; min-width: 450px; max-width: 450px; display: flex; flex-direction: column; gap: 10px;">
@@ -540,7 +538,7 @@
                                             </div>
                                         </div>
                                         <div class="info-card" id="tetrisReviewCard">
-                                            <h3>🔍 Move Review (Explainable AI)</h3>
+                                            <h3>Move Review (Explainable AI)</h3>
                                             <div style="margin-top: 6px;">
                                                 <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
                                                     <span style="font-size:0.85rem;">Quality:</span>
@@ -607,7 +605,7 @@
             </div>
         </div>
         <div class="window-body" style="padding:15px; font-size:0.85rem; line-height:1.5;">
-            <p style="color:var(--primary); font-weight:bold; margin-bottom:8px;">NEON_OS SYSTEM INSTRUCTIONS:</p>
+            <p style="color:var(--primary); font-weight:bold; margin-bottom:8px;">ARCADE_OS SYSTEM INSTRUCTIONS:</p>
             <p style="margin-bottom:8px;">1. **INSERT COIN**: Click the coin slot in the sidebar to add decorative credits and activate retro chiptune.</p>
             <p style="margin-bottom:8px;">2. **APP SHORTCUTS**: Start games by clicking the desktop icons (SPACE_V, PAC_GRID, BLOCK_X).</p>
             <p style="margin-bottom:8px;">3. **OS CONTROL**: Use the REBOOT and SHUTDOWN buttons from the bottom bar for authentic retro animations.</p>
@@ -626,12 +624,12 @@
         <div class="window-body" style="padding:15px;">
             <p style="color:var(--accent); font-weight:bold; margin-bottom:12px; font-size:0.85rem;">PROJECT DIRECTORY (FILE LIST):</p>
             <div class="dumps-list">
-                <div class="dumps-item highlight-file"><span>📄 game_logic.py</span> <span>10.0 KB</span></div>
-                <div class="dumps-item highlight-file"><span>📄 server.py</span> <span>52.0 KB</span></div>
-                <div class="dumps-item highlight-file"><span>📄 agent.py</span> <span>5.0 KB</span></div>
-                <div class="dumps-item"><span>📄 model.py</span> <span>2.2 KB</span></div>
-                <div class="dumps-item"><span>📄 static/index.html</span> <span>41.0 KB</span></div>
-                <div class="dumps-item"><span>📄 static/dashboard.css</span> <span>8.0 KB</span></div>
+                <div class="dumps-item highlight-file"><span>[FILE] game_logic.py</span> <span>10.0 KB</span></div>
+                <div class="dumps-item highlight-file"><span>[FILE] server.py</span> <span>52.0 KB</span></div>
+                <div class="dumps-item highlight-file"><span>[FILE] agent.py</span> <span>5.0 KB</span></div>
+                <div class="dumps-item"><span>[FILE] model.py</span> <span>2.2 KB</span></div>
+                <div class="dumps-item"><span>[FILE] static/index.html</span> <span>41.0 KB</span></div>
+                <div class="dumps-item"><span>[FILE] static/dashboard.css</span> <span>8.0 KB</span></div>
             </div>
             <button class="btn secondary-btn" style="margin-top:15px; border-color:var(--accent);" onclick="hideDumpsModal()">CLOSE WINDOW</button>
         </div>

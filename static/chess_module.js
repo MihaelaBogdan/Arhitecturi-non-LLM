@@ -506,13 +506,13 @@ function showOpeningLesson() {
             html += `<div class="lesson-name">${lesson.english_name}</div>`;
         }
         if (lesson.theory) {
-            html += `<div class="lesson-section"><strong>Teorie:</strong> ${lesson.theory}</div>`;
+            html += `<div class="lesson-section"><strong>Theory:</strong> ${lesson.theory}</div>`;
         }
         if (lesson.strategy) {
-            html += `<div class="lesson-section"><strong>Strategie:</strong> ${lesson.strategy}</div>`;
+            html += `<div class="lesson-section"><strong>Strategy:</strong> ${lesson.strategy}</div>`;
         }
         if (lesson.key_ideas && lesson.key_ideas.length > 0) {
-            html += `<div class="lesson-section"><strong>Idei cheie:</strong><ul>`;
+            html += `<div class="lesson-section"><strong>Key ideas:</strong><ul>`;
             lesson.key_ideas.forEach(idea => {
                 html += `<li>${idea}</li>`;
             });
@@ -636,14 +636,14 @@ function processUploadedImage(file) {
                 moveHistory = [];
                 
                 document.getElementById('moveExplanation').textContent = 
-                    `📷 Position recognized from image (confidence: ${data.confidence}%)`;
+                    `Position recognized from image (confidence: ${data.confidence}%)`;
             } else {
                 zone.innerHTML = `
                     <div class="upload-error">
-                        <div class="error-icon">❌</div>
+                        <div class="error-icon">X</div>
                         <p>Could not recognize position</p>
                         <p class="error-text">${data.error || 'Unknown error'}</p>
-                        <button class="btn secondary-btn btn-sm" onclick="resetUploadZone()">🔄 Try again</button>
+                        <button class="btn secondary-btn btn-sm" onclick="resetUploadZone()">Try again</button>
                     </div>
                 `;
             }
@@ -652,9 +652,9 @@ function processUploadedImage(file) {
             console.error('Recognition error:', err);
             zone.innerHTML = `
                 <div class="upload-error">
-                    <div class="error-icon">❌</div>
+                    <div class="error-icon">X</div>
                     <p>Recognition error</p>
-                    <button class="btn secondary-btn btn-sm" onclick="resetUploadZone()">🔄 Try again</button>
+                    <button class="btn secondary-btn btn-sm" onclick="resetUploadZone()">Try again</button>
                 </div>
             `;
         });
@@ -665,7 +665,7 @@ function processUploadedImage(file) {
 function resetUploadZone() {
     const zone = document.getElementById('imageUploadZone');
     zone.innerHTML = `
-        <div class="upload-icon">📷</div>
+        <div class="upload-icon">[IMAGE]</div>
         <p>Drag an image here or <label for="imageFileInput" class="upload-link">choose a file</label></p>
         <p class="upload-hint">Screenshot from Chess.com, Lichess, or any chess board</p>
         <input type="file" id="imageFileInput" accept="image/*" style="display:none;">

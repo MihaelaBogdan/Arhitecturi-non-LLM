@@ -1,99 +1,99 @@
 eco,name,name_en,moves,description,strategy,difficulty
-A00,Deschiderea Anderssen,Anderssen Opening,a3,"O deschidere rară, pasivă. Albul cedează inițiativa.","Flexibilitate, evitarea teoriei principale.",ușor
-A00,Deschiderea Grob,Grob Opening,g4,Deschidere agresivă dar riscantă. Slăbește flancul regelui.,"Surpriză, atac pe flancul regelui.",avansat
-A01,Deschiderea Larsen,Larsen Opening,b3,Fianchetto pe flancul damei. Controlează diagonala lungă.,"Presiune pe diagonala a1-h8, joc pozițional.",intermediar
-A02,Deschiderea Bird,Bird Opening,f4,Control agresiv pe coloana f. Similar cu Deschiderea Olandeză inversată.,"Atac pe flancul regelui, control pe e5.",intermediar
-A04,Deschiderea Réti,Reti Opening,Nf3,Deschidere hipermodernă. Controlează centrul de la distanță.,"Fianchetto, control indirect al centrului.",intermediar
-A05,Réti - Varianta Indiană Regelui,Reti KIA,Nf3 Nf6,Setup flexibil. Poate transpune în multe structuri.,"King's Indian Attack, presiune pe centru.",intermediar
-A10,Deschiderea Engleză,English Opening,c4,A treia cea mai populară deschidere. Control pe d5.,"Joc pozițional, control pe câmpurile albe.",intermediar
-A13,Engleză - Varianta Agincourt,English Agincourt,c4 e6,Negrul permite Albului flexibilitate în centru.,Structuri Nimzo/Queen's Indian.,intermediar
-A20,Engleză cu 1...e5,English Reversed Sicilian,c4 e5,Siciliana inversată. Negrul ocupă centrul.,Albul joacă o Siciliană cu tempo în plus.,intermediar
-A40,Apărarea Indiană,Indian Defense,d4 Nf6,Baza tuturor sistemelor indiene. Extrem de popular.,"Hipermodernism, contraatac pe centru.",intermediar
-B00,Apărarea Nimzowitsch,Nimzowitsch Defense,e4 Nc6,Apărare hipermodernă neobișnuită.,"Presiune pe e5, dezvoltare rapidă.",avansat
-B01,Apărarea Scandinavă,Scandinavian Defense,e4 d5,Negrul atacă imediat centrul. Simplă dar solidă.,"Schimb de pioni în centru, dezvoltare rapidă.",ușor
-B02,Apărarea Alekhine,Alekhine Defense,e4 Nf6,"Provoacă pionii albi să avanseze, apoi îi atacă.","Hipermodernism, contraatac pe centrul extins.",avansat
-B06,Apărarea Modernă,Modern Defense,e4 g6,Fianchetto rapid. Presiune pe centru de la distanță.,"Flexibilitate, contraatac pe centru.",intermediar
-B07,Apărarea Pirc,Pirc Defense,e4 d6 d4 Nf6,"Hipermodernă. Permite Albului centru mare, apoi îl atacă.","Contraatac din fianchetto, joc pe flanc.",intermediar
-B10,Apărarea Caro-Kann,Caro-Kann Defense,e4 c6,Foarte solidă. Pregătește d5 cu suport.,"Structură solidă, nebun bun pe câmpuri albe.",intermediar
-B12,Caro-Kann - Varianta Advance,Caro-Kann Advance,e4 c6 d4 d5 e5,Albul fixează centrul. Joc pe flancuri.,"Spațiu, atac pe flancul regelui.",intermediar
-B13,Caro-Kann - Varianta Schimb,Caro-Kann Exchange,e4 c6 d4 d5 exd5 cxd5,"Structură simetrică, joc pozițional.","Joc liniștit, pregătire endgame.",ușor
-B15,Caro-Kann - Linia Principală,Caro-Kann Main Line,e4 c6 d4 d5 Nc3 dxe4 Nxe4,Teoria principală. Joc echilibrat.,"Dezvoltare armonioasă, nebunul pe câmpuri deschise.",intermediar
-B20,Apărarea Siciliană,Sicilian Defense,e4 c5,Cea mai populară apărare la 1.e4. Asimetrică și combativă.,"Contraatac pe flancul damei, joc tactic.",intermediar
-B21,Siciliana - Gambitul Smith-Morra,Smith-Morra Gambit,e4 c5 d4 cxd4 c3,Gambitul de pion pentru dezvoltare rapidă.,"Inițiativă, dezvoltare rapidă, atac.",intermediar
-B22,Siciliana - Alapin,Sicilian Alapin,e4 c5 c3,Albul pregătește d4. Evită teoria greoaie.,"Centru stabil, evitarea Open Sicilian.",ușor
-B23,Siciliana Închisă,Closed Sicilian,e4 c5 Nc3,Albul evită deschiderea centrului.,"Grand Prix Attack, fianchetto.",intermediar
-B27,Siciliana - Varianta Accelerated Dragon,Accelerated Dragon,e4 c5 Nf3 g6,Dragon fără d6. Mai flexibil.,"Presiune pe diagonala h8-a1, contraatac.",avansat
-B30,Siciliana - Varianta Nyezhmetdinov-Rossolimo,Rossolimo Sicilian,e4 c5 Nf3 Nc6 Bb5,Albul evită Open Sicilian. Foarte popular.,"Structură solidă, schimb de nebun.",intermediar
-B33,Siciliana - Sveshnikov,Sicilian Sveshnikov,e4 c5 Nf3 Nc6 d4 cxd4 Nxd4 Nf6 Nc3 e5,Structură dinamică cu gaură pe d5.,"Activitate maximă, compensație pentru d5.",avansat
-B35,Siciliana Dragon,Sicilian Dragon,e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 g6,Una dintre cele mai ascuțite variante. Atac și contraatac.,"Nebun fianchetto devastator, atac pe flancul damei.",avansat
-B40,Siciliana - Varianta Kan,Sicilian Kan,e4 c5 Nf3 e6,Flexibilă. Poate transpune în multe variante.,"Scheuler-Lowenthal, structuri Hedgehog.",intermediar
-B50,Siciliana - Linia Principală,Open Sicilian,e4 c5 Nf3 d6 d4 cxd4 Nxd4,Cea mai critică linie. Teoria merge foarte adânc.,"Joc complex, ambii jucători au șanse de atac.",avansat
-B60,Siciliana - Varianta Richter-Rauzer,Richter-Rauzer,e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 Nc6 Bg5,Atac clasic pe nebunul Negru.,"Presiune pe f6, rocadă pe flancuri opuse.",avansat
-B80,Siciliana Scheveningen,Sicilian Scheveningen,e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 e6,Structura e6+d6. Foarte solidă dar pasivă.,"Hedgehog, English Attack.",avansat
-B90,Siciliana Najdorf,Sicilian Najdorf,e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 a6,"Favorizata campionilor mondiali (Fischer, Kasparov).","Maximă flexibilitate, joc tactic intens.",avansat
-C00,Apărarea Franceză,French Defense,e4 e6,"Solidă, cu structură de pioni asimetrică.","Contraatac pe centru cu d5, joc pe flancul damei.",intermediar
-C01,Franceză - Varianta Schimb,French Exchange,e4 e6 d4 d5 exd5 exd5,"Structură simetrică, egalitate rapidă.","Joc simplu, pregătire endgame.",ușor
-C02,Franceză - Varianta Advance,French Advance,e4 e6 d4 d5 e5,Albul fixează centrul. Joc pe flancuri.,"Spațiu, atac pe flancul regelui. Negrul atacă baza c2-d4.",intermediar
-C03,Franceză - Varianta Tarrasch,French Tarrasch,e4 e6 d4 d5 Nd2,Evită blocarea nebunului pe c1.,"Flexibilitate, dezvoltare naturală.",intermediar
-C10,Franceză - Varianta Rubinstein,French Rubinstein,e4 e6 d4 d5 Nc3 dxe4 Nxe4,Negrul rezolvă tensiunea din centru.,"Dezvoltare liberă, dar Negru e ușor pasiv.",intermediar
-C11,Franceză - Linia Clasică,French Classical,e4 e6 d4 d5 Nc3 Nf6,Linia principală. Joc bogat tactic.,"Negrul presează pe e4, Albul atacă pe flancul regelui.",avansat
-C15,Franceză - Winawer,French Winawer,e4 e6 d4 d5 Nc3 Bb4,Cel mai ascuțit răspuns. Structuri complexe.,"Nebunul fixează calul, complicații tactice.",avansat
-C20,Joc Deschis,Open Game,e4 e5,Clasic. Ambii ocupă centrul.,"Dezvoltare rapidă, luptă pentru centru.",ușor
-C21,Gambitul Regelui Danez,Danish Gambit,e4 e5 d4 exd4 c3,Sacrificiu dublu de pioni pentru dezvoltare.,"Atac fulger, dezvoltare rapidă.",intermediar
-C22,Gambitul Central,Center Game,e4 e5 d4 exd4 Qxd4,Dama iese prea devreme dar centralizată.,Dezvoltare cu tempo pe damă.,ușor
-C25,Jocul Vienez,Vienna Game,e4 e5 Nc3,Pregătește f4 fără a expune calul.,"Gambitul Regelui întârziat, atac pe f-file.",intermediar
-C30,Gambitul Regelui,King's Gambit,e4 e5 f4,Cel mai romantic gambit. Sacrificiu de pion pe f4.,Atac fulgerător pe flancul regelui.,avansat
-C33,Gambitul Regelui Acceptat,King's Gambit Accepted,e4 e5 f4 exf4,Negrul acceptă provocarea.,"Albul deschide linii, Negrul trebuie să returneze pionul.",avansat
-C36,Gambitul Regelui - Gambitul Abbazia,Abbazia Countergambit,e4 e5 f4 exf4 d4,Gambitul modern cu d4.,"Centre puternic, deschidere de diagonale.",avansat
-C40,Apărarea Letonă,Latvian Gambit,e4 e5 Nf3 f5,Gambit riscant al Negrului. Suicidal la nivel înalt.,"Surpriză, contraatac nebunesc.",avansat
-C42,Apărarea Rusă (Petrov),Petrov Defense,e4 e5 Nf3 Nf6,Simetrică și foarte solidă. Favorita jucătorilor de top.,"Egalitate rapidă, joc pozițional.",intermediar
-C44,Jocul Scoțian,Scotch Game,e4 e5 Nf3 Nc6 d4,Deschide centrul devreme. Joc deschis.,"Dezvoltare liberă, inițiativă.",intermediar
-C45,Scoțianul - Varianta Clasică,Scotch Classical,e4 e5 Nf3 Nc6 d4 exd4 Nxd4 Bc5,Negrul dezvoltă nebunul activ.,"Presiune pe d4, dezvoltare armonioasă.",intermediar
-C46,Jocul Celor Trei Cai,Three Knights Game,e4 e5 Nf3 Nc6 Nc3,Solid dar puțin pasiv.,"Dezvoltare simetrică, joc pozițional.",ușor
-C47,Jocul Celor Patru Cai,Four Knights Game,e4 e5 Nf3 Nc6 Nc3 Nf6,"Clasic, simetric, solid.","Joc pozițional, echilibru.",ușor
-C50,Jocul Italian,Italian Game,e4 e5 Nf3 Nc6 Bc4,Cea mai veche deschidere studiată. Elegantă.,"Presiune pe f7, dezvoltare clasică.",ușor
-C50,Jocul Italian - Giuoco Piano,Giuoco Piano,e4 e5 Nf3 Nc6 Bc4 Bc5,"""Jocul liniștit"". Dezvoltare armonioasă.","Construcție pozițională, d3+c3 lent.",ușor
-C51,Gambitul Evans,Evans Gambit,e4 e5 Nf3 Nc6 Bc4 Bc5 b4,Sacrificiu de pion pentru tempo și centru.,Atac devastator cu dezvoltare rapidă.,intermediar
-C53,Italian - Linia Clasică,Italian Classical,e4 e5 Nf3 Nc6 Bc4 Bc5 c3,Pregătește d4 central.,"Centru puternic, atac pe rege.",intermediar
-C55,Jocul Italian cu Doi Cai,Two Knights Defense,e4 e5 Nf3 Nc6 Bc4 Nf6,Negrul contraatacă agresiv.,"Joc tactic, atac Fried Liver pe f7.",intermediar
-C57,Atacul Fegatello (Fried Liver),Fried Liver Attack,e4 e5 Nf3 Nc6 Bc4 Nf6 Ng5 d5 exd5 Nxd5 Nxf7,Cel mai spectaculos sacrificiu de cal! Atac pe rege.,"Atac de mat, sacrificiu de piesă pe f7.",avansat
-C60,Deschiderea Spaniolă (Ruy López),Ruy Lopez,e4 e5 Nf3 Nc6 Bb5,"""Regele deschiderilor"". Cea mai studiată.",Presiune de lungă durată pe centru și flancul regelui.,intermediar
-C63,Ruy López - Varianta Schliemann,Schliemann Defense,e4 e5 Nf3 Nc6 Bb5 f5,Gambit agresiv contra Spaniolei.,"Contraatac imediat, surpriză.",avansat
-C65,Ruy López - Varianta Berlin,Berlin Defense,e4 e5 Nf3 Nc6 Bb5 Nf6,"""Berlin Wall"". Extrem de solidă.","Endgame favorabil, apărare impenetrabilă.",avansat
-C68,Ruy López - Varianta Schimb,Ruy Lopez Exchange,e4 e5 Nf3 Nc6 Bb5 a6 Bxc6,Schimb de nebun pe cal.,Majoritate de pioni pe flancul regelui.,intermediar
-C70,Ruy López - Varianta Morphy,Morphy Defense,e4 e5 Nf3 Nc6 Bb5 a6,Cea mai populară continuare.,"Amenință nebunul, câștigă tempo.",intermediar
-C78,Ruy López - Varianta Arkhangelsk,Arkhangelsk Variation,e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O b5 Bb3 Bb7,"Nebun activ pe b7, contraatac pe centru.",Presiune pe e4 din fianchetto.,avansat
-C80,Ruy López - Deschidere Deschisă,Open Ruy Lopez,e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Nxe4,Negrul capturează pionul e4 imediat.,"Joc tactic, complicații.",avansat
-C84,Ruy López - Linia Închisă,Closed Ruy Lopez,e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7,Linia principală. Cea mai studiată din istoria șahului.,Manevre strategice pe termen lung.,avansat
-C89,Ruy López - Atacul Marshall,Marshall Attack,e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1 b5 Bb3 O-O c3 d5,Gambitul lui Frank Marshall. Sacrificiu de pion spectaculos.,"Atac devastator pe rege, compensație dinamică.",avansat
-D00,Deschiderea Pionului Damei,Queen's Pawn Game,d4 d5,Joc închis clasic. Mai strategic decât 1.e4.,"Control pozițional, joc pe flancul damei.",ușor
-D02,Sistemul London,London System,d4 d5 Nf3 Nf6 Bf4,Sistem universal. Ușor de învățat.,"Structură solidă piramidală, joc pozițional.",ușor
-D06,Gambitul Damei,Queen's Gambit,d4 d5 c4,Cel mai important gambit clasic.,"Control pe centru, presiune pe d5.",intermediar
-D07,Gambitul Damei - Varianta Chigorin,Chigorin Defense,d4 d5 c4 Nc6,Cal pe c6 în loc de e6. Neobișnuit dar activ.,"Dezvoltare activă, joc tactic.",intermediar
-D10,Gambitul Damei - Varianta Slav,Slav Defense,d4 d5 c4 c6,Solidă ca un zid. Nebunul rămâne liber pe c8.,"Structură solidă, nebun activ pe câmpuri albe.",intermediar
-D20,Gambitul Damei Acceptat,Queen's Gambit Accepted,d4 d5 c4 dxc4,Negrul ia pionul. Trebuie returnat cu tempo.,"Joc deschis, dezvoltare liberă.",intermediar
-D30,Gambitul Damei Refuzat,Queen's Gambit Declined,d4 d5 c4 e6,"Clasic, solid, preferat de jucătorii de elită.","Apărare solidă, nebun problematic pe c8.",intermediar
-D35,GDR - Varianta Schimb,QGD Exchange,d4 d5 c4 e6 Nc3 Nf6 cxd5 exd5,Structură de pioni simetrică. Joc de endgame.,Atac pe minoritate pe flancul damei.,intermediar
-D37,GDR - Linia Clasică,QGD Classical,d4 d5 c4 e6 Nc3 Nf6 Nf3 Be7,Cea mai tradițională linie.,Joc pozițional profund.,intermediar
-D43,Semi-Slav,Semi-Slav Defense,d4 d5 c4 c6 Nc3 Nf6 Nf3 e6,Combinație între Slav și QGD. Foarte populară.,Structură solidă cu posibilități de contraatac.,avansat
-D45,Semi-Slav - Varianta Meran,Meran Variation,d4 d5 c4 c6 Nc3 Nf6 Nf3 e6 e3 Nbd7 Bd3 dxc4 Bxc4 b5,Negrul avansează agresiv pe flancul damei.,"Expansiune pe flanc, joc tactic complex.",avansat
-E00,Apărarea Indiană a Damei,Queen's Indian,d4 Nf6 c4 e6 Nf3 b6,Fianchetto pe b7. Controlează diagonala mare.,"Control pe e4, joc pozițional fluid.",intermediar
-E12,Indian Damei - Varianta Petrosian,QID Petrosian,d4 Nf6 c4 e6 Nf3 b6 a3,Previne Bb4. Foarte solid.,"Control pozițional, evitarea fixărilor.",intermediar
-E15,Indian Damei - Varianta Nimzowitsch,QID Nimzowitsch,d4 Nf6 c4 e6 Nf3 b6 g3,Fianchetto dublu. Bătălia diagonalelor.,Control pe câmpuri albe.,intermediar
-E20,Apărarea Nimzo-Indiană,Nimzo-Indian Defense,d4 Nf6 c4 e6 Nc3 Bb4,Una dintre cele mai respectate apărări. Fixează calul pe c3.,"Presiune pe e4, structură de pioni dublați.",avansat
-E32,Nimzo-Indiană - Varianta Clasică,Nimzo-Indian Classical,d4 Nf6 c4 e6 Nc3 Bb4 Qc2,Evită pionii dublați. Pregătește e4.,"Expansiune în centru, joc de manevră.",avansat
-E40,Nimzo-Indiană - Varianta Rubinstein,Nimzo-Indian Rubinstein,d4 Nf6 c4 e6 Nc3 Bb4 e3,Solidă. Acceptă pionii dublați pentru pereche de nebuni.,"Nebuni puternici, centru stabil.",intermediar
-E60,Apărarea Indiană a Regelui,King's Indian Defense,d4 Nf6 c4 g6,Hipermodernă și combativă. Favorizata lui Kasparov.,"Fianchetto, contraatac pe flancul regelui.",avansat
-E62,KID - Varianta Fianchetto,KID Fianchetto,d4 Nf6 c4 g6 Nc3 Bg7 Nf3 d6 g3,Linia cea mai pozițională contra KID.,"Fianchetto dublu, joc strategic.",intermediar
-E70,KID - Linia Clasică,KID Classical,d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 Nf3,Cea mai naturală dezvoltare.,"Centru puternic, ambii joacă pe flancuri opuse.",avansat
-E73,KID - Varianta Averbakh,KID Averbakh,d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 Be2 O-O Bg5,"Nebun agresiv pe g5, restricționează Negrul.","Presiune pozițională, restricționare.",avansat
-E76,KID - Varianta Samisch,KID Samisch,d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 f3,Construcție masivă de centru. Pregătește Be3.,"Centru impunător, atac pe flancul damei.",avansat
-E80,KID - Varianta Sämisch cu f5,KID Samisch f5,d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 f3 O-O Be3 e5,Clasică bătălie pe flancuri opuse.,"Albul atacă pe damă, Negrul pe rege.",avansat
-E90,KID - Linia Principală,KID Main Line,d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 Nf3 O-O,Pozitia de bază. De aici se ramifică toata teoria.,Ambii au planuri concrete pe flancuri opuse.,avansat
-E97,KID - Varianta Mar del Plata,KID Mar del Plata,d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 Nf3 O-O Be2 e5 O-O Nc6,Cea mai faimoasă bătălie din KID. Două armate se atacă reciproc.,Albul: c5+d5 pe damă. Negrul: f5+g4 pe rege.,avansat
-E61,Apărarea Grünfeld,Grunfeld Defense,d4 Nf6 c4 g6 Nc3 d5,Hipermodernă. Negrul cedează centrul pentru a-l ataca.,"Presiune pe d4 cu nebunul g7, contraatac.",avansat
-E70,Apărarea Benoni,Benoni Defense,d4 Nf6 c4 c5,Asimetrică și dinamică. Joc pe flancuri opuse.,"Majoritate pe flancul damei, contraatac.",avansat
-A56,Benoni Modernă,Modern Benoni,d4 Nf6 c4 c5 d5 e6,Acceptă dezavantaj de spațiu pentru dinamism.,Presiune pe c-file și e-file.,avansat
-A57,Gambitul Benko,Benko Gambit,d4 Nf6 c4 c5 d5 b5,Sacrificiu de pion pentru presiune pe flancul damei.,"Coloane deschise a și b, presiune de lungă durată.",avansat
-A45,Deschiderea Trompowsky,Trompowsky Attack,d4 Nf6 Bg5,Nebun agresiv pe g5. Evită teoria mainstream.,"Surpriză, structuri atipice.",intermediar
-D00,Sistemul Colle,Colle System,d4 d5 Nf3 Nf6 e3,Sistem ușor de învățat. Piramidă de pioni.,"e4 breakthrough, atac pe rege.",ușor
+A00,Deschiderea Anderssen,Anderssen Opening,a3,"A rare, passive opening. White gives up the initiative.","Flexibility, avoiding main theory.",easy
+A00,Deschiderea Grob,Grob Opening,g4,"Aggressive but risky opening. Weakens the kingside.","Surprise, attack on the kingside.",advanced
+A01,Deschiderea Larsen,Larsen Opening,b3,"Fianchetto on the queenside. Controls the long diagonal.","Pressure on the a1-h8 diagonal, positional play.",intermediate
+A02,Deschiderea Bird,Bird Opening,f4,"Aggressive control on the f-file. Similar to a reversed Dutch Defense.","Attack on the kingside, control of e5.",intermediate
+A04,Deschiderea Réti,Reti Opening,Nf3,"Hypermodern opening. Controls the center from a distance.","Fianchetto, indirect control of the center.",intermediate
+A05,Réti - Varianta Indiană Regelui,Reti KIA,Nf3 Nf6,"Flexible setup. Can transpose into many structures.","King's Indian Attack, pressure on the center.",intermediate
+A10,Deschiderea Engleză,English Opening,c4,"The third most popular opening. Controls the d5 square.","Positional play, control of light squares.",intermediate
+A13,Engleză - Varianta Agincourt,English Agincourt,c4 e6,"Black allows White flexibility in the center.","Nimzo/Queen's Indian structures.",intermediate
+A20,Engleză cu 1...e5,English Reversed Sicilian,c4 e5,"Reversed Sicilian. Black occupies the center.","White plays a Sicilian with a tempo up.",intermediate
+A40,Apărarea Indiană,Indian Defense,d4 Nf6,"The foundation of all Indian systems. Extremely popular.","Hypermodernism, counterattack on the center.",intermediate
+B00,Apărarea Nimzowitsch,Nimzowitsch Defense,e4 Nc6,"Unusual hypermodern defense.","Pressure on e5, rapid development.",advanced
+B01,Apărarea Scandinavă,Scandinavian Defense,e4 d5,"Black attacks the center immediately. Simple but solid.","Pawn exchange in the center, rapid development.",easy
+B02,Apărarea Alekhine,Alekhine Defense,e4 Nf6,"Provokes White's pawns to advance, then attacks them.","Hypermodernism, counterattack on the expanded center.",advanced
+B06,Apărarea Modernă,Modern Defense,e4 g6,"Rapid fianchetto. Pressure on the center from a distance.","Flexibility, counterattack on the center.",intermediate
+B07,Apărarea Pirc,Pirc Defense,e4 d6 d4 Nf6,"Hypermodern. Allows White a large center, then attacks it.","Counterattack from fianchetto, play on the flank.",intermediate
+B10,Apărarea Caro-Kann,Caro-Kann Defense,e4 c6,"Very solid. Prepares d5 with support.","Solid structure, good bishop on light squares.",intermediate
+B12,Caro-Kann - Varianta Advance,Caro-Kann Advance,e4 c6 d4 d5 e5,"White fixes the center. Play on the flanks.","Space, attack on the kingside.",intermediate
+B13,Caro-Kann - Varianta Schimb,Caro-Kann Exchange,e4 c6 d4 d5 exd5 cxd5,"Symmetric structure, positional play.","Quiet play, endgame preparation.",easy
+B15,Caro-Kann - Linia Principală,Caro-Kann Main Line,e4 c6 d4 d5 Nc3 dxe4 Nxe4,"Main theory. Balanced play.","Harmonious development, bishop on open squares.",intermediate
+B20,Apărarea Siciliană,Sicilian Defense,e4 c5,"The most popular defense to 1.e4. Asymmetric and combative.","Counterattack on the queenside, tactical play.",intermediate
+B21,Siciliana - Gambitul Smith-Morra,Smith-Morra Gambit,e4 c5 d4 cxd4 c3,"Pawn gambit for rapid development.","Initiative, rapid development, attack.",intermediate
+B22,Siciliana - Alapin,Sicilian Alapin,e4 c5 c3,"White prepares d4. Avoids heavy theory.","Stable center, avoiding the Open Sicilian.",easy
+B23,Siciliana Închisă,Closed Sicilian,e4 c5 Nc3,"White avoids opening the center.","Grand Prix Attack, fianchetto.",intermediate
+B27,Siciliana - Varianta Accelerated Dragon,Accelerated Dragon,e4 c5 Nf3 g6,"Dragon without d6. More flexible.","Pressure on the h8-a1 diagonal, counterattack.",advanced
+B30,Siciliana - Varianta Nyezhmetdinov-Rossolimo,Rossolimo Sicilian,e4 c5 Nf3 Nc6 Bb5,"White avoids the Open Sicilian. Very popular.","Solid structure, bishop exchange.",intermediate
+B33,Siciliana - Sveshnikov,Sicilian Sveshnikov,e4 c5 Nf3 Nc6 d4 cxd4 Nxd4 Nf6 Nc3 e5,"Dynamic structure with a hole on d5.","Maximum activity, compensation for d5.",advanced
+B35,Siciliana Dragon,Sicilian Dragon,e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 g6,"One of the sharpest variations. Attack and counterattack.","Devastating fianchetto bishop, attack on the queenside.",advanced
+B40,Siciliana - Varianta Kan,Sicilian Kan,e4 c5 Nf3 e6,"Flexible. Can transpose into many variations.","Scheuler-Lowenthal, Hedgehog structures.",intermediate
+B50,Siciliana - Linia Principală,Open Sicilian,e4 c5 Nf3 d6 d4 cxd4 Nxd4,"The most critical line. Theory goes very deep.","Complex play, both players have attacking chances.",advanced
+B60,Siciliana - Varianta Richter-Rauzer,Richter-Rauzer,e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 Nc6 Bg5,"Classic attack on the Black bishop.","Pressure on f6, opposite-side castling.",advanced
+B80,Siciliana Scheveningen,Sicilian Scheveningen,e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 e6,"The e6+d6 structure. Very solid but passive.","Hedgehog, English Attack.",advanced
+B90,Siciliana Najdorf,Sicilian Najdorf,e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 a6,"Favored by world champions (Fischer, Kasparov).","Maximum flexibility, intense tactical play.",advanced
+C00,Apărarea Franceză,French Defense,e4 e6,"Solid, with an asymmetric pawn structure.","Counterattack on the center with d5, play on the queenside.",intermediate
+C01,Franceză - Varianta Schimb,French Exchange,e4 e6 d4 d5 exd5 exd5,"Symmetric structure, quick equality.","Simple play, endgame preparation.",easy
+C02,Franceză - Varianta Advance,French Advance,e4 e6 d4 d5 e5,"White fixes the center. Play on the flanks.","Space, attack on the kingside. Black attacks the c2-d4 base.",intermediate
+C03,Franceză - Varianta Tarrasch,French Tarrasch,e4 e6 d4 d5 Nd2,"Avoids blocking the bishop on c1.","Flexibility, natural development.",intermediate
+C10,Franceză - Varianta Rubinstein,French Rubinstein,e4 e6 d4 d5 Nc3 dxe4 Nxe4,"Black resolves center tension.","Free development, but Black is slightly passive.",intermediate
+C11,Franceză - Linia Clasică,French Classical,e4 e6 d4 d5 Nc3 Nf6,"Main line. Rich in tactics.","Black presses on e4, White attacks on the kingside.",advanced
+C15,Franceză - Winawer,French Winawer,e4 e6 d4 d5 Nc3 Bb4,"The sharpest response. Complex structures.","The bishop pins the knight, tactical complications.",advanced
+C20,Joc Deschis,Open Game,e4 e5,"Classic. Both occupy the center.","Rapid development, fight for the center.",easy
+C21,Gambitul Regelui Danez,Danish Gambit,e4 e5 d4 exd4 c3,"Double pawn sacrifice for development.","Lightning attack, rapid development.",intermediate
+C22,Gambitul Central,Center Game,e4 e5 d4 exd4 Qxd4,"The queen comes out early but is centralized.","Development with tempo on the queen.",easy
+C25,Jocul Vienez,Vienna Game,e4 e5 Nc3,"Prepares f4 without exposing the knight.","Delayed King's Gambit, attack on the f-file.",intermediate
+C30,Gambitul Regelui,King's Gambit,e4 e5 f4,"The most romantic classic gambit. Pawn sacrifice on f4.","Lightning attack on the kingside.",advanced
+C33,Gambitul Regelui Acceptat,King's Gambit Accepted,e4 e5 f4 exf4,"Black accepts the challenge.","White opens lines, Black must return the pawn.",advanced
+C36,Gambitul Regelui - Gambitul Abbazia,Abbazia Countergambit,e4 e5 f4 exf4 d4,"Modern gambit with d4.","Strong center, opening diagonals.",advanced
+C40,Apărarea Letonă,Latvian Gambit,e4 e5 Nf3 f5,"Risky gambit for Black. Suicidal at high level.","Surprise, crazy counterattack.",advanced
+C42,Apărarea Rusă (Petrov),Petrov Defense,e4 e5 Nf3 Nf6,"Symmetric and very solid. Favored by top players.","Quick equality, positional play.",intermediate
+C44,Jocul Scoțian,Scotch Game,e4 e5 Nf3 Nc6 d4,"Opens the center early. Open game.","Free development, initiative.",intermediate
+C45,Scoțianul - Varianta Clasică,Scotch Classical,e4 e5 Nf3 Nc6 d4 exd4 Nxd4 Bc5,"Black develops the active bishop.","Pressure on d4, harmonious development.",intermediate
+C46,Jocul Celor Trei Cai,Three Knights Game,e4 e5 Nf3 Nc6 Nc3,"Solid but slightly passive.","Symmetric development, positional play.",easy
+C47,Jocul Celor Patru Cai,Four Knights Game,e4 e5 Nf3 Nc6 Nc3 Nf6,"Classic, symmetric, solid.","Positional play, balance.",easy
+C50,Jocul Italian,Italian Game,e4 e5 Nf3 Nc6 Bc4,"The oldest studied opening. Elegant.","Pressure on f7, classic development.",easy
+C50,Jocul Italian - Giuoco Piano,Giuoco Piano,e4 e5 Nf3 Nc6 Bc4 Bc5,"\"Quiet game\". Harmonious development.","Positional construction, slow d3+c3.",easy
+C51,Gambitul Evans,Evans Gambit,e4 e5 Nf3 Nc6 Bc4 Bc5 b4,"Pawn sacrifice for tempo and center.","Devastating attack with rapid development.",intermediate
+C53,Italian - Linia Clasică,Italian Classical,e4 e5 Nf3 Nc6 Bc4 Bc5 c3,"Prepares central d4.","Strong center, attack on the king.",intermediate
+C55,Jocul Italian cu Doi Cai,Two Knights Defense,e4 e5 Nf3 Nc6 Bc4 Nf6,"Black counterattacks aggressively.","Tactical play, Fried Liver attack on f7.",intermediate
+C57,Atacul Fegatello (Fried Liver),Fried Liver Attack,e4 e5 Nf3 Nc6 Bc4 Nf6 Ng5 d5 exd5 Nxd5 Nxf7,"The most spectacular knight sacrifice! Attack on the king.","Checkmate attack, piece sacrifice on f7.",advanced
+C60,Deschiderea Spaniolă (Ruy López),Ruy Lopez,e4 e5 Nf3 Nc6 Bb5,"\"The King of Openings\". The most studied.","Long-term pressure on the center and kingside.",intermediate
+C63,Ruy López - Varianta Schliemann,Schliemann Defense,e4 e5 Nf3 Nc6 Bb5 f5,"Aggressive gambit against the Ruy Lopez.","Immediate counterattack, surprise.",advanced
+C65,Ruy López - Varianta Berlin,Berlin Defense,e4 e5 Nf3 Nc6 Bb5 Nf6,"\"Berlin Wall\". Extremely solid.","Favorable endgame, impenetrable defense.",advanced
+C68,Ruy López - Varianta Schimb,Ruy Lopez Exchange,e4 e5 Nf3 Nc6 Bb5 a6 Bxc6,"Exchange of bishop for knight.","Pawn majority on the kingside.",intermediate
+C70,Ruy López - Varianta Morphy,Morphy Defense,e4 e5 Nf3 Nc6 Bb5 a6,"The most popular continuation.","Threatens the bishop, wins tempo.",intermediate
+C78,Ruy López - Varianta Arkhangelsk,Arkhangelsk Variation,e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O b5 Bb3 Bb7,"Active bishop on b7, counterattack in the center.","Pressure on e4 from fianchetto.",advanced
+C80,Ruy López - Deschidere Deschisă,Open Ruy Lopez,e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Nxe4,"Black captures the e4 pawn immediately.","Tactical play, complications.",advanced
+C84,Ruy López - Linia Închisă,Closed Ruy Lopez,e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7,"Main line. The most studied in chess history.","Long-term strategic maneuvering.",advanced
+C89,Ruy López - Atacul Marshall,Marshall Attack,e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1 b5 Bb3 O-O c3 d5,"Frank Marshall's gambit. Spectacular pawn sacrifice.","Devastating attack on the king, dynamic compensation.",advanced
+D00,Deschiderea Pionului Damei,Queen's Pawn Game,d4 d5,"Classic closed game. More strategic than 1.e4.","Positional control, play on the queenside.",easy
+D02,Sistemul London,London System,d4 d5 Nf3 Nf6 Bf4,"Universal system. Easy to learn.","Solid pyramid structure, positional play.",easy
+D06,Gambitul Damei,Queen's Gambit,d4 d5 c4,"The most important classic gambit.","Control over center, pressure on d5.",intermediate
+D07,Gambitul Damei - Varianta Chigorin,Chigorin Defense,d4 d5 c4 Nc6,"Knight on c6 instead of e6. Unusual but active.","Active development, tactical play.",intermediate
+D10,Gambitul Damei - Varianta Slav,Slav Defense,d4 d5 c4 c6,"Solid as a wall. The bishop remains free on c8.","Solid structure, active bishop on light squares.",intermediate
+D20,Gambitul Damei Acceptat,Queen's Gambit Accepted,d4 d5 c4 dxc4,"Black takes the pawn. Must be returned with tempo.","Open game, free development.",intermediate
+D30,Gambitul Damei Refuzat,Queen's Gambit Declined,d4 d5 c4 e6,"Classic, solid, preferred by elite players.","Solid defense, problematic bishop on c8.",intermediate
+D35,GDR - Varianta Schimb,QGD Exchange,d4 d5 c4 e6 Nc3 Nf6 cxd5 exd5,"Symmetric pawn structure. Endgame play.","Minority attack on the queenside.",intermediate
+D37,GDR - Linia Clasică,QGD Classical,d4 d5 c4 e6 Nc3 Nf6 Nf3 Be7,"The most traditional line.","Deep positional play.",intermediate
+D43,Semi-Slav,Semi-Slav Defense,d4 d5 c4 c6 Nc3 Nf6 Nf3 e6,"Combination of Slav and QGD. Very popular.","Solid structure with counterplay possibilities.",advanced
+D45,Semi-Slav - Varianta Meran,Meran Variation,d4 d5 c4 c6 Nc3 Nf6 Nf3 e6 e3 Nbd7 Bd3 dxc4 Bxc4 b5,"Black advances aggressively on the queenside.","Flank expansion, complex tactical play.",advanced
+E00,Apărarea Indiană a Damei,Queen's Indian,d4 Nf6 c4 e6 Nf3 b6,"Fianchetto on b7. Controls the long diagonal.","Control on e4, fluid positional play.",intermediate
+E12,Indian Damei - Varianta Petrosian,QID Petrosian,d4 Nf6 c4 e6 Nf3 b6 a3,"Prevents Bb4. Very solid.","Positional control, avoiding pins.",intermediate
+E15,Indian Damei - Varianta Nimzowitsch,QID Nimzowitsch,d4 Nf6 c4 e6 Nf3 b6 g3,"Double fianchetto. Battle of the diagonals.","Control on light squares.",intermediate
+E20,Apărarea Nimzo-Indiană,Nimzo-Indian Defense,d4 Nf6 c4 e6 Nc3 Bb4,"One of the most respected defenses. Pins the knight on c3.","Pressure on e4, doubled pawn structure.",advanced
+E32,Nimzo-Indiană - Varianta Clasică,Nimzo-Indian Classical,d4 Nf6 c4 e6 Nc3 Bb4 Qc2,"Avoids doubled pawns. Prepares e4.","Expansion in the center, maneuver game.",advanced
+E40,Nimzo-Indiană - Varianta Rubinstein,Nimzo-Indian Rubinstein,d4 Nf6 c4 e6 Nc3 Bb4 e3,"Solid. Accepts doubled pawns for the bishop pair.","Strong bishops, stable center.",intermediate
+E60,Apărarea Indiană a Regelui,King's Indian Defense,d4 Nf6 c4 g6,"Hypermodern and combative. Favored by Kasparov.","Fianchetto, counterattack on the kingside.",advanced
+E62,KID - Varianta Fianchetto,KID Fianchetto,d4 Nf6 c4 g6 Nc3 Bg7 Nf3 d6 g3,"The most positional line against KID.","Double fianchetto, strategic play.",intermediate
+E70,KID - Linia Clasică,KID Classical,d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 Nf3,"The most natural development.","Strong center, both play on opposite flanks.",advanced
+E73,KID - Varianta Averbakh,KID Averbakh,d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 Be2 O-O Bg5,"Aggressive bishop on g5, restricts Black.","Positional pressure, restriction.",advanced
+E76,KID - Varianta Samisch,KID Samisch,d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 f3,"Massive center construction. Prepares Be3.","Imposing center, attack on the queenside.",advanced
+E80,KID - Varianta Sämisch cu f5,KID Samisch f5,d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 f3 O-O Be3 e5,"Classic battle on opposite flanks.","White attacks on queenside, Black on kingside.",advanced
+E90,KID - Linia Principală,KID Main Line,d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 Nf3 O-O,"Base position. From here all theory branches.","Both have concrete plans on opposite flanks.",advanced
+E97,KID - Varianta Mar del Plata,KID Mar del Plata,d4 Nf6 c4 g6 Nc3 Bg7 e4 d6 Nf3 O-O Be2 e5 O-O Nc6,"The most famous battle in KID. Two armies attack each other.","White: c5+d5 on queenside. Black: f5+g4 on kingside.",advanced
+E61,Apărarea Grünfeld,Grunfeld Defense,d4 Nf6 c4 g6 Nc3 d5,"Hypermodern. Black yields the center to attack it.","Pressure on d4 with the g7 bishop, counterattack.",advanced
+E70,Apărarea Benoni,Benoni Defense,d4 Nf6 c4 c5,"Asymmetric and dynamic. Play on opposite flanks.","Majority on the queenside, counterattack.",advanced
+A56,Benoni Modernă,Modern Benoni,d4 Nf6 c4 c5 d5 e6,"Accepts space disadvantage for dynamism.","Pressure on c-file and e-file.",advanced
+A57,Gambitul Benko,Benko Gambit,d4 Nf6 c4 c5 d5 b5,"Pawn sacrifice for queenside pressure.","Open a and b files, long-term pressure.",advanced
+A45,Deschiderea Trompowsky,Trompowsky Attack,d4 Nf6 Bg5,"Aggressive bishop on g5. Avoids mainstream theory.","Surprise, atypical structures.",intermediate
+D00,Sistemul Colle,Colle System,d4 d5 Nf3 Nf6 e3,"Easy to learn system. Pawn pyramid.","e4 breakthrough, attack on the king.",easy
