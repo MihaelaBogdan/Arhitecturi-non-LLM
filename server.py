@@ -40,10 +40,12 @@ async def get():
 class ChessMoveRequest(BaseModel):
     fen: str
     depth: int = 3
+    moves: list[str] = []
 
 class ChessAnalyzeRequest(BaseModel):
     fen: str
     last_move: str | None = None
+    moves: list[str] = []
 
 class OpeningRequest(BaseModel):
     fen: str
@@ -100,9 +102,20 @@ async def post_chess_analyze(req: ChessAnalyzeRequest):
 
 @app.post("/api/chess/hint")
 async def post_chess_hint(req: ChessMoveRequest):
-    board = chess.Board(req.fen)
-    # Hint always for the side to move (should be White = player)
-    best_move = await asyncio.to_thread(get_best_move, board, min(req.depth, 2))
+    if req.moves:
+        board = chess.Board()
+        for move_uci in req.moves:
+            try:
+                move = chess.Move.from_uci(move_uci)
+                if move in board.legal_moves:
+                    board.push(move)
+            except ValueError:
+                pass
+    else:
+        board = chess.Board(req.fen)
+    # Use the new predict_next_move which has Opening Book and Hybrid CNN logic!
+    results = await asyncio.to_thread(predict_next_move, board, 1)
+    best_move = results[0]["move"] if results else None
     return {"hint": best_move}
 
 
@@ -127,7 +140,7 @@ async def post_recognize_board(req: ImageRecognizeRequest):
         if board.king(chess.WHITE) is None or board.king(chess.BLACK) is None:
             return {
                 "success": False,
-                "error": "Modelul nu a detectat ambii regi pe tablă. Asigură-te că imaginea conține întreaga tablă de șah și că este decupată corect pe conturul acesteia.",
+                "error": "The model did not detect both kings on the board. Make sure the image contains the entire chessboard and is cropped correctly to its outline.",
                 "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
             }
         
@@ -160,7 +173,7 @@ async def post_recognize_board_upload(file: UploadFile = File(...)):
         if board.king(chess.WHITE) is None or board.king(chess.BLACK) is None:
             return {
                 "success": False,
-                "error": "Modelul nu a detectat ambii regi pe tablă. Asigură-te că imaginea conține întreaga tablă de șah și că este decupată corect pe conturul acesteia.",
+                "error": "The model did not detect both kings on the board. Make sure the image contains the entire chessboard and is cropped correctly to its outline.",
                 "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
             }
         
@@ -185,7 +198,17 @@ async def post_recognize_board_upload(file: UploadFile = File(...)):
 async def post_next_move_prediction(req: ChessMoveRequest):
     """Predict next best moves using the trained policy network."""
     try:
-        board = chess.Board(req.fen)
+        if req.moves:
+            board = chess.Board()
+            for move_uci in req.moves:
+                try:
+                    move = chess.Move.from_uci(move_uci)
+                    if move in board.legal_moves:
+                        board.push(move)
+                except ValueError:
+                    pass
+        else:
+            board = chess.Board(req.fen)
         predictions = await asyncio.to_thread(predict_next_move, board, 5)
         return {
             "success": True,
@@ -333,11 +356,11 @@ def _score_description(score: float) -> str:
     elif s > 100:
         return "⬜ Avantaj mare pentru Alb"
     elif s > 30:
-        return "⬜ Avantaj ușor pentru Alb"
+        return "⬜ Slight advantage for White"
     elif s > -30:
         return "= Poziție egală"
     elif s > -100:
-        return "⬛ Avantaj ușor pentru Negru"
+        return "⬛ Slight advantage for Black"
     elif s > -200:
         return "⬛ Avantaj mare pentru Negru"
     else:
@@ -349,7 +372,7 @@ def _detect_tactics(board: chess.Board) -> list[str]:
     tactics = []
     
     if board.is_check():
-        tactics.append("♚ Regele este în ȘAH!")
+        tactics.append("♚ King este în ȘAH!")
     
     # Check for possible forks, pins, etc.
     for move in board.legal_moves:
@@ -378,15 +401,15 @@ def _detect_tactics(board: chess.Board) -> list[str]:
             if board.is_attacked_by(board.turn, sq):
                 if not board.is_attacked_by(not board.turn, sq):
                     piece_name = {
-                        chess.PAWN: "Pion", chess.KNIGHT: "Cal",
-                        chess.BISHOP: "Nebun", chess.ROOK: "Turn",
-                        chess.QUEEN: "Regină", chess.KING: "Rege"
-                    }.get(piece.piece_type, "Piesă")
+                        chess.PAWN: "Pawn", chess.KNIGHT: "Knight",
+                        chess.BISHOP: "Bishop", chess.ROOK: "Rook",
+                        chess.QUEEN: "Queen", chess.KING: "King"
+                    }.get(piece.piece_type, "Piece")
                     sq_name = chess.square_name(sq).upper()
-                    tactics.append(f"🎯 {piece_name} neapărat pe {sq_name}!")
+                    tactics.append(f"🎯 Undefended {piece_name} on {sq_name}!")
     
     if not tactics:
-        tactics.append("🔍 Nu am detectat tactici imediate")
+        tactics.append("🔍 No immediate tactics detected")
     
     return tactics[:5]
 
@@ -455,23 +478,23 @@ class ScorePredictor(nn.Module):
 
 def explain_tree_decision(model, x):
     if model is None:
-        return "Arborele se antrenează... Așteaptă finalul primului joc."
+        return "Tree is training... Wait for the first game to end."
     
     tree_ = model.tree_
     node = 0
     conditions = []
     
-    action_names = ["ÎNAINTE", "DREAPTA", "STÂNGA"]
+    action_names = ["FORWARD", "RIGHT", "LEFT"]
     feature_names = [
-        "Pericol Înainte",
-        "Pericol Dreapta",
-        "Pericol Stânga",
-        "Direcție Stânga",
-        "Direcție Dreapta",
+        "Pericol Forward",
+        "Pericol Right",
+        "Pericol Left",
+        "Direcție Left",
+        "Direcție Right",
         "Direcție Sus",
         "Direcție Jos",
-        "Mâncare Stânga",
-        "Mâncare Dreapta",
+        "Mâncare Left",
+        "Mâncare Right",
         "Mâncare Sus",
         "Mâncare Jos"
     ]
@@ -818,7 +841,7 @@ async def training_loop():
                     agent.train_short_memory(state_old, final_move, reward, state_new, done)
                     agent.remember(state_old, final_move, reward, state_new, done)
 
-        # Calculate average score per mode for live bar comparison
+        # Calculate average score tor mode for live bar comparison
         avg_scores = {
             "dqn": round(sum(snake_scores_by_mode["dqn"]) / len(snake_scores_by_mode["dqn"]), 1) if snake_scores_by_mode["dqn"] else 0.0,
             "tree": round(sum(snake_scores_by_mode["tree"]) / len(snake_scores_by_mode["tree"]), 1) if snake_scores_by_mode["tree"] else 0.0,
@@ -972,7 +995,7 @@ async def training_loop():
                     except Exception as e:
                         print(f"Error training Score Predictor: {e}")
 
-# --- Tetris AI Models & Helper Functions ---
+# --- Tetris AI Models & Heltor Functions ---
 import random
 
 class TetrisMLP(nn.Module):
@@ -1403,7 +1426,7 @@ async def post_tetris_evaluate_move(req: TetrisEvaluateRequest):
         current_shape = rotate_matrix(current_shape)
         
     if not placements:
-        return {"classification": "Medie", "explanation": "Mutare neevaluată (stare neobișnuită)."}
+        return {"classification": "Average", "explanation": "Move not evaluated (unusual state)."}
         
     # Sort placements by score descending
     placements.sort(key=lambda p: p["score"], reverse=True)
@@ -1462,42 +1485,42 @@ async def post_tetris_evaluate_move(req: TetrisEvaluateRequest):
     percentile = (rank - 1) / total_possibilities if total_possibilities > 1 else 0.0
     
     # Classify move
-    classification = "Greșeală"
+    classification = "Mistake"
     if rank == 1 or percentile <= 0.10:
-        classification = "Excelentă"
+        classification = "Excellent"
     elif percentile <= 0.30:
-        classification = "Bună"
+        classification = "Good"
     elif percentile <= 0.60:
-        classification = "Medie"
+        classification = "Average"
     else:
-        classification = "Greșeală"
+        classification = "Mistake"
         
     # 3. Generate explanation
     best_h_agg, best_lines, best_holes, best_bump = best_move["features"]
     
     explanation = ""
-    if classification == "Excelentă":
-        explanation = "Mutare excelentă! Ai plasat piesa perfect. "
+    if classification == "Excellent":
+        explanation = "Excellent move! You placed the piece perfectly. "
         if chosen_lines > 0:
-            explanation += f"Ai curățat {chosen_lines} linie/linii!"
+            explanation += f"You cleared {chosen_lines} line(s)!"
         else:
-            explanation += "Ai menținut tabla curată, fără a crea goluri noi."
+            explanation += "You kept the board clean without creating new holes."
     else:
         reasons = []
         if chosen_holes > best_holes:
-            reasons.append(f"a creat {int(chosen_holes - best_holes)} gol(uri) în plus")
+            reasons.append(f"created {int(chosen_holes - best_holes)} extra hole(s)")
         if chosen_h_agg > best_h_agg:
-            reasons.append(f"a crescut înălțimea cu {int(chosen_h_agg - best_h_agg)} unități")
+            reasons.append(f"increased height by {int(chosen_h_agg - best_h_agg)} units")
         if chosen_bump > best_bump:
-            reasons.append(f"a mărit denivelarea cu {int(chosen_bump - best_bump)} unități")
+            reasons.append(f"increased bumpiness by {int(chosen_bump - best_bump)} units")
             
-        reason_str = ", ".join(reasons) if reasons else "are o așezare mai puțin optimă"
-        explanation = f"Mutarea este clasificată ca {classification.lower()} deoarece {reason_str}. "
-        explanation += f"Cea mai bună mutare ar fi fost la coloana {best_move['x'] + 1} "
+        reason_str = ", ".join(reasons) if reasons else "has a less optimal placement"
+        explanation = f"The move is classified as a {classification.lower()} because it {reason_str}. "
+        explanation += f"The best move would have been at column {best_move['x'] + 1} "
         if best_lines > 0:
-            explanation += f"(ar fi curățat {int(best_lines)} linie/linii)."
+            explanation += f"(it would have cleared {int(best_lines)} line(s))."
         else:
-            explanation += "(ar fi lăsat tabla mai netedă și fără goluri)."
+            explanation += "(it would have left the board smoother and without holes)."
             
     return {
         "classification": classification,

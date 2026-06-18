@@ -10,15 +10,15 @@ piece_values = {
 }
 
 PIECE_NAMES_RO = {
-    chess.PAWN:   "Pionul",
-    chess.KNIGHT: "Calul",
-    chess.BISHOP: "Nebunul",
-    chess.ROOK:   "Turnul",
-    chess.QUEEN:  "Regina",
-    chess.KING:   "Regele",
+    chess.PAWN:   "Pawn",
+    chess.KNIGHT: "Knight",
+    chess.BISHOP: "Bishop",
+    chess.ROOK:   "Rook",
+    chess.QUEEN:  "Queen",
+    chess.KING:   "King",
 }
 
-# --- Piece-Square Tables (White perspective, rank 0 = rank 1) ---
+# --- Piece-Square Tables (White torstoctive, rank 0 = rank 1) ---
 PAWN_TABLE = [
      0,  0,  0,  0,  0,  0,  0,  0,
     50, 50, 50, 50, 50, 50, 50, 50,
@@ -177,7 +177,7 @@ def get_best_move(board: chess.Board, depth: int = 3) -> str | None:
 
 # --- Opening recognition ---
 OPENINGS = [
-    (["e2e4", "e7e5", "g1f3", "b8c6", "f1b5"], "Deschiderea Ruy López (Spaniola)"),
+    (["e2e4", "e7e5", "g1f3", "b8c6", "f1b5"], "Openinga Ruy Lótoz (Spaniola)"),
     (["e2e4", "e7e5", "g1f3", "b8c6", "d2d4"], "Jocul Scoțian"),
     (["e2e4", "e7e5", "f2f4"],                  "Gambitul Regelui"),
     (["e2e4", "c7c5"],                           "Apărarea Siciliană"),
@@ -185,26 +185,26 @@ OPENINGS = [
     (["e2e4", "c7c6"],                           "Apărarea Caro-Kann"),
     (["e2e4", "d7d5"],                           "Apărarea Scandinavă"),
     (["e2e4", "e7e5"],                           "Joc Deschis (1.e4 e5)"),
-    (["e2e4"],                                   "Deschiderea Pionului Regelui"),
+    (["e2e4"],                                   "Openinga Pawnui Regelui"),
     (["d2d4", "d7d5", "c2c4"],                   "Gambitul Damei"),
     (["d2d4", "g8f6", "c2c4", "e7e6"],           "Apărarea Nimzo-Indiană"),
     (["d2d4", "g8f6"],                           "Apărarea Indiană"),
     (["d2d4", "d7d5"],                           "Joc Închis (1.d4 d5)"),
-    (["d2d4"],                                   "Deschiderea Pionului Damei"),
-    (["g1f3"],                                   "Deschiderea Reti"),
-    (["c2c4"],                                   "Deschiderea Engleză"),
+    (["d2d4"],                                   "Openinga Pawnui Damei"),
+    (["g1f3"],                                   "Openinga Reti"),
+    (["c2c4"],                                   "Openinga Engleză"),
 ]
 
 def detect_opening(board: chess.Board) -> str:
     moves = [m.uci() for m in board.move_stack]
-    best = "Deschidere necunoscută"
+    best = "Opening necunoscută"
     best_len = 0
     for seq, name in OPENINGS:
         if moves[:len(seq)] == seq and len(seq) > best_len:
             best = name
             best_len = len(seq)
     if best_len == 0 and len(moves) == 0:
-        return "Poziție de start"
+        return "Starting Position"
     return best
 
 
@@ -222,8 +222,8 @@ def explain_move(board_before: chess.Board, move: chess.Move) -> str:
 
     # Castling
     if board_before.is_castling(move):
-        side = "scurtă (pe flancul regelui)" if board_before.is_kingside_castling(move) else "lungă (pe flancul damei)"
-        return f"Rocadă {side} — Regele {color} se adăpostește în spatele pionilor."
+        side = "scurtă (to flancul regelui)" if board_before.is_kingside_castling(move) else "lungă (to flancul damei)"
+        return f"Rocadă {side} — King {color} se adăpostește în spatele pionilor."
 
     # Capture
     captured = board_before.piece_at(move.to_square)
@@ -238,39 +238,39 @@ def explain_move(board_before: chess.Board, move: chess.Move) -> str:
             trade = "schimb egal."
         else:
             trade = "sacrificând material pentru poziție."
-        return f"{piece_name} {color} capturează {cap_name} pe {to_sq}, {trade}"
+        return f"{piece_name} {color} capturează {cap_name} to {to_sq}, {trade}"
 
     # Promotion
     if move.promotion:
         prom_name = PIECE_NAMES_RO.get(move.promotion, "Regină")
-        return f"Pionul {color} ajunge pe ultima linie și este promovat la {prom_name}!"
+        return f"Pawn {color} ajunge to ultima linie și este promovat la {prom_name}!"
 
     # En passant
     if board_before.is_en_passant(move):
-        return f"{piece_name} {color} capturează en passant pe {to_sq}."
+        return f"{piece_name} {color} capturează en passant to {to_sq}."
 
     # Check (check after move)
     board_after = board_before.copy()
     board_after.push(move)
     if board_after.is_checkmate():
-        return f"ȘAH MAT! {piece_name} {color} mută pe {to_sq}. Joc terminat!"
+        return f"ȘAH MAT! {piece_name} {color} mută to {to_sq}. Game Over!"
     if board_after.is_check():
-        return f"{piece_name} {color} mută pe {to_sq} — ȘAH! Regele advers este atacat."
+        return f"{piece_name} {color} mută to {to_sq} — CHECK! King advers este atacat."
 
     # Center control
     center = {chess.E4, chess.E5, chess.D4, chess.D5}
     if move.to_square in center:
-        return f"{piece_name} {color} controlează centrul mutând pe {to_sq}."
+        return f"{piece_name} {color} controlează centrul mutând to {to_sq}."
 
     # Development (from back rank)
     if piece.piece_type in (chess.KNIGHT, chess.BISHOP):
         from_rank = chess.square_rank(move.from_square)
         if (piece.color == chess.WHITE and from_rank == 0) or \
            (piece.color == chess.BLACK and from_rank == 7):
-            return f"{piece_name} {color} este dezvoltat pe {to_sq}, controlând câmpuri importante."
+            return f"{piece_name} {color} este dezvoltat to {to_sq}, controlând câmpuri importante."
 
     # Default
-    return f"{piece_name} {color} mută de pe {from_sq} pe {to_sq}."
+    return f"{piece_name} {color} mută de to {from_sq} to {to_sq}."
 
 
 # --- Material balance ---

@@ -65,11 +65,11 @@ function setAIMode(mode) {
     const visualizer = document.getElementById('cnnVisualizer');
     
     if (mode === 'minimax') {
-        desc.textContent = 'Minimax explorează pozițiile viitoare sistematic cu Alpha-Beta Pruning.';
+        desc.textContent = 'Minimax systematically explores future positions with Alpha-Beta Pruning.';
         if (visualizer) $(visualizer).slideUp(300);
         stopCNNAnimation();
     } else {
-        desc.textContent = 'CNN evaluează pozițiile prin pattern-uri învățate din mii de partide simulate.';
+        desc.textContent = 'CNN evaluates positions through patterns learned from thousands of simulated games.';
         if (visualizer) {
             $(visualizer).slideDown(300);
             document.querySelectorAll('.cnn-layer').forEach(el => el.classList.add('active-layer'));
@@ -86,28 +86,28 @@ function updateChessStatus(isAIThinking) {
     if (!statusEl) return;
 
     if (chessGame.in_checkmate()) {
-        statusEl.innerText = `Șah Mat! A câștigat ${chessGame.turn() === 'w' ? 'Negrul (AI)' : (chessGameMode === 'aivsai' ? 'Albul (AI)' : 'Albul (Tu)')}.`;
+        statusEl.innerText = `Checkmate! Winner is ${chessGame.turn() === 'w' ? 'Black (AI)' : (chessGameMode === 'aivsai' ? 'White (AI)' : 'White (You)')}.`;
         statusEl.style.color = 'var(--danger)';
         statusEl.style.background = 'rgba(239,68,68,0.2)';
     } else if (chessGame.in_draw() || chessGame.in_stalemate() || chessGame.in_threefold_repetition()) {
-        statusEl.innerText = 'Remiză!';
+        statusEl.innerText = 'Draw!';
         statusEl.style.color = 'var(--text-muted)';
         statusEl.style.background = '';
     } else {
         if (isAIThinking) {
             const turn = chessGame.turn(); // 'w' or 'b'
             const model = (chessGameMode === 'aivsai') ? (turn === 'w' ? whiteAIMode : blackAIMode) : currentAIMode;
-            statusEl.innerText = model === 'cnn' ? '🧠 CNN calculează...' : '🌲 Minimax calculează...';
+            statusEl.innerText = model === 'cnn' ? '🧠 CNN calculating...' : '🌲 Minimax calculating...';
             statusEl.style.color = 'var(--primary)';
             statusEl.style.background = '';
         } else {
             if (chessGameMode === 'aivsai') {
-                statusEl.innerText = chessGame.turn() === 'w' ? 'Rândul Albului (AI)' : 'Rândul Negrului (AI)';
+                statusEl.innerText = chessGame.turn() === 'w' ? "White's Turn (AI)" : "Black's Turn (AI)";
             } else {
-                statusEl.innerText = 'Rândul tău (Alb)';
+                statusEl.innerText = 'Your Turn (White)';
             }
             if (chessGame.in_check()) {
-                statusEl.innerText += ' — ȘAH!';
+                statusEl.innerText += ' — CHECK!';
                 statusEl.style.color = 'var(--danger)';
             } else {
                 statusEl.style.color = 'var(--accent)';
@@ -141,7 +141,7 @@ function analyzePosition(lastMove = null) {
     fetch('/api/chess/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fen: chessGame.fen(), last_move: move })
+        body: JSON.stringify({ fen: chessGame.fen(), last_move: move, moves: moveHistory })
     })
     .then(r => r.json())
     .then(data => {
@@ -207,16 +207,16 @@ function fetchOpeningDetails() {
 function requestHint() {
     const depth = parseInt(document.getElementById('chessDifficulty').value) || 2;
     const hintBtn = document.querySelector('button[onclick="requestHint()"]');
-    if (hintBtn) hintBtn.textContent = '⏳ Se calculează...';
+    if (hintBtn) hintBtn.textContent = '⏳ Calculating...';
 
     fetch('/api/chess/hint', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fen: chessGame.fen(), depth: Math.min(depth, 2) })
+        body: JSON.stringify({ fen: chessGame.fen(), depth: Math.min(depth, 2), moves: moveHistory })
     })
     .then(r => r.json())
     .then(data => {
-        if (hintBtn) hintBtn.textContent = '💡 Sugerează-mi o mutare';
+        if (hintBtn) hintBtn.textContent = '💡 Suggest a Move';
         if (data.hint) {
             const from = data.hint.substring(0, 2);
             const to   = data.hint.substring(2, 4);
@@ -224,12 +224,12 @@ function requestHint() {
             $('.square-' + from).addClass('highlight-hint-from');
             $('.square-' + to).addClass('highlight-hint-to');
             document.getElementById('moveExplanation').textContent =
-                `💡 Sugestie: mută de pe ${from.toUpperCase()} pe ${to.toUpperCase()}`;
+                `💡 Suggestion: move from ${from.toUpperCase()} to ${to.toUpperCase()}`;
             setTimeout(removeHighlights, 3000);
         }
     })
     .catch(err => {
-        if (hintBtn) hintBtn.textContent = '💡 Sugerează-mi o mutare';
+        if (hintBtn) hintBtn.textContent = '💡 Suggest a Move';
         console.error('Hint error:', err);
     });
 }
@@ -331,7 +331,7 @@ function onSnapEnd() {
 function smartAnalyze() {
     const btn = document.querySelector('button[onclick="smartAnalyze()"]');
     if (btn) {
-        btn.textContent = '⏳ Se analizează...';
+        btn.textContent = '⏳ Analyzing...';
         btn.disabled = true;
     }
 
@@ -341,13 +341,14 @@ function smartAnalyze() {
         body: JSON.stringify({
             fen: chessGame.fen(),
             last_move: lastAIMove,
-            depth: 2
+            depth: 2,
+            moves: moveHistory
         })
     })
     .then(r => r.json())
     .then(data => {
         if (btn) {
-            btn.textContent = '🧠 Analiză Completă AI';
+            btn.textContent = '🧠 Full AI Analysis';
             btn.disabled = false;
         }
 
@@ -422,7 +423,7 @@ function smartAnalyze() {
     })
     .catch(err => {
         if (btn) {
-            btn.textContent = '🧠 Analiză Completă AI';
+            btn.textContent = '🧠 Full AI Analysis';
             btn.disabled = false;
         }
         console.error('Smart analyze error:', err);
@@ -459,7 +460,7 @@ function showOpeningLesson() {
         const lesson = data.lesson || {};
 
         card.style.display = 'block';
-        document.getElementById('lessonTitle').textContent = lesson.title || '📖 Lecție';
+        document.getElementById('lessonTitle').textContent = lesson.title || '📖 Lesson';
 
         let html = '';
         
@@ -480,7 +481,7 @@ function showOpeningLesson() {
             html += `</ul></div>`;
         }
         if (lesson.common_mistakes && lesson.common_mistakes.length > 0) {
-            html += `<div class="lesson-section"><strong>⚠️ Greșeli frecvente:</strong><ul>`;
+            html += `<div class="lesson-section"><strong>⚠️ Common mistakes:</strong><ul>`;
             lesson.common_mistakes.forEach(mistake => {
                 html += `<li>${mistake}</li>`;
             });
@@ -492,7 +493,7 @@ function showOpeningLesson() {
 
         // Show continuations/suggestions
         if (data.suggestions && data.suggestions.length > 0) {
-            html += `<div class="lesson-section"><strong>🔀 Continuări teoretice:</strong><ul>`;
+            html += `<div class="lesson-section"><strong>🔀 Theoretical continuations:</strong><ul>`;
             data.suggestions.forEach(s => {
                 html += `<li class="continuation-item" onclick="highlightPrediction('${s.next_move}')">
                     <strong>${s.eco}</strong> ${s.name} 
@@ -549,7 +550,7 @@ function initImageUpload() {
 
 function processUploadedImage(file) {
     if (!file.type.startsWith('image/')) {
-        alert('Te rog selectează un fișier imagine (PNG, JPG, etc.)');
+        alert('Please select an image file (PNG, JPG, etc.)');
         return;
     }
 
@@ -557,7 +558,7 @@ function processUploadedImage(file) {
     zone.innerHTML = `
         <div class="upload-processing">
             <div class="spinner"></div>
-            <p>🧠 Se analizează imaginea...</p>
+            <p>🧠 Analyzing image...</p>
         </div>
     `;
 
@@ -584,10 +585,10 @@ function processUploadedImage(file) {
                 zone.innerHTML = `
                     <div class="upload-success">
                         <div class="success-icon">✅</div>
-                        <p>Poziție recunoscută!</p>
-                        <p class="confidence-text">Încredere: ${data.confidence}%</p>
+                        <p>Position recognized!</p>
+                        <p class="confidence-text">Confidence: ${data.confidence}%</p>
                         <p class="fen-text">${fenParts[0]}</p>
-                        <button class="btn secondary-btn btn-sm" onclick="resetUploadZone()">📷 Altă imagine</button>
+                        <button class="btn secondary-btn btn-sm" onclick="resetUploadZone()">📷 Another image</button>
                     </div>
                 `;
 
@@ -597,14 +598,14 @@ function processUploadedImage(file) {
                 moveHistory = [];
                 
                 document.getElementById('moveExplanation').textContent = 
-                    `📷 Poziție recunoscută din imagine (încredere: ${data.confidence}%)`;
+                    `📷 Position recognized from image (confidence: ${data.confidence}%)`;
             } else {
                 zone.innerHTML = `
                     <div class="upload-error">
                         <div class="error-icon">❌</div>
-                        <p>Nu am putut recunoaște poziția</p>
-                        <p class="error-text">${data.error || 'Eroare necunoscută'}</p>
-                        <button class="btn secondary-btn btn-sm" onclick="resetUploadZone()">🔄 Încearcă din nou</button>
+                        <p>Could not recognize position</p>
+                        <p class="error-text">${data.error || 'Unknown error'}</p>
+                        <button class="btn secondary-btn btn-sm" onclick="resetUploadZone()">🔄 Try again</button>
                     </div>
                 `;
             }
@@ -614,8 +615,8 @@ function processUploadedImage(file) {
             zone.innerHTML = `
                 <div class="upload-error">
                     <div class="error-icon">❌</div>
-                    <p>Eroare la recunoaștere</p>
-                    <button class="btn secondary-btn btn-sm" onclick="resetUploadZone()">🔄 Încearcă din nou</button>
+                    <p>Recognition error</p>
+                    <button class="btn secondary-btn btn-sm" onclick="resetUploadZone()">🔄 Try again</button>
                 </div>
             `;
         });
@@ -627,8 +628,8 @@ function resetUploadZone() {
     const zone = document.getElementById('imageUploadZone');
     zone.innerHTML = `
         <div class="upload-icon">📷</div>
-        <p>Trage o imagine aici sau <label for="imageFileInput" class="upload-link">alege un fișier</label></p>
-        <p class="upload-hint">Screenshot de pe Chess.com, Lichess, sau orice tablă de șah</p>
+        <p>Drag an image here or <label for="imageFileInput" class="upload-link">choose a file</label></p>
+        <p class="upload-hint">Screenshot from Chess.com, Lichess, or any chess board</p>
         <input type="file" id="imageFileInput" accept="image/*" style="display:none;">
     `;
     // Re-attach file input handler
@@ -670,8 +671,8 @@ function resetChessGame() {
     moveHistory = [];
     removeHighlights();
     updateChessStatus(false);
-    document.getElementById('moveExplanation').textContent = 'Jocul nu a început.';
-    document.getElementById('openingName').textContent = 'Poziție de start';
+    document.getElementById('moveExplanation').textContent = 'Game has not started.';
+    document.getElementById('openingName').textContent = 'Starting Position';
     document.getElementById('openingDetails').style.display = 'none';
     document.getElementById('openingLessonCard').style.display = 'none';
     document.getElementById('predictionsPanel').style.display = 'none';
@@ -679,7 +680,7 @@ function resetChessGame() {
     document.getElementById('whiteCaptured').textContent = '—';
     document.getElementById('blackCaptured').textContent = '—';
     document.getElementById('smartAnalysisContent').innerHTML = 
-        '<p style="font-size:0.85rem; color:var(--text-muted);">Apasă butonul de mai jos pentru analiză completă.</p>';
+        '<p style="font-size:0.85rem; color:var(--text-muted);">Press the button below for full analysis.</p>';
     updateEvalBar(0);
     resetUploadZone();
     stopCNNAnimation();

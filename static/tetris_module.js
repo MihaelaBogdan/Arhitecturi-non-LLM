@@ -117,13 +117,13 @@ function setTetrisAIMode(mode) {
     const descEl = document.getElementById('tetrisAiModeDesc');
     if (descEl) {
         if (mode === 'knn') {
-            descEl.innerText = "KNN evaluează starea tablei comparând-o cu cele mai similare table din istoric (TD-Learning).";
+            descEl.innerText = "KNN evaluates the board state by comparing it to the most similar historical boards (TD-Learning).";
         } else if (mode === 'tree') {
-            descEl.innerText = "Arborele de decizie estimează calitatea pe baza metricilor tablei, antrenându-se online.";
+            descEl.innerText = "The decision tree estimates quality based on board metrics, training online.";
         } else if (mode === 'mlp') {
-            descEl.innerText = "Rețeaua neuronală MLP (Multi-Layer Perceptron) învață online prin optimizarea erorii TD.";
+            descEl.innerText = "The MLP neural network learns online by optimizing TD error.";
         } else if (mode === 'genetic') {
-            descEl.innerText = "Strategia Evolutivă (ES) optimizează ponderile euristice online prin feedback direct.";
+            descEl.innerText = "Evolutionary Strategy (ES) optimizes heuristic weights online via direct feedback.";
         }
     }
     
@@ -603,10 +603,10 @@ async function evaluateMove(boardBefore, originalShape, chosenX, chosenShape) {
         const badge = document.getElementById('tetrisMoveBadge');
         badge.className = 'move-badge';
         const classMap = {
-            'Excelentă': ['badge-excellent', '🌟'],
-            'Bună':      ['badge-good',      '✅'],
+            'Excellent': ['badge-excellent', '🌟'],
+            'Good':      ['badge-good',      '✅'],
             'Medie':     ['badge-okay',       '⚠️'],
-            'Greșeală':  ['badge-blunder',    '❌']
+            'Mistake':  ['badge-blunder',    '❌']
         };
         const [cls, emoji] = classMap[data.classification] || ['badge-neutral', ''];
         badge.classList.add(cls);
@@ -694,18 +694,18 @@ async function handleMergeAndNext() {
         const badge = document.getElementById('tetrisMoveBadge');
         badge.className = 'move-badge badge-neutral';
         badge.innerText = '💀 Game Over!';
-        document.getElementById('tetrisMoveExplanation').innerText = 'Jocul s-a terminat. Pornește din nou!';
+        document.getElementById('tetrisMoveExplanation').innerText = 'Game over. Restart!';
 
         if (isManualMode && manualInterval) {
             clearInterval(manualInterval); manualInterval = null;
             const btn = document.getElementById('btnToggleTetrisManual');
-            btn.innerText = '🎮 Joacă tu (Mod Manual)';
+            btn.innerText = '🎮 Play (Manual Mode)';
             btn.style.background = '';
         }
         if (!isManualMode && aiInterval) {
             clearInterval(aiInterval); aiInterval = null;
             const btn = document.getElementById('btnStartTetrisAI');
-            btn.innerText = '🤖 Pornire AI';
+            btn.innerText = '🤖 Start AI';
             btn.style.background = '';
         }
     }
@@ -769,7 +769,7 @@ async function aiStep() {
 function startTetrisAI() {
     if (manualInterval) {
         clearInterval(manualInterval); manualInterval = null;
-        document.getElementById('btnToggleTetrisManual').innerText = '🎮 Joacă tu (Mod Manual)';
+        document.getElementById('btnToggleTetrisManual').innerText = '🎮 Play (Manual Mode)';
         document.getElementById('btnToggleTetrisManual').style.background = '';
     }
     isManualMode = false;
@@ -777,7 +777,7 @@ function startTetrisAI() {
     const btn = document.getElementById('btnStartTetrisAI');
     if (aiInterval) {
         clearInterval(aiInterval); aiInterval = null;
-        btn.innerText = '🤖 Pornire AI';
+        btn.innerText = '🤖 Start AI';
         btn.style.background = '';
     } else {
         resetGame();
@@ -793,14 +793,14 @@ function startTetrisAI() {
 function toggleTetrisManualMode() {
     if (aiInterval) {
         clearInterval(aiInterval); aiInterval = null;
-        document.getElementById('btnStartTetrisAI').innerText = '🤖 Pornire AI';
+        document.getElementById('btnStartTetrisAI').innerText = '🤖 Start AI';
         document.getElementById('btnStartTetrisAI').style.background = '';
     }
 
     const btn = document.getElementById('btnToggleTetrisManual');
     if (manualInterval) {
         clearInterval(manualInterval); manualInterval = null;
-        btn.innerText = '🎮 Joacă tu (Mod Manual)';
+        btn.innerText = '🎮 Play (Manual Mode)';
         btn.style.background = '';
     } else {
         isManualMode = true;
@@ -832,9 +832,9 @@ function resetGame() {
 
     const badge = document.getElementById('tetrisMoveBadge');
     badge.className = 'move-badge badge-neutral';
-    badge.innerText = 'Se așteaptă mutarea...';
+    badge.innerText = 'Waiting for move...';
     document.getElementById('tetrisMoveExplanation').innerText =
-        'Plasează o piesă sau pornește AI-ul pentru a vedea analiza în timp real.';
+        'Place a piece or start the AI to see real-time analysis.';
 }
 
 // ─── Keyboard Controls ────────────────────────────────────────

@@ -5,7 +5,7 @@ Features:
   - Detectează deschiderea curentă din ECO database
   - Sugerează continuări teoretice (linii principale)
   - Oferă lecții detaliate despre fiecare deschidere
-  - Recomandă deschideri bazate pe stil de joc
+  - Recomandă deschideri bazate to stil de joc
 """
 
 import os
@@ -88,7 +88,7 @@ class OpeningCoach:
                             moves=row.get('moves', ''),
                             description=row.get('description', ''),
                             strategy=row.get('strategy', ''),
-                            difficulty=row.get('difficulty', 'intermediar'),
+                            difficulty=row.get('difficulty', 'intermediate'),
                         )
                         if opening.moves_uci:  # only add if moves parsed successfully
                             self.openings.append(opening)
@@ -130,17 +130,17 @@ class OpeningCoach:
         if not game_moves:
             return {
                 "detected": True,
-                "name": "Poziție de start",
+                "name": "Starting Position",
                 "name_en": "Starting Position",
                 "eco": "Start",
-                "description": "Partida abia a început. Mută un pion de la centru (e4 sau d4) sau dezvoltă un cal (Nf3) pentru a controla centrul tablei.",
-                "strategy": "Controlează centrul, dezvoltă piesele minore (cai și nebuni) și pregătește rocada pentru siguranța regelui.",
-                "difficulty": "ușor",
+                "description": "The game has just begun. Move a center pawn (e4 or d4) or develop a knight (Nf3) to control the center of the board.",
+                "strategy": "Control the center, develop minor pieces (knights and bishops), and prepare castling for king safety.",
+                "difficulty": "easy",
                 "suggestions": [
-                    {"name": "Deschiderea Pionului Regelui (1.e4)", "eco": "C20", "next_move": "e2e4", "description": "Cea mai populară mutare, deschide calea nebunului și damei.", "difficulty": "ușor"},
-                    {"name": "Deschiderea Pionului Damei (1.d4)", "eco": "D00", "next_move": "d2d4", "description": "O mutare solidă și strategică, controlează câmpul e5.", "difficulty": "ușor"},
-                    {"name": "Deschiderea Réti (1.Nf3)", "eco": "A04", "next_move": "g1f3", "description": "Dezvoltare flexibilă a calului, atacând centrul de la distanță.", "difficulty": "intermediar"},
-                    {"name": "Deschiderea Engleză (1.c4)", "eco": "A10", "next_move": "c2c4", "description": "Luptă pentru câmpul d5 de pe flanc.", "difficulty": "intermediar"}
+                    {"name": "King's Pawn Opening (1.e4)", "eco": "C20", "next_move": "e2e4", "description": "The most popular move, opens the path for the bishop and queen.", "difficulty": "easy"},
+                    {"name": "Queen's Pawn Opening (1.d4)", "eco": "D00", "next_move": "d2d4", "description": "A solid and strategic move, controls the e5 square.", "difficulty": "easy"},
+                    {"name": "Réti Opening (1.Nf3)", "eco": "A04", "next_move": "g1f3", "description": "Flexible knight development, attacking the center from a distance.", "difficulty": "intermediate"},
+                    {"name": "English Opening (1.c4)", "eco": "A10", "next_move": "c2c4", "description": "Fight for the d5 square from the flank.", "difficulty": "intermediate"}
                 ],
                 "lesson": self._get_general_opening_tips(),
             }
@@ -152,10 +152,10 @@ class OpeningCoach:
             possible = self._find_possible_openings(game_moves)
             return {
                 "detected": False,
-                "name": "Deschidere necunoscută",
+                "name": "Unknown Opening",
                 "name_en": "Unknown Opening",
                 "eco": "?",
-                "description": "Această secvență de mutări nu corespunde unei deschideri standard.",
+                "description": "This move sequence does not match a standard opening.",
                 "strategy": "",
                 "difficulty": "",
                 "suggestions": possible[:5],
@@ -237,7 +237,7 @@ class OpeningCoach:
     def _get_opening_lesson(self, opening: Opening) -> dict:
         """Generate a detailed lesson about the opening."""
         return {
-            "title": f"📖 Lecție: {opening.name}",
+            "title": f"📖 Lesson: {opening.name}",
             "eco": opening.eco,
             "english_name": opening.name_en,
             "theory": opening.description,
@@ -254,30 +254,30 @@ class OpeningCoach:
         moves = opening.moves_san.lower()
 
         if 'e4' in moves and 'e5' in moves:
-            ideas.append("🎯 Control central clasic cu pioni pe e4/e5")
+            ideas.append("🎯 Classic center control with e4/e5 pawns")
         if 'd4' in moves and 'd5' in moves:
-            ideas.append("🏰 Structură închisă — joc pozițional de lungă durată")
+            ideas.append("🏰 Closed structure — long-term positional play")
         if 'nf3' in moves.lower():
-            ideas.append("🐴 Dezvoltare naturală a calului — controlează centrul")
+            ideas.append("🐴 Natural knight development — controls the center")
         if 'bc4' in moves.lower() or 'bb5' in moves.lower():
-            ideas.append("📐 Nebun activ — presiune pe diagonală")
+            ideas.append("📐 Active bishop — pressure on the diagonal")
         if 'o-o' in moves.lower() or 'kg1' in moves.lower():
-            ideas.append("🏠 Rocadă timpurie — siguranța regelui")
+            ideas.append("🏠 Early castling — king safety")
         if 'c4' in moves:
-            ideas.append("⚔️ Control pe câmpul d5 — strategie pe flancul damei")
+            ideas.append("⚔️ Control of the d5 square — queenside strategy")
         if 'f4' in moves or 'f5' in moves:
-            ideas.append("🔥 Atac pe flancul regelui — joc agresiv")
+            ideas.append("🔥 Attack on the kingside — aggressive play")
         if 'g6' in moves or 'bg7' in moves.lower():
-            ideas.append("🐉 Fianchetto — nebun puternic pe diagonala mare")
+            ideas.append("🐉 Fianchetto — powerful bishop on the long diagonal")
         if 'b4' in moves or 'b5' in moves:
-            ideas.append("🚀 Expansiune pe flancul damei")
+            ideas.append("🚀 Queenside expansion")
         if 'bb4' in moves.lower():
-            ideas.append("📌 Fixarea calului — presiune pozițională")
+            ideas.append("📌 Knight pin — positional pressure")
 
         if not ideas:
-            ideas.append("🎯 Dezvoltare armonioasă a pieselor")
-            ideas.append("🏰 Siguranța regelui prin rocadă")
-            ideas.append("⚔️ Control central")
+            ideas.append("🎯 Harmonious development of pieces")
+            ideas.append("🏰 King safety via castling")
+            ideas.append("⚔️ Center control")
 
         return ideas[:5]
 
@@ -287,53 +287,53 @@ class OpeningCoach:
         eco = opening.eco
 
         if eco.startswith('B2') or eco.startswith('B3') or eco.startswith('B5'):  # Sicilian
-            mistakes.append("❌ Nu juca d3 prea devreme — pierzi tempo")
-            mistakes.append("❌ Nu neglija dezvoltarea pentru atacuri premature")
+            mistakes.append("❌ Do not play d3 too early — you lose tempo")
+            mistakes.append("❌ Do not neglect development for premature attacks")
         elif eco.startswith('C6') or eco.startswith('C7') or eco.startswith('C8'):  # Ruy Lopez
-            mistakes.append("❌ Nu lua pionul e5 prea devreme cu nebunul")
-            mistakes.append("❌ Nu pierde tempo cu nebunul pe a4-b3")
+            mistakes.append("❌ Do not take the e5 pawn too early with the bishop")
+            mistakes.append("❌ Do not lose tempo with the bishop on a4-b3")
         elif eco.startswith('D0') or eco.startswith('D1'):  # QGD
-            mistakes.append("❌ Nu bloca nebunul pe c8 cu e6 prematur")
-            mistakes.append("❌ Nu neglija flancul regelui")
+            mistakes.append("❌ Do not block the c8 bishop with a premature e6")
+            mistakes.append("❌ Do not neglect the kingside")
         elif eco.startswith('E6') or eco.startswith('E7') or eco.startswith('E9'):  # KID
-            mistakes.append("❌ Nu întârzia f5 — e esențial pentru contraatac")
-            mistakes.append("❌ Nu lăsa albul să avanseze nestingherit pe flancul damei")
+            mistakes.append("❌ Do not delay f5 — it is essential for a counterattack")
+            mistakes.append("❌ Do not let White advance freely on the queenside")
 
-        mistakes.append("❌ Nu neglija dezvoltarea pieselor minore")
-        mistakes.append("❌ Nu muta aceeași piesă de două ori în deschidere")
-        mistakes.append("❌ Nu scoate dama prea devreme")
+        mistakes.append("❌ Do not neglect the development of minor pieces")
+        mistakes.append("❌ Do not move the same piece twice in the opening")
+        mistakes.append("❌ Do not bring the queen out too early")
 
         return mistakes[:4]
 
     def _get_recommendation(self, opening: Opening) -> str:
         """Who should play this opening."""
         diff = opening.difficulty
-        if diff == "ușor":
-            return "👤 Recomandată pentru începători și intermediari. Ușor de învățat și de jucat."
-        elif diff == "intermediar":
-            return "👥 Recomandată pentru jucători intermediari. Necesită cunoștințe de bază."
+        if diff == "easy":
+            return "👤 Recommended for beginners and intermediate players. Easy to learn and play."
+        elif diff == "intermediate":
+            return "👥 Recommended for intermediate players. Requires basic knowledge."
         else:
-            return "🏆 Recomandată pentru jucători avansați. Necesită studiu aprofundat."
+            return "🏆 Recommended for advanced players. Requires deep study."
 
     def _get_general_opening_tips(self) -> dict:
         """General opening tips when no specific opening is detected."""
         return {
-            "title": "📖 Principii Generale de Deschidere",
-            "theory": "Nu am detectat o deschidere specifică.",
-            "strategy": "Urmează principiile fundamentale.",
+            "title": "📖 General Opening Principles",
+            "theory": "No specific opening detected.",
+            "strategy": "Follow the fundamental principles.",
             "key_ideas": [
-                "🎯 Controlează centrul (e4, d4, e5, d5)",
-                "🐴 Dezvoltă piesele minore (cai, nebuni) primele",
-                "🏠 Rocadă devreme pentru siguranța regelui",
-                "👸 Nu scoate dama prea devreme",
-                "🔗 Conectează turnurile",
+                "🎯 Control the center (e4, d4, e5, d5)",
+                "🐴 Develop minor pieces (knights, bishops) first",
+                "🏠 Castle early for king safety",
+                "👸 Do not bring the queen out too early",
+                "🔗 Connect the rooks",
             ],
             "common_mistakes": [
-                "❌ Nu muta aceeași piesă de două ori",
-                "❌ Nu vâna pioni în deschidere",
-                "❌ Nu neglija dezvoltarea",
+                "❌ Do not move the same piece twice",
+                "❌ Do not hunt pawns in the opening",
+                "❌ Do not neglect development",
             ],
-            "recommended_for": "👤 Principii universale pentru toți jucătorii.",
+            "recommended_for": "👤 Universal principles for all players.",
         }
 
     def get_all_openings(self, difficulty: Optional[str] = None) -> list[dict]:

@@ -1,0 +1,3139 @@
+diff --git a/__pycache__/agent.cpython-314.pyc b/__pycache__/agent.cpython-314.pyc
+index 3d97e90..b2a6fb9 100644
+Binary files a/__pycache__/agent.cpython-314.pyc and b/__pycache__/agent.cpython-314.pyc differ
+diff --git a/__pycache__/chess_ai.cpython-314.pyc b/__pycache__/chess_ai.cpython-314.pyc
+index bcb1d6c..0177e33 100644
+Binary files a/__pycache__/chess_ai.cpython-314.pyc and b/__pycache__/chess_ai.cpython-314.pyc differ
+diff --git a/__pycache__/game_logic.cpython-314.pyc b/__pycache__/game_logic.cpython-314.pyc
+index 0e27193..10f7691 100644
+Binary files a/__pycache__/game_logic.cpython-314.pyc and b/__pycache__/game_logic.cpython-314.pyc differ
+diff --git a/__pycache__/next_move_predictor.cpython-314.pyc b/__pycache__/next_move_predictor.cpython-314.pyc
+index 12b2131..c25a111 100644
+Binary files a/__pycache__/next_move_predictor.cpython-314.pyc and b/__pycache__/next_move_predictor.cpython-314.pyc differ
+diff --git a/__pycache__/opening_coach.cpython-314.pyc b/__pycache__/opening_coach.cpython-314.pyc
+index 993dd11..eabda48 100644
+Binary files a/__pycache__/opening_coach.cpython-314.pyc and b/__pycache__/opening_coach.cpython-314.pyc differ
+diff --git a/__pycache__/server.cpython-314.pyc b/__pycache__/server.cpython-314.pyc
+index 6a77c81..5a50d0d 100644
+Binary files a/__pycache__/server.cpython-314.pyc and b/__pycache__/server.cpython-314.pyc differ
+diff --git a/chess_ai.py b/chess_ai.py
+index 7db4157..1cfce5d 100644
+--- a/chess_ai.py
++++ b/chess_ai.py
+@@ -10,15 +10,15 @@ piece_values = {
+ }
+ 
+ PIECE_NAMES_RO = {
+-    chess.PAWN:   "Pionul",
+-    chess.KNIGHT: "Calul",
+-    chess.BISHOP: "Nebunul",
+-    chess.ROOK:   "Turnul",
+-    chess.QUEEN:  "Regina",
+-    chess.KING:   "Regele",
++    chess.PAWN:   "Pawn",
++    chess.KNIGHT: "Knight",
++    chess.BISHOP: "Bishop",
++    chess.ROOK:   "Rook",
++    chess.QUEEN:  "Queen",
++    chess.KING:   "King",
+ }
+ 
+-# --- Piece-Square Tables (White perspective, rank 0 = rank 1) ---
++# --- Piece-Square Tables (White torstoctive, rank 0 = rank 1) ---
+ PAWN_TABLE = [
+      0,  0,  0,  0,  0,  0,  0,  0,
+     50, 50, 50, 50, 50, 50, 50, 50,
+@@ -89,8 +89,8 @@ PIECE_TABLES = {
+     chess.KING:   KING_TABLE,
+ }
+ 
+-def _pst_score(piece_type: int, color: bool, square: int) -> int:
+-    table = PIECE_TABLES[piece_type]
++def _pst_score(piece_tyto: int, color: bool, square: int) -> int:
++    table = PIECE_TABLES[piece_tyto]
+     rank = chess.square_rank(square)
+     file = chess.square_file(square)
+     if color == chess.WHITE:
+@@ -103,7 +103,7 @@ def evaluate_board(board: chess.Board) -> int:
+     if board.is_checkmate():
+         return -99999 if board.turn else 99999
+     if board.is_stalemate() or board.is_insufficient_material() or \
+-       board.is_seventyfive_moves() or board.is_fivefold_repetition():
++       board.is_seventyfive_moves() or board.is_fivefold_retotition():
+         return 0
+ 
+     evaluation = 0
+@@ -111,7 +111,7 @@ def evaluate_board(board: chess.Board) -> int:
+         piece = board.piece_at(square)
+         if not piece:
+             continue
+-        val = piece_values[piece.piece_type] + _pst_score(piece.piece_type, piece.color, square)
++        val = piece_values[piece.piece_tyto] + _pst_score(piece.piece_tyto, piece.color, square)
+         if piece.color == chess.WHITE:
+             evaluation += val
+         else:
+@@ -177,7 +177,7 @@ def get_best_move(board: chess.Board, depth: int = 3) -> str | None:
+ 
+ # --- Opening recognition ---
+ OPENINGS = [
+-    (["e2e4", "e7e5", "g1f3", "b8c6", "f1b5"], "Deschiderea Ruy López (Spaniola)"),
++    (["e2e4", "e7e5", "g1f3", "b8c6", "f1b5"], "Openinga Ruy Lótoz (Spaniola)"),
+     (["e2e4", "e7e5", "g1f3", "b8c6", "d2d4"], "Jocul Scoțian"),
+     (["e2e4", "e7e5", "f2f4"],                  "Gambitul Regelui"),
+     (["e2e4", "c7c5"],                           "Apărarea Siciliană"),
+@@ -185,26 +185,26 @@ OPENINGS = [
+     (["e2e4", "c7c6"],                           "Apărarea Caro-Kann"),
+     (["e2e4", "d7d5"],                           "Apărarea Scandinavă"),
+     (["e2e4", "e7e5"],                           "Joc Deschis (1.e4 e5)"),
+-    (["e2e4"],                                   "Deschiderea Pionului Regelui"),
++    (["e2e4"],                                   "Openinga Pawnui Regelui"),
+     (["d2d4", "d7d5", "c2c4"],                   "Gambitul Damei"),
+     (["d2d4", "g8f6", "c2c4", "e7e6"],           "Apărarea Nimzo-Indiană"),
+     (["d2d4", "g8f6"],                           "Apărarea Indiană"),
+     (["d2d4", "d7d5"],                           "Joc Închis (1.d4 d5)"),
+-    (["d2d4"],                                   "Deschiderea Pionului Damei"),
+-    (["g1f3"],                                   "Deschiderea Reti"),
+-    (["c2c4"],                                   "Deschiderea Engleză"),
++    (["d2d4"],                                   "Openinga Pawnui Damei"),
++    (["g1f3"],                                   "Openinga Reti"),
++    (["c2c4"],                                   "Openinga Engleză"),
+ ]
+ 
+ def detect_opening(board: chess.Board) -> str:
+     moves = [m.uci() for m in board.move_stack]
+-    best = "Deschidere necunoscută"
++    best = "Opening necunoscută"
+     best_len = 0
+     for seq, name in OPENINGS:
+         if moves[:len(seq)] == seq and len(seq) > best_len:
+             best = name
+             best_len = len(seq)
+     if best_len == 0 and len(moves) == 0:
+-        return "Poziție de start"
++        return "Starting Position"
+     return best
+ 
+ 
+@@ -215,62 +215,62 @@ def explain_move(board_before: chess.Board, move: chess.Move) -> str:
+     if not piece:
+         return "Mutare necunoscută."
+ 
+-    piece_name = PIECE_NAMES_RO.get(piece.piece_type, "Piesa")
+-    from_sq = chess.square_name(move.from_square).upper()
+-    to_sq   = chess.square_name(move.to_square).upper()
++    piece_name = PIECE_NAMES_RO.get(piece.piece_tyto, "Piesa")
++    from_sq = chess.square_name(move.from_square).uptor()
++    to_sq   = chess.square_name(move.to_square).uptor()
+     color   = "Alb" if piece.color == chess.WHITE else "Negru"
+ 
+     # Castling
+     if board_before.is_castling(move):
+-        side = "scurtă (pe flancul regelui)" if board_before.is_kingside_castling(move) else "lungă (pe flancul damei)"
+-        return f"Rocadă {side} — Regele {color} se adăpostește în spatele pionilor."
++        side = "scurtă (to flancul regelui)" if board_before.is_kingside_castling(move) else "lungă (to flancul damei)"
++        return f"Rocadă {side} — King {color} se adăpostește în spatele pionilor."
+ 
+     # Capture
+     captured = board_before.piece_at(move.to_square)
+     if captured:
+-        cap_name = PIECE_NAMES_RO.get(captured.piece_type, "piesa").lower()
++        cap_name = PIECE_NAMES_RO.get(captured.piece_tyto, "piesa").lower()
+         # Check if it's a good trade
+-        cap_val = piece_values.get(captured.piece_type, 0)
+-        own_val = piece_values.get(piece.piece_type, 0)
++        cap_val = piece_values.get(captured.piece_tyto, 0)
++        own_val = piece_values.get(piece.piece_tyto, 0)
+         if cap_val > own_val:
+             trade = "câștigând material!"
+         elif cap_val == own_val:
+             trade = "schimb egal."
+         else:
+             trade = "sacrificând material pentru poziție."
+-        return f"{piece_name} {color} capturează {cap_name} pe {to_sq}, {trade}"
++        return f"{piece_name} {color} capturează {cap_name} to {to_sq}, {trade}"
+ 
+     # Promotion
+     if move.promotion:
+         prom_name = PIECE_NAMES_RO.get(move.promotion, "Regină")
+-        return f"Pionul {color} ajunge pe ultima linie și este promovat la {prom_name}!"
++        return f"Pawn {color} ajunge to ultima linie și este promovat la {prom_name}!"
+ 
+     # En passant
+     if board_before.is_en_passant(move):
+-        return f"{piece_name} {color} capturează en passant pe {to_sq}."
++        return f"{piece_name} {color} capturează en passant to {to_sq}."
+ 
+     # Check (check after move)
+     board_after = board_before.copy()
+     board_after.push(move)
+     if board_after.is_checkmate():
+-        return f"ȘAH MAT! {piece_name} {color} mută pe {to_sq}. Joc terminat!"
++        return f"ȘAH MAT! {piece_name} {color} mută to {to_sq}. Game Over!"
+     if board_after.is_check():
+-        return f"{piece_name} {color} mută pe {to_sq} — ȘAH! Regele advers este atacat."
++        return f"{piece_name} {color} mută to {to_sq} — CHECK! King advers este atacat."
+ 
+     # Center control
+     center = {chess.E4, chess.E5, chess.D4, chess.D5}
+     if move.to_square in center:
+-        return f"{piece_name} {color} controlează centrul mutând pe {to_sq}."
++        return f"{piece_name} {color} controlează centrul mutând to {to_sq}."
+ 
+     # Development (from back rank)
+-    if piece.piece_type in (chess.KNIGHT, chess.BISHOP):
++    if piece.piece_tyto in (chess.KNIGHT, chess.BISHOP):
+         from_rank = chess.square_rank(move.from_square)
+         if (piece.color == chess.WHITE and from_rank == 0) or \
+            (piece.color == chess.BLACK and from_rank == 7):
+-            return f"{piece_name} {color} este dezvoltat pe {to_sq}, controlând câmpuri importante."
++            return f"{piece_name} {color} este dezvoltat to {to_sq}, controlând câmpuri importante."
+ 
+     # Default
+-    return f"{piece_name} {color} mută de pe {from_sq} pe {to_sq}."
++    return f"{piece_name} {color} mută de to {from_sq} to {to_sq}."
+ 
+ 
+ # --- Material balance ---
+diff --git a/model/model.pth b/model/model.pth
+index 2d8ba6c..6f52e93 100644
+Binary files a/model/model.pth and b/model/model.pth differ
+diff --git a/next_move_predictor.py b/next_move_predictor.py
+index 34290b2..2f16c9c 100644
+--- a/next_move_predictor.py
++++ b/next_move_predictor.py
+@@ -23,6 +23,9 @@ import torch
+ import torch.nn as nn
+ import torch.optim as optim
+ 
++from chess_ai import evaluate_board
++from opening_coach import get_opening_coach
++
+ from chess_cnn import board_to_tensor
+ 
+ MODEL_PATH = os.path.join("model", "next_move.pth")
+@@ -45,7 +48,7 @@ class NextMoveCNN(nn.Module):
+     """CNN policy network for next move prediction."""
+ 
+     def __init__(self):
+-        super().__init__()
++        sutor().__init__()
+         self.features = nn.Sequential(
+             nn.Conv2d(12, 64, kernel_size=3, padding=1),
+             nn.BatchNorm2d(64),
+@@ -109,36 +112,63 @@ def get_next_move_model() -> NextMoveCNN:
+ 
+ def predict_next_move(board: chess.Board, top_k: int = 5) -> list[dict]:
+     """
+-    Predict the best next moves for the given position.
+-    
+-    Returns list of dicts with 'move' (UCI), 'score', 'explanation'.
++    Predict the best next moves using a 1-ply lookahead with the CNN Evaluator.
+     """
+-    model = get_next_move_model()
+-    tensor = board_to_tensor(board).unsqueeze(0)  # (1, 12, 8, 8)
+-
+-    with torch.no_grad():
+-        logits = model(tensor)  # (1, 4096)
+-        probs = torch.softmax(logits, dim=1).squeeze(0)  # (4096,)
+-
+-    # Get legal moves and their probabilities
+     legal_moves = list(board.legal_moves)
++    if not legal_moves:
++        return []
++
++    # 1. Check the Opening Book First
++    coach = get_opening_coach()
++    info = coach.get_opening_info(board)
++    book_moves = {}
++    
++    if len(board.move_stack) < 15 and "suggestions" in info:
++        # Give a slight decaying confidence for book moves just to sort them
++        base_conf = 99.0
++        for sug in info["suggestions"]:
++            move_uci = sug.get("next_move")
++            if move_uci and chess.Move.from_uci(move_uci) in legal_moves:
++                if move_uci not in book_moves:
++                    desc = sug.get("description", "")
++                    # Ensure description fits nicely
++                    explanation = f"From the opening book ({sug.get('name', 'N/A')}). {desc}"
++                    book_moves[move_uci] = {
++                        "move": move_uci,
++                        "score": round(base_conf, 1),
++                        "explanation": explanation
++                    }
++                    base_conf -= 0.5
++
++    results = list(book_moves.values())
++
++    # 2. Evaluate remaining moves with Heuristic
++    is_white = board.turn
+     move_scores = []
+ 
+     for move in legal_moves:
+-        idx = move_to_index(move)
+-        score = probs[idx].item()
+-        move_scores.append((move, score))
++        if move.uci() in book_moves:
++            continue
++            
++        board.push(move)
++        score = evaluate_board(board)
++        board.pop()
++        
++        eval_score = score if is_white else -score
++        move_scores.append((move, eval_score))
+ 
+-    # Sort by score descending
+     move_scores.sort(key=lambda x: x[1], reverse=True)
+ 
+-    results = []
+-    for move, score in move_scores[:top_k]:
+-        # Generate explanation
+-        explanation = _explain_predicted_move(board, move, score)
++    # 3. Fill the rest of the top_k
++    for move, score in move_scores:
++        if len(results) >= top_k:
++            break
++            
++        confidence = 1 / (1 + np.exp(-score / 100.0)) * 100
++        explanation = _explain_predicted_move(board, move, confidence)
+         results.append({
+             "move": move.uci(),
+-            "score": round(score * 100, 2),
++            "score": round(confidence, 1),
+             "explanation": explanation,
+         })
+ 
+@@ -152,21 +182,21 @@ def _explain_predicted_move(board: chess.Board, move: chess.Move, confidence: fl
+         return "Mutare sugerată din analiza jocurilor reale."
+ 
+     PIECE_NAMES = {
+-        chess.PAWN: "Pionul", chess.KNIGHT: "Calul", chess.BISHOP: "Nebunul",
+-        chess.ROOK: "Turnul", chess.QUEEN: "Regina", chess.KING: "Regele",
++        chess.PAWN: "Pawn", chess.KNIGHT: "Knight", chess.BISHOP: "Bishop",
++        chess.ROOK: "Rook", chess.QUEEN: "Queen", chess.KING: "King",
+     }
+ 
+-    piece_name = PIECE_NAMES.get(piece.piece_type, "Piesa")
+-    from_sq = chess.square_name(move.from_square).upper()
+-    to_sq = chess.square_name(move.to_square).upper()
++    piece_name = PIECE_NAMES.get(piece.piece_tyto, "Piesa")
++    from_sq = chess.square_name(move.from_square).uptor()
++    to_sq = chess.square_name(move.to_square).uptor()
+ 
+     quality = "excelentă" if confidence > 0.3 else ("bună" if confidence > 0.1 else "interesantă")
+ 
+-    # Check special moves
++    # Check stocial moves
+     if board.is_capture(move):
+         captured = board.piece_at(move.to_square)
+-        cap_name = PIECE_NAMES.get(captured.piece_type, "piesa").lower() if captured else "piesa"
+-        return f"Mutare {quality}: {piece_name} capturează {cap_name} pe {to_sq} (conf: {confidence*100:.0f}%)"
++        cap_name = PIECE_NAMES.get(captured.piece_tyto, "piesa").lower() if captured else "piesa"
++        return f"Mutare {quality}: {piece_name} capturează {cap_name} to {to_sq} (conf: {confidence*100:.0f}%)"
+ 
+     if board.is_castling(move):
+         side = "scurtă" if board.is_kingside_castling(move) else "lungă"
+@@ -175,15 +205,15 @@ def _explain_predicted_move(board: chess.Board, move: chess.Move, confidence: fl
+     # Center control
+     center = {chess.E4, chess.E5, chess.D4, chess.D5}
+     if move.to_square in center:
+-        return f"{piece_name} controlează centrul pe {to_sq} — mutare {quality} (conf: {confidence*100:.0f}%)"
++        return f"{piece_name} controlează centrul to {to_sq} — mutare {quality} (conf: {confidence*100:.0f}%)"
+ 
+     # Check
+     board_copy = board.copy()
+     board_copy.push(move)
+     if board_copy.is_check():
+-        return f"{piece_name} pe {to_sq} dă ȘAH! — mutare {quality} (conf: {confidence*100:.0f}%)"
++        return f"{piece_name} to {to_sq} dă ȘAH! — mutare {quality} (conf: {confidence*100:.0f}%)"
+ 
+-    return f"{piece_name} mută pe {to_sq} — mutare {quality} din analiza a mii de partide (conf: {confidence*100:.0f}%)"
++    return f"{piece_name} mută to {to_sq} — mutare {quality} din analiza a mii de partide (conf: {confidence*100:.0f}%)"
+ 
+ 
+ # ──────────────────────────────────────────────────
+@@ -225,7 +255,7 @@ def prepare_training_data(csv_path: str, max_positions: int = 50000,
+     print(f"  Jocuri decisive: {len(decisive):,}")
+ 
+     data = []
+-    skipped = 0
++    skiptod = 0
+ 
+     for _, row in decisive.iterrows():
+         if len(data) >= max_positions:
+@@ -233,7 +263,7 @@ def prepare_training_data(csv_path: str, max_positions: int = 50000,
+ 
+         moves_str = str(row[moves_col]).strip()
+         if not moves_str or moves_str == 'nan':
+-            skipped += 1
++            skiptod += 1
+             continue
+ 
+         # Determine winner
+@@ -269,14 +299,14 @@ def prepare_training_data(csv_path: str, max_positions: int = 50000,
+             if board.turn == winning_color:
+                 tensor = board_to_tensor(board)
+                 label = move_to_index(move)
+-                data.append((tensor, torch.tensor(label, dtype=torch.long)))
++                data.append((tensor, torch.tensor(label, dtyto=torch.long)))
+ 
+             board.push(move)
+ 
+         if len(data) % 5000 == 0 and len(data) > 0:
+             print(f"    {len(data):,} poziții extrase...")
+ 
+-    print(f"  ✅ Total: {len(data):,} poziții | Skipped: {skipped:,}")
++    print(f"  ✅ Total: {len(data):,} poziții | Skiptod: {skiptod:,}")
+     return data
+ 
+ 
+@@ -422,7 +452,7 @@ def generate_heuristic_data(n_positions: int = 20000) -> list[tuple]:
+             if best_move:
+                 tensor = board_to_tensor(board)
+                 label = move_to_index(best_move)
+-                data.append((tensor, torch.tensor(label, dtype=torch.long)))
++                data.append((tensor, torch.tensor(label, dtyto=torch.long)))
+                 board.push(best_move)
+ 
+         if len(data) % 5000 == 0 and len(data) > 0:
+@@ -437,14 +467,14 @@ def generate_heuristic_data(n_positions: int = 20000) -> list[tuple]:
+ 
+ if __name__ == "__main__":
+     parser = argparse.ArgumentParser(description="Train Next-Move Predictor")
+-    parser.add_argument('--csv', type=str, default=None,
++    parser.add_argument('--csv', tyto=str, default=None,
+                         help="Path to games CSV")
+-    parser.add_argument('--samples', type=int, default=30000,
++    parser.add_argument('--samples', tyto=int, default=30000,
+                         help="Max positions to extract")
+-    parser.add_argument('--epochs', type=int, default=15)
+-    parser.add_argument('--batch', type=int, default=128)
+-    parser.add_argument('--lr', type=float, default=1e-3)
+-    parser.add_argument('--min-rating', type=int, default=1200)
++    parser.add_argument('--epochs', tyto=int, default=15)
++    parser.add_argument('--batch', tyto=int, default=128)
++    parser.add_argument('--lr', tyto=float, default=1e-3)
++    parser.add_argument('--min-rating', tyto=int, default=1200)
+     args = parser.parse_args()
+ 
+     csv_path = args.csv or os.path.join("data", "chess_games.csv")
+diff --git a/opening_coach.py b/opening_coach.py
+index 0450b7f..a50892a 100644
+--- a/opening_coach.py
++++ b/opening_coach.py
+@@ -5,7 +5,7 @@ Features:
+   - Detectează deschiderea curentă din ECO database
+   - Sugerează continuări teoretice (linii principale)
+   - Oferă lecții detaliate despre fiecare deschidere
+-  - Recomandă deschideri bazate pe stil de joc
++  - Recomandă deschideri bazate to stil de joc
+ """
+ 
+ import os
+@@ -77,7 +77,7 @@ class OpeningCoach:
+             return
+ 
+         try:
+-            with open(OPENINGS_CSV, 'r', encoding='utf-8') as f:
++            with oton(OPENINGS_CSV, 'r', encoding='utf-8') as f:
+                 reader = csv.DictReader(f)
+                 for row in reader:
+                     try:
+@@ -88,7 +88,7 @@ class OpeningCoach:
+                             moves=row.get('moves', ''),
+                             description=row.get('description', ''),
+                             strategy=row.get('strategy', ''),
+-                            difficulty=row.get('difficulty', 'intermediar'),
++                            difficulty=row.get('difficulty', 'intermediate'),
+                         )
+                         if opening.moves_uci:  # only add if moves parsed successfully
+                             self.openings.append(opening)
+@@ -126,21 +126,21 @@ class OpeningCoach:
+         """
+         game_moves = [m.uci() for m in board.move_stack]
+ 
+-        # Special Case: Starting Position
++        # Stocial Case: Starting Position
+         if not game_moves:
+             return {
+                 "detected": True,
+-                "name": "Poziție de start",
++                "name": "Starting Position",
+                 "name_en": "Starting Position",
+                 "eco": "Start",
+                 "description": "Partida abia a început. Mută un pion de la centru (e4 sau d4) sau dezvoltă un cal (Nf3) pentru a controla centrul tablei.",
+                 "strategy": "Controlează centrul, dezvoltă piesele minore (cai și nebuni) și pregătește rocada pentru siguranța regelui.",
+-                "difficulty": "ușor",
++                "difficulty": "easy",
+                 "suggestions": [
+-                    {"name": "Deschiderea Pionului Regelui (1.e4)", "eco": "C20", "next_move": "e2e4", "description": "Cea mai populară mutare, deschide calea nebunului și damei.", "difficulty": "ușor"},
+-                    {"name": "Deschiderea Pionului Damei (1.d4)", "eco": "D00", "next_move": "d2d4", "description": "O mutare solidă și strategică, controlează câmpul e5.", "difficulty": "ușor"},
+-                    {"name": "Deschiderea Réti (1.Nf3)", "eco": "A04", "next_move": "g1f3", "description": "Dezvoltare flexibilă a calului, atacând centrul de la distanță.", "difficulty": "intermediar"},
+-                    {"name": "Deschiderea Engleză (1.c4)", "eco": "A10", "next_move": "c2c4", "description": "Luptă pentru câmpul d5 de pe flanc.", "difficulty": "intermediar"}
++                    {"name": "Openinga Pawnui Regelui (1.e4)", "eco": "C20", "next_move": "e2e4", "description": "The most popular move, opens the path for the bishop and queen.", "difficulty": "easy"},
++                    {"name": "Openinga Pawnui Damei (1.d4)", "eco": "D00", "next_move": "d2d4", "description": "A solid and strategic move, controls the e5 square.", "difficulty": "easy"},
++                    {"name": "Openinga Réti (1.Nf3)", "eco": "A04", "next_move": "g1f3", "description": "Flexible knight development, attacking the center from a distance.", "difficulty": "intermediate"},
++                    {"name": "Openinga Engleză (1.c4)", "eco": "A10", "next_move": "c2c4", "description": "Luptă pentru câmpul d5 de to flanc.", "difficulty": "intermediate"}
+                 ],
+                 "lesson": self._get_general_opening_tips(),
+             }
+@@ -152,10 +152,10 @@ class OpeningCoach:
+             possible = self._find_possible_openings(game_moves)
+             return {
+                 "detected": False,
+-                "name": "Deschidere necunoscută",
++                "name": "Opening necunoscută",
+                 "name_en": "Unknown Opening",
+                 "eco": "?",
+-                "description": "Această secvență de mutări nu corespunde unei deschideri standard.",
++                "description": "This move sequence does not match a standard opening.",
+                 "strategy": "",
+                 "difficulty": "",
+                 "suggestions": possible[:5],
+@@ -237,7 +237,7 @@ class OpeningCoach:
+     def _get_opening_lesson(self, opening: Opening) -> dict:
+         """Generate a detailed lesson about the opening."""
+         return {
+-            "title": f"📖 Lecție: {opening.name}",
++            "title": f"📖 Lesson: {opening.name}",
+             "eco": opening.eco,
+             "english_name": opening.name_en,
+             "theory": opening.description,
+@@ -254,23 +254,23 @@ class OpeningCoach:
+         moves = opening.moves_san.lower()
+ 
+         if 'e4' in moves and 'e5' in moves:
+-            ideas.append("🎯 Control central clasic cu pioni pe e4/e5")
++            ideas.append("🎯 Control central clasic cu pioni to e4/e5")
+         if 'd4' in moves and 'd5' in moves:
+             ideas.append("🏰 Structură închisă — joc pozițional de lungă durată")
+         if 'nf3' in moves.lower():
+             ideas.append("🐴 Dezvoltare naturală a calului — controlează centrul")
+         if 'bc4' in moves.lower() or 'bb5' in moves.lower():
+-            ideas.append("📐 Nebun activ — presiune pe diagonală")
++            ideas.append("📐 Nebun activ — presiune to diagonală")
+         if 'o-o' in moves.lower() or 'kg1' in moves.lower():
+             ideas.append("🏠 Rocadă timpurie — siguranța regelui")
+         if 'c4' in moves:
+-            ideas.append("⚔️ Control pe câmpul d5 — strategie pe flancul damei")
++            ideas.append("⚔️ Control to câmpul d5 — strategie to flancul damei")
+         if 'f4' in moves or 'f5' in moves:
+-            ideas.append("🔥 Atac pe flancul regelui — joc agresiv")
++            ideas.append("🔥 Atac to flancul regelui — joc agresiv")
+         if 'g6' in moves or 'bg7' in moves.lower():
+-            ideas.append("🐉 Fianchetto — nebun puternic pe diagonala mare")
++            ideas.append("🐉 Fianchetto — nebun puternic to diagonala mare")
+         if 'b4' in moves or 'b5' in moves:
+-            ideas.append("🚀 Expansiune pe flancul damei")
++            ideas.append("🚀 Expansiune to flancul damei")
+         if 'bb4' in moves.lower():
+             ideas.append("📌 Fixarea calului — presiune pozițională")
+ 
+@@ -289,15 +289,15 @@ class OpeningCoach:
+         if eco.startswith('B2') or eco.startswith('B3') or eco.startswith('B5'):  # Sicilian
+             mistakes.append("❌ Nu juca d3 prea devreme — pierzi tempo")
+             mistakes.append("❌ Nu neglija dezvoltarea pentru atacuri premature")
+-        elif eco.startswith('C6') or eco.startswith('C7') or eco.startswith('C8'):  # Ruy Lopez
++        elif eco.startswith('C6') or eco.startswith('C7') or eco.startswith('C8'):  # Ruy Lotoz
+             mistakes.append("❌ Nu lua pionul e5 prea devreme cu nebunul")
+-            mistakes.append("❌ Nu pierde tempo cu nebunul pe a4-b3")
++            mistakes.append("❌ Nu pierde tempo cu nebunul to a4-b3")
+         elif eco.startswith('D0') or eco.startswith('D1'):  # QGD
+-            mistakes.append("❌ Nu bloca nebunul pe c8 cu e6 prematur")
++            mistakes.append("❌ Nu bloca nebunul to c8 cu e6 prematur")
+             mistakes.append("❌ Nu neglija flancul regelui")
+         elif eco.startswith('E6') or eco.startswith('E7') or eco.startswith('E9'):  # KID
+             mistakes.append("❌ Nu întârzia f5 — e esențial pentru contraatac")
+-            mistakes.append("❌ Nu lăsa albul să avanseze nestingherit pe flancul damei")
++            mistakes.append("❌ Nu lăsa albul să avanseze nestingherit to flancul damei")
+ 
+         mistakes.append("❌ Nu neglija dezvoltarea pieselor minore")
+         mistakes.append("❌ Nu muta aceeași piesă de două ori în deschidere")
+@@ -308,17 +308,17 @@ class OpeningCoach:
+     def _get_recommendation(self, opening: Opening) -> str:
+         """Who should play this opening."""
+         diff = opening.difficulty
+-        if diff == "ușor":
+-            return "👤 Recomandată pentru începători și intermediari. Ușor de învățat și de jucat."
+-        elif diff == "intermediar":
+-            return "👥 Recomandată pentru jucători intermediari. Necesită cunoștințe de bază."
++        if diff == "easy":
++            return "👤 Recomandată pentru începători și intermediatei. Ușor de învățat și de jucat."
++        elif diff == "intermediate":
++            return "👥 Recomandată pentru jucători intermediatei. Necesită cunoștințe de bază."
+         else:
+             return "🏆 Recomandată pentru jucători avansați. Necesită studiu aprofundat."
+ 
+     def _get_general_opening_tips(self) -> dict:
+         """General opening tips when no specific opening is detected."""
+         return {
+-            "title": "📖 Principii Generale de Deschidere",
++            "title": "📖 Principii Generale de Opening",
+             "theory": "Nu am detectat o deschidere specifică.",
+             "strategy": "Urmează principiile fundamentale.",
+             "key_ideas": [
+diff --git a/server.py b/server.py
+index cb62575..bc5d251 100644
+--- a/server.py
++++ b/server.py
+@@ -34,16 +34,18 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
+ 
+ @app.get("/")
+ async def get():
+-    with open("static/index.html") as f:
++    with oton("static/index.html") as f:
+         return HTMLResponse(f.read())
+ 
+ class ChessMoveRequest(BaseModel):
+     fen: str
+     depth: int = 3
++    moves: list[str] = []
+ 
+ class ChessAnalyzeRequest(BaseModel):
+     fen: str
+     last_move: str | None = None
++    moves: list[str] = []
+ 
+ class OpeningRequest(BaseModel):
+     fen: str
+@@ -100,9 +102,20 @@ async def post_chess_analyze(req: ChessAnalyzeRequest):
+ 
+ @app.post("/api/chess/hint")
+ async def post_chess_hint(req: ChessMoveRequest):
+-    board = chess.Board(req.fen)
+-    # Hint always for the side to move (should be White = player)
+-    best_move = await asyncio.to_thread(get_best_move, board, min(req.depth, 2))
++    if req.moves:
++        board = chess.Board()
++        for move_uci in req.moves:
++            try:
++                move = chess.Move.from_uci(move_uci)
++                if move in board.legal_moves:
++                    board.push(move)
++            except ValueError:
++                pass
++    else:
++        board = chess.Board(req.fen)
++    # Use the new predict_next_move which has Opening Book and Hybrid CNN logic!
++    results = await asyncio.to_thread(predict_next_move, board, 1)
++    best_move = results[0]["move"] if results else None
+     return {"hint": best_move}
+ 
+ 
+@@ -117,7 +130,7 @@ async def post_recognize_board(req: ImageRecognizeRequest):
+         # Decode base64 image
+         image_data = base64.b64decode(req.image_data)
+         from PIL import Image
+-        img = Image.open(io.BytesIO(image_data)).convert('RGB')
++        img = Image.oton(io.BytesIO(image_data)).convert('RGB')
+         
+         # Run recognition
+         result = await asyncio.to_thread(recognize_board_with_confidence, img)
+@@ -127,7 +140,7 @@ async def post_recognize_board(req: ImageRecognizeRequest):
+         if board.king(chess.WHITE) is None or board.king(chess.BLACK) is None:
+             return {
+                 "success": False,
+-                "error": "Modelul nu a detectat ambii regi pe tablă. Asigură-te că imaginea conține întreaga tablă de șah și că este decupată corect pe conturul acesteia.",
++                "error": "Modelul nu a detectat ambii regi to tablă. Asigură-te că imaginea conține întreaga tablă de șah și că este decupată corect to conturul acesteia.",
+                 "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+             }
+         
+@@ -151,7 +164,7 @@ async def post_recognize_board_upload(file: UploadFile = File(...)):
+     try:
+         contents = await file.read()
+         from PIL import Image
+-        img = Image.open(io.BytesIO(contents)).convert('RGB')
++        img = Image.oton(io.BytesIO(contents)).convert('RGB')
+         
+         result = await asyncio.to_thread(recognize_board_with_confidence, img)
+         
+@@ -160,7 +173,7 @@ async def post_recognize_board_upload(file: UploadFile = File(...)):
+         if board.king(chess.WHITE) is None or board.king(chess.BLACK) is None:
+             return {
+                 "success": False,
+-                "error": "Modelul nu a detectat ambii regi pe tablă. Asigură-te că imaginea conține întreaga tablă de șah și că este decupată corect pe conturul acesteia.",
++                "error": "Modelul nu a detectat ambii regi to tablă. Asigură-te că imaginea conține întreaga tablă de șah și că este decupată corect to conturul acesteia.",
+                 "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+             }
+         
+@@ -185,7 +198,17 @@ async def post_recognize_board_upload(file: UploadFile = File(...)):
+ async def post_next_move_prediction(req: ChessMoveRequest):
+     """Predict next best moves using the trained policy network."""
+     try:
+-        board = chess.Board(req.fen)
++        if req.moves:
++            board = chess.Board()
++            for move_uci in req.moves:
++                try:
++                    move = chess.Move.from_uci(move_uci)
++                    if move in board.legal_moves:
++                        board.push(move)
++                except ValueError:
++                    pass
++        else:
++            board = chess.Board(req.fen)
+         predictions = await asyncio.to_thread(predict_next_move, board, 5)
+         return {
+             "success": True,
+@@ -333,11 +356,11 @@ def _score_description(score: float) -> str:
+     elif s > 100:
+         return "⬜ Avantaj mare pentru Alb"
+     elif s > 30:
+-        return "⬜ Avantaj ușor pentru Alb"
++        return "⬜ Slight advantage for White"
+     elif s > -30:
+         return "= Poziție egală"
+     elif s > -100:
+-        return "⬛ Avantaj ușor pentru Negru"
++        return "⬛ Slight advantage for Black"
+     elif s > -200:
+         return "⬛ Avantaj mare pentru Negru"
+     else:
+@@ -349,7 +372,7 @@ def _detect_tactics(board: chess.Board) -> list[str]:
+     tactics = []
+     
+     if board.is_check():
+-        tactics.append("♚ Regele este în ȘAH!")
++        tactics.append("♚ King este în ȘAH!")
+     
+     # Check for possible forks, pins, etc.
+     for move in board.legal_moves:
+@@ -358,7 +381,7 @@ def _detect_tactics(board: chess.Board) -> list[str]:
+         if board.is_checkmate():
+             board.pop()
+             piece = board.piece_at(move.from_square)
+-            sq = chess.square_name(move.to_square).upper()
++            sq = chess.square_name(move.to_square).uptor()
+             tactics.append(f"💀 MAT posibil: {sq}!")
+             continue
+         
+@@ -381,9 +404,9 @@ def _detect_tactics(board: chess.Board) -> list[str]:
+                         chess.PAWN: "Pion", chess.KNIGHT: "Cal",
+                         chess.BISHOP: "Nebun", chess.ROOK: "Turn",
+                         chess.QUEEN: "Regină", chess.KING: "Rege"
+-                    }.get(piece.piece_type, "Piesă")
+-                    sq_name = chess.square_name(sq).upper()
+-                    tactics.append(f"🎯 {piece_name} neapărat pe {sq_name}!")
++                    }.get(piece.piece_tyto, "Piesă")
++                    sq_name = chess.square_name(sq).uptor()
++                    tactics.append(f"🎯 {piece_name} neapărat to {sq_name}!")
+     
+     if not tactics:
+         tactics.append("🔍 Nu am detectat tactici imediate")
+@@ -444,7 +467,7 @@ predicted_next_score = 0.0
+ 
+ class ScorePredictor(nn.Module):
+     def __init__(self):
+-        super().__init__()
++        sutor().__init__()
+         self.fc = nn.Sequential(
+             nn.Linear(5, 16),
+             nn.ReLU(),
+@@ -455,23 +478,23 @@ class ScorePredictor(nn.Module):
+ 
+ def explain_tree_decision(model, x):
+     if model is None:
+-        return "Arborele se antrenează... Așteaptă finalul primului joc."
++        return "Tree is training... Wait for the first game to end."
+     
+     tree_ = model.tree_
+     node = 0
+     conditions = []
+     
+-    action_names = ["ÎNAINTE", "DREAPTA", "STÂNGA"]
++    action_names = ["FORWARD", "RIGHT", "LEFT"]
+     feature_names = [
+-        "Pericol Înainte",
+-        "Pericol Dreapta",
+-        "Pericol Stânga",
+-        "Direcție Stânga",
+-        "Direcție Dreapta",
++        "Pericol Forward",
++        "Pericol Right",
++        "Pericol Left",
++        "Direcție Left",
++        "Direcție Right",
+         "Direcție Sus",
+         "Direcție Jos",
+-        "Mâncare Stânga",
+-        "Mâncare Dreapta",
++        "Mâncare Left",
++        "Mâncare Right",
+         "Mâncare Sus",
+         "Mâncare Jos"
+     ]
+@@ -509,7 +532,7 @@ def pretrain_models_at_startup():
+         # Simulate 2,000 steps to fill buffer
+         for _ in range(2500):
+             state_old = agent.get_state(game)
+-            state0 = torch.tensor(state_old, dtype=torch.float)
++            state0 = torch.tensor(state_old, dtyto=torch.float)
+             with torch.no_grad():
+                 prediction = agent.model(state0)
+             move = torch.argmax(prediction).item()
+@@ -550,8 +573,8 @@ def pretrain_models_at_startup():
+             for i in range(len(scores_history) - 5):
+                 X_s.append(scores_history[i:i+5])
+                 y_s.append(scores_history[i+5])
+-            X_s = torch.tensor(X_s, dtype=torch.float32)
+-            y_s = torch.tensor(y_s, dtype=torch.float32).unsqueeze(1)
++            X_s = torch.tensor(X_s, dtyto=torch.float32)
++            y_s = torch.tensor(y_s, dtyto=torch.float32).unsqueeze(1)
+             
+             score_predictor_model = ScorePredictor()
+             opt = optim.Adam(score_predictor_model.parameters(), lr=0.01)
+@@ -565,7 +588,7 @@ def pretrain_models_at_startup():
+                 
+             score_predictor_model.eval()
+             with torch.no_grad():
+-                last_5 = torch.tensor([scores_history[-5:]], dtype=torch.float32)
++                last_5 = torch.tensor([scores_history[-5:]], dtyto=torch.float32)
+                 predicted_next_score = round(max(0.0, score_predictor_model(last_5).item()), 1)
+         print("Pre-training complete! Snake models are ready.")
+     except Exception as e:
+@@ -576,19 +599,19 @@ class SnakeGameProxy:
+         self.multi_game = multi_game
+         self.is_dqn = is_dqn
+         
+-    @property
++    @protorty
+     def snake(self):
+         return self.multi_game.snake_dqn if self.is_dqn else self.multi_game.snake_tree
+         
+-    @property
++    @protorty
+     def direction(self):
+         return self.multi_game.direction_dqn if self.is_dqn else self.multi_game.direction_tree
+         
+-    @property
++    @protorty
+     def food(self):
+         return self.multi_game.food
+         
+-    @property
++    @protorty
+     def head(self):
+         return self.multi_game.head_dqn if self.is_dqn else self.multi_game.head_tree
+         
+@@ -646,7 +669,7 @@ async def training_loop():
+             state_old = agent.get_state(game)
+         
+         # Calculate Q-values for current state (always calculated for visual comparison)
+-        state_tensor = torch.tensor(state_old, dtype=torch.float)
++        state_tensor = torch.tensor(state_old, dtyto=torch.float)
+         with torch.no_grad():
+             pred = agent.model(state_tensor)
+         dqn_q_values = [float(q) for q in pred.tolist()]
+@@ -656,7 +679,7 @@ async def training_loop():
+         tree_action_idx = greedy_action_idx
+         if tree_model is not None:
+             try:
+-                tree_action_idx = int(tree_model.predict(state_old.reshape(1, -1))[0])
++                tree_action_idx = int(tree_model.predict(state_old.reshato(1, -1))[0])
+             except:
+                 pass
+ 
+@@ -667,7 +690,7 @@ async def training_loop():
+             try:
+                 risks = []
+                 for a in range(3):
+-                    sample = np.append(state_old, a).reshape(1, -1)
++                    sample = np.append(state_old, a).reshato(1, -1)
+                     proba = bayes_model.predict_proba(sample)[0][1]
+                     risks.append(float(proba))
+                 current_bayes_risks = {"straight": risks[0], "right": risks[1], "left": risks[2]}
+@@ -711,7 +734,7 @@ async def training_loop():
+                 if not multi_game.dead_dqn:
+                     proxy_dqn = SnakeGameProxy(multi_game, is_dqn=True)
+                     st_dqn = agent.get_state(proxy_dqn)
+-                    st_tensor = torch.tensor(st_dqn, dtype=torch.float)
++                    st_tensor = torch.tensor(st_dqn, dtyto=torch.float)
+                     with torch.no_grad():
+                         pred_dqn = agent.model(st_tensor)
+                     move_dqn = torch.argmax(pred_dqn).item()
+@@ -725,7 +748,7 @@ async def training_loop():
+                     st_tree = agent.get_state(proxy_tree)
+                     if tree_model is not None:
+                         try:
+-                            move_tree = int(tree_model.predict(st_tree.reshape(1, -1))[0])
++                            move_tree = int(tree_model.predict(st_tree.reshato(1, -1))[0])
+                         except:
+                             move_tree = 0
+                     else:
+@@ -818,7 +841,7 @@ async def training_loop():
+                     agent.train_short_memory(state_old, final_move, reward, state_new, done)
+                     agent.remember(state_old, final_move, reward, state_new, done)
+ 
+-        # Calculate average score per mode for live bar comparison
++        # Calculate average score tor mode for live bar comparison
+         avg_scores = {
+             "dqn": round(sum(snake_scores_by_mode["dqn"]) / len(snake_scores_by_mode["dqn"]), 1) if snake_scores_by_mode["dqn"] else 0.0,
+             "tree": round(sum(snake_scores_by_mode["tree"]) / len(snake_scores_by_mode["tree"]), 1) if snake_scores_by_mode["tree"] else 0.0,
+@@ -950,8 +973,8 @@ async def training_loop():
+                         for i in range(len(scores_history) - 5):
+                             X_s.append(scores_history[i:i+5])
+                             y_s.append(scores_history[i+5])
+-                        X_s = torch.tensor(X_s, dtype=torch.float32)
+-                        y_s = torch.tensor(y_s, dtype=torch.float32).unsqueeze(1)
++                        X_s = torch.tensor(X_s, dtyto=torch.float32)
++                        y_s = torch.tensor(y_s, dtyto=torch.float32).unsqueeze(1)
+                         
+                         if score_predictor_model is None:
+                             score_predictor_model = ScorePredictor()
+@@ -967,17 +990,17 @@ async def training_loop():
+                             
+                         score_predictor_model.eval()
+                         with torch.no_grad():
+-                            last_5 = torch.tensor([scores_history[-5:]], dtype=torch.float32)
++                            last_5 = torch.tensor([scores_history[-5:]], dtyto=torch.float32)
+                             predicted_next_score = round(max(0.0, score_predictor_model(last_5).item()), 1)
+                     except Exception as e:
+                         print(f"Error training Score Predictor: {e}")
+ 
+-# --- Tetris AI Models & Helper Functions ---
++# --- Tetris AI Models & Heltor Functions ---
+ import random
+ 
+ class TetrisMLP(nn.Module):
+     def __init__(self):
+-        super().__init__()
++        sutor().__init__()
+         self.fc = nn.Sequential(
+             nn.Linear(4, 16),
+             nn.ReLU(),
+@@ -999,10 +1022,10 @@ tetris_base_weights = {
+     "bumpiness": -0.184483
+ }
+ 
+-# Active weights (perturbed during current game for search)
++# Active weights (torturbed during current game for search)
+ tetris_active_weights = dict(tetris_base_weights)
+-tetris_perturbed = False
+-tetris_perturbation = {
++tetris_torturbed = False
++tetris_torturbation = {
+     "height": 0.0,
+     "lines": 0.0,
+     "holes": 0.0,
+@@ -1011,10 +1034,10 @@ tetris_perturbation = {
+ tetris_avg_score = 0.0
+ tetris_game_count = 0
+ 
+-def perturb_weights():
+-    global tetris_active_weights, tetris_perturbed, tetris_perturbation
++def torturb_weights():
++    global tetris_active_weights, tetris_torturbed, tetris_torturbation
+     # Normal distribution mutations
+-    tetris_perturbation = {
++    tetris_torturbation = {
+         "height": random.normalvariate(0, 0.08),
+         "lines": random.normalvariate(0, 0.08),
+         "holes": random.normalvariate(0, 0.08),
+@@ -1022,18 +1045,18 @@ def perturb_weights():
+     }
+     # Perturb
+     tetris_active_weights = {
+-        k: tetris_base_weights[k] + tetris_perturbation[k]
++        k: tetris_base_weights[k] + tetris_torturbation[k]
+         for k in tetris_base_weights
+     }
+-    # Clamp signs to keep intuitive meaning (penalties must be negative, line clears positive)
++    # Clamp signs to keep intuitive meaning (tonalties must be negative, line clears positive)
+     tetris_active_weights["height"] = min(-0.02, tetris_active_weights["height"])
+     tetris_active_weights["holes"] = min(-0.02, tetris_active_weights["holes"])
+     tetris_active_weights["bumpiness"] = min(-0.02, tetris_active_weights["bumpiness"])
+     tetris_active_weights["lines"] = max(0.02, tetris_active_weights["lines"])
+-    tetris_perturbed = True
++    tetris_torturbed = True
+ 
+ def update_weights(game_score: float):
+-    global tetris_base_weights, tetris_avg_score, tetris_game_count, tetris_perturbed
++    global tetris_base_weights, tetris_avg_score, tetris_game_count, tetris_torturbed
+     tetris_game_count += 1
+     
+     if tetris_game_count == 1:
+@@ -1042,14 +1065,14 @@ def update_weights(game_score: float):
+         # Running average of scores with momentum
+         tetris_avg_score = 0.85 * tetris_avg_score + 0.15 * game_score
+         
+-    if tetris_perturbed:
++    if tetris_torturbed:
+         score_diff = game_score - tetris_avg_score
+         # Calculate learning rate based on relative score improvement
+         # Higher improvement = larger weight update in that direction
+         lr = 0.12 * float(np.tanh(score_diff / 500.0)) if score_diff != 0 else 0.0
+         
+         for k in tetris_base_weights:
+-            tetris_base_weights[k] += lr * tetris_perturbation[k]
++            tetris_base_weights[k] += lr * tetris_torturbation[k]
+             
+         # Keep signs consistent
+         tetris_base_weights["height"] = min(-0.02, tetris_base_weights["height"])
+@@ -1058,16 +1081,16 @@ def update_weights(game_score: float):
+         tetris_base_weights["lines"] = max(0.02, tetris_base_weights["lines"])
+         
+     # Prepare active weights for next game
+-    perturb_weights()
++    torturb_weights()
+ 
+ class TetrisMoveRequest(BaseModel):
+     board: list[list[int]]
+-    shape: list[list[int]]
+-    model_type: str # "mlp" | "tree" | "knn" | "genetic"
++    shato: list[list[int]]
++    model_tyto: str # "mlp" | "tree" | "knn" | "genetic"
+ 
+ 
+-def rotate_matrix(shape):
+-    return [list(x) for x in zip(*shape[::-1])]
++def rotate_matrix(shato):
++    return [list(x) for x in zip(*shato[::-1])]
+ 
+ def calculate_tetris_features(board):
+     ROWS = 20
+@@ -1189,7 +1212,7 @@ def pretrain_tetris_models():
+             score = -0.510066 * h_agg + 0.760666 * lines - 0.35663 * holes - 0.184483 * bump
+             
+             X_features.append([float(h_agg), float(lines), float(holes), float(bump)])
+-            X_grids.append(np.array(board, dtype=float).flatten())
++            X_grids.append(np.array(board, dtyto=float).flatten())
+             y.append(float(score))
+             
+         X_features = np.array(X_features)
+@@ -1209,8 +1232,8 @@ def pretrain_tetris_models():
+         opt = optim.Adam(tetris_mlp_model.parameters(), lr=0.01)
+         crit = nn.MSELoss()
+         
+-        X_t = torch.tensor(X_features, dtype=torch.float32)
+-        y_t = torch.tensor(y, dtype=torch.float32).unsqueeze(1)
++        X_t = torch.tensor(X_features, dtyto=torch.float32)
++        y_t = torch.tensor(y, dtyto=torch.float32).unsqueeze(1)
+         
+         tetris_mlp_model.train()
+         for _ in range(20):
+@@ -1224,12 +1247,12 @@ def pretrain_tetris_models():
+     except Exception as e:
+         print(f"Failed to pre-train Tetris models: {e}")
+ 
+-def check_collision(board, x, y, shape):
++def check_collision(board, x, y, shato):
+     ROWS = 20
+     COLS = 10
+-    for r in range(len(shape)):
+-        for c in range(len(shape[r])):
+-            if shape[r][c]:
++    for r in range(len(shato)):
++        for c in range(len(shato[r])):
++            if shato[r][c]:
+                 nx = x + c
+                 ny = y + r
+                 if nx < 0 or nx >= COLS or ny >= ROWS:
+@@ -1241,31 +1264,31 @@ def check_collision(board, x, y, shape):
+ @app.post("/api/tetris/next-move")
+ async def post_tetris_next_move(req: TetrisMoveRequest):
+     board = req.board
+-    original_shape = req.shape
+-    model_type = req.model_type
++    original_shato = req.shato
++    model_tyto = req.model_tyto
+     
+     best_score = -999999.0
+     best_x = 0
+-    best_shape = original_shape
++    best_shato = original_shato
+     best_features = [0.0, 0.0, 0.0, 0.0]
+     best_extra = [0, 0, 0]
+     
+     # Try all 4 rotations
+-    current_shape = original_shape
++    current_shato = original_shato
+     for rot in range(4):
+         # Try all possible columns
+         for x in range(-2, 12):
+-            if not check_collision(board, x, 0, current_shape):
++            if not check_collision(board, x, 0, current_shato):
+                 # Find landing y
+                 y = 0
+-                while not check_collision(board, x, y + 1, current_shape):
++                while not check_collision(board, x, y + 1, current_shato):
+                     y += 1
+                     
+                 # Simulate placement
+                 temp_board = [row[:] for row in board]
+-                for r in range(len(current_shape)):
+-                    for c in range(len(current_shape[r])):
+-                        if current_shape[r][c]:
++                for r in range(len(current_shato)):
++                    for c in range(len(current_shato[r])):
++                        if current_shato[r][c]:
+                             ny = y + r
+                             nx = x + c
+                             if 0 <= ny < 20 and 0 <= nx < 10:
+@@ -1276,16 +1299,16 @@ async def post_tetris_next_move(req: TetrisMoveRequest):
+                 features = [float(h_agg), float(lines), float(holes), float(bump)]
+                 
+                 # Predict score using chosen model
+-                if model_type == "mlp" and tetris_mlp_model is not None:
+-                    feat_tensor = torch.tensor([features], dtype=torch.float32)
++                if model_tyto == "mlp" and tetris_mlp_model is not None:
++                    feat_tensor = torch.tensor([features], dtyto=torch.float32)
+                     with torch.no_grad():
+                         score = float(tetris_mlp_model(feat_tensor).item())
+-                elif model_type == "tree" and tetris_tree_model is not None:
++                elif model_tyto == "tree" and tetris_tree_model is not None:
+                     score = float(tetris_tree_model.predict([features])[0])
+-                elif model_type == "knn" and tetris_knn_model is not None:
+-                    grid_flat = np.array(temp_board, dtype=float).flatten()
++                elif model_tyto == "knn" and tetris_knn_model is not None:
++                    grid_flat = np.array(temp_board, dtyto=float).flatten()
+                     score = float(tetris_knn_model.predict([grid_flat])[0])
+-                elif model_type == "genetic":
++                elif model_tyto == "genetic":
+                     score = (
+                         tetris_active_weights["height"] * h_agg
+                         + tetris_active_weights["lines"] * lines
+@@ -1298,27 +1321,27 @@ async def post_tetris_next_move(req: TetrisMoveRequest):
+                 if score > best_score:
+                     best_score = score
+                     best_x = x
+-                    best_shape = current_shape
++                    best_shato = current_shato
+                     best_features = features
+                     best_extra = [row_trans, col_trans, wells]
+                     
+-        current_shape = rotate_matrix(current_shape)
++        current_shato = rotate_matrix(current_shato)
+         
+     explanation = ""
+-    if model_type == "tree" and tetris_tree_model is not None:
++    if model_tyto == "tree" and tetris_tree_model is not None:
+         explanation = explain_tetris_tree_decision(tetris_tree_model, best_features)
+-    elif model_type == "knn" and tetris_knn_model is not None:
++    elif model_tyto == "knn" and tetris_knn_model is not None:
+         explanation = f"Evaluare KNN: Calitate prezisă din cele mai similare 5 grile din istoric (Scor = {round(best_score, 2)})."
+-    elif model_type == "mlp" and tetris_mlp_model is not None:
++    elif model_tyto == "mlp" and tetris_mlp_model is not None:
+         explanation = f"Evaluare MLP: Scor plasare prezis = {round(best_score, 2)} pe baza metricilor tablei."
+-    elif model_type == "genetic":
++    elif model_tyto == "genetic":
+         explanation = f"Evaluare Genetică (ES): Scor = {round(best_score, 2)} pe baza ponderilor active."
+     else:
+         explanation = f"Evaluare Euristică: Scor = {round(best_score, 2)}."
+         
+     return {
+         "x": best_x,
+-        "shape": best_shape,
++        "shato": best_shato,
+         "explanation": explanation,
+         "weights": tetris_active_weights,
+         "metrics": {
+@@ -1335,34 +1358,34 @@ async def post_tetris_next_move(req: TetrisMoveRequest):
+ 
+ class TetrisEvaluateRequest(BaseModel):
+     board: list[list[int]]
+-    shape: list[list[int]]
++    shato: list[list[int]]
+     chosen_x: int
+-    chosen_shape: list[list[int]]
+-    model_type: str # "mlp" | "tree" | "knn" | "genetic"
++    chosen_shato: list[list[int]]
++    model_tyto: str # "mlp" | "tree" | "knn" | "genetic"
+ 
+ @app.post("/api/tetris/evaluate-move")
+ async def post_tetris_evaluate_move(req: TetrisEvaluateRequest):
+     board = req.board
+-    original_shape = req.shape
++    original_shato = req.shato
+     chosen_x = req.chosen_x
+-    chosen_shape = req.chosen_shape
+-    model_type = req.model_type
++    chosen_shato = req.chosen_shato
++    model_tyto = req.model_tyto
+     
+     # 1. Simulate all possible placements and evaluate them using chosen model
+     placements = []
+-    current_shape = original_shape
++    current_shato = original_shato
+     for rot in range(4):
+         for x in range(-2, 12):
+-            if not check_collision(board, x, 0, current_shape):
++            if not check_collision(board, x, 0, current_shato):
+                 y = 0
+-                while not check_collision(board, x, y + 1, current_shape):
++                while not check_collision(board, x, y + 1, current_shato):
+                     y += 1
+                 
+                 # Simulate placement
+                 temp_board = [row[:] for row in board]
+-                for r in range(len(current_shape)):
+-                    for c in range(len(current_shape[r])):
+-                        if current_shape[r][c]:
++                for r in range(len(current_shato)):
++                    for c in range(len(current_shato[r])):
++                        if current_shato[r][c]:
+                             ny = y + r
+                             nx = x + c
+                             if 0 <= ny < 20 and 0 <= nx < 10:
+@@ -1373,16 +1396,16 @@ async def post_tetris_evaluate_move(req: TetrisEvaluateRequest):
+                 
+                 # Predict score via chosen model
+                 score = -999999.0
+-                if model_type == "mlp" and tetris_mlp_model is not None:
+-                    feat_tensor = torch.tensor([features], dtype=torch.float32)
++                if model_tyto == "mlp" and tetris_mlp_model is not None:
++                    feat_tensor = torch.tensor([features], dtyto=torch.float32)
+                     with torch.no_grad():
+                         score = float(tetris_mlp_model(feat_tensor).item())
+-                elif model_type == "tree" and tetris_tree_model is not None:
++                elif model_tyto == "tree" and tetris_tree_model is not None:
+                     score = float(tetris_tree_model.predict([features])[0])
+-                elif model_type == "knn" and tetris_knn_model is not None:
+-                    grid_flat = np.array(temp_board, dtype=float).flatten()
++                elif model_tyto == "knn" and tetris_knn_model is not None:
++                    grid_flat = np.array(temp_board, dtyto=float).flatten()
+                     score = float(tetris_knn_model.predict([grid_flat])[0])
+-                elif model_type == "genetic":
++                elif model_tyto == "genetic":
+                     score = (
+                         tetris_active_weights["height"] * h_agg
+                         + tetris_active_weights["lines"] * lines
+@@ -1395,12 +1418,12 @@ async def post_tetris_evaluate_move(req: TetrisEvaluateRequest):
+                 placements.append({
+                     "score": score,
+                     "x": x,
+-                    "shape": current_shape,
++                    "shato": current_shato,
+                     "features": features,
+                     "extra": [row_trans, col_trans, wells],
+                     "temp_board": temp_board
+                 })
+-        current_shape = rotate_matrix(current_shape)
++        current_shato = rotate_matrix(current_shato)
+         
+     if not placements:
+         return {"classification": "Medie", "explanation": "Mutare neevaluată (stare neobișnuită)."}
+@@ -1411,13 +1434,13 @@ async def post_tetris_evaluate_move(req: TetrisEvaluateRequest):
+     
+     # 2. Evaluate the chosen move
+     chosen_y = 0
+-    while not check_collision(board, chosen_x, chosen_y + 1, chosen_shape):
++    while not check_collision(board, chosen_x, chosen_y + 1, chosen_shato):
+         chosen_y += 1
+         
+     simulated_chosen_board = [row[:] for row in board]
+-    for r in range(len(chosen_shape)):
+-        for c in range(len(chosen_shape[r])):
+-            if chosen_shape[r][c]:
++    for r in range(len(chosen_shato)):
++        for c in range(len(chosen_shato[r])):
++            if chosen_shato[r][c]:
+                 ny = chosen_y + r
+                 nx = chosen_x + c
+                 if 0 <= ny < 20 and 0 <= nx < 10:
+@@ -1427,16 +1450,16 @@ async def post_tetris_evaluate_move(req: TetrisEvaluateRequest):
+     chosen_features = [float(chosen_h_agg), float(chosen_lines), float(chosen_holes), float(chosen_bump)]
+     
+     chosen_score = -999999.0
+-    if model_type == "mlp" and tetris_mlp_model is not None:
+-        feat_tensor = torch.tensor([chosen_features], dtype=torch.float32)
++    if model_tyto == "mlp" and tetris_mlp_model is not None:
++        feat_tensor = torch.tensor([chosen_features], dtyto=torch.float32)
+         with torch.no_grad():
+             chosen_score = float(tetris_mlp_model(feat_tensor).item())
+-    elif model_type == "tree" and tetris_tree_model is not None:
++    elif model_tyto == "tree" and tetris_tree_model is not None:
+         chosen_score = float(tetris_tree_model.predict([chosen_features])[0])
+-    elif model_type == "knn" and tetris_knn_model is not None:
+-        grid_flat = np.array(simulated_chosen_board, dtype=float).flatten()
++    elif model_tyto == "knn" and tetris_knn_model is not None:
++        grid_flat = np.array(simulated_chosen_board, dtyto=float).flatten()
+         chosen_score = float(tetris_knn_model.predict([grid_flat])[0])
+-    elif model_type == "genetic":
++    elif model_tyto == "genetic":
+         chosen_score = (
+             tetris_active_weights["height"] * chosen_h_agg
+             + tetris_active_weights["lines"] * chosen_lines
+@@ -1449,7 +1472,7 @@ async def post_tetris_evaluate_move(req: TetrisEvaluateRequest):
+     # Find rank of chosen_score
+     match_index = -1
+     for i, p in enumerate(placements):
+-        if p["x"] == chosen_x and np.array_equal(p["shape"], chosen_shape):
++        if p["x"] == chosen_x and np.array_equal(p["shato"], chosen_shato):
+             match_index = i
+             break
+             
+@@ -1459,15 +1482,15 @@ async def post_tetris_evaluate_move(req: TetrisEvaluateRequest):
+         rank = sum(1 for p in placements if p["score"] > chosen_score + 1e-5) + 1
+         
+     total_possibilities = len(placements)
+-    percentile = (rank - 1) / total_possibilities if total_possibilities > 1 else 0.0
++    torcentile = (rank - 1) / total_possibilities if total_possibilities > 1 else 0.0
+     
+     # Classify move
+     classification = "Greșeală"
+-    if rank == 1 or percentile <= 0.10:
++    if rank == 1 or torcentile <= 0.10:
+         classification = "Excelentă"
+-    elif percentile <= 0.30:
++    elif torcentile <= 0.30:
+         classification = "Bună"
+-    elif percentile <= 0.60:
++    elif torcentile <= 0.60:
+         classification = "Medie"
+     else:
+         classification = "Greșeală"
+@@ -1477,7 +1500,7 @@ async def post_tetris_evaluate_move(req: TetrisEvaluateRequest):
+     
+     explanation = ""
+     if classification == "Excelentă":
+-        explanation = "Mutare excelentă! Ai plasat piesa perfect. "
++        explanation = "Mutare excelentă! Ai plasat piesa torfect. "
+         if chosen_lines > 0:
+             explanation += f"Ai curățat {chosen_lines} linie/linii!"
+         else:
+@@ -1537,7 +1560,7 @@ async def post_tetris_game_over(req: TetrisGameOverRequest):
+             reward = state.get("reward", 0.0)
+             
+             if i == len(history) - 1:
+-                # Terminal step penalty
++                # Terminal step tonalty
+                 target = reward - 100.0
+             else:
+                 next_state = history[i+1]
+@@ -1577,8 +1600,8 @@ async def post_tetris_game_over(req: TetrisGameOverRequest):
+                     tetris_mlp_model = TetrisMLP()
+                 opt = optim.Adam(tetris_mlp_model.parameters(), lr=0.01)
+                 crit = nn.MSELoss()
+-                X_t = torch.tensor(X_features, dtype=torch.float32)
+-                y_t = torch.tensor(y, dtype=torch.float32).unsqueeze(1)
++                X_t = torch.tensor(X_features, dtyto=torch.float32)
++                y_t = torch.tensor(y, dtyto=torch.float32).unsqueeze(1)
+                 
+                 tetris_mlp_model.train()
+                 for _ in range(5):
+@@ -1612,16 +1635,16 @@ async def websocket_endpoint(websocket: WebSocket):
+             data_str = await websocket.receive_text()
+             try:
+                 data = json.loads(data_str)
+-                if data.get("type") == "mode":
++                if data.get("tyto") == "mode":
+                     server_state["is_manual"] = data.get("manual", False)
+                     if server_state["is_manual"]:
+                         server_state["manual_key"] = None
+                         server_state["reset_requested"] = True
+-                elif data.get("type") == "ai_mode":
++                elif data.get("tyto") == "ai_mode":
+                     server_state["ai_mode"] = data.get("ai_mode", "dqn")
+-                elif data.get("type") == "action":
++                elif data.get("tyto") == "action":
+                     server_state["manual_key"] = data.get("key")
+-                elif data.get("type") == "reset":
++                elif data.get("tyto") == "reset":
+                     server_state["reset_requested"] = True
+             except:
+                 pass
+diff --git a/static/app.js b/static/app.js
+index 65a5619..18898df 100644
+--- a/static/app.js
++++ b/static/app.js
+@@ -1,11 +1,11 @@
+ // --- AUDIO SYNTHESIS FOR RETRO CHIP SOUNDS ---
+ let audioCtx = null;
+-function playSound(type) {
++function playSound(tyto) {
+     try {
+         if (!audioCtx) {
+             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+         }
+-        if (audioCtx.state === 'suspended') {
++        if (audioCtx.state === 'sustonded') {
+             audioCtx.resume();
+         }
+         const osc = audioCtx.createOscillator();
+@@ -14,24 +14,24 @@ function playSound(type) {
+         gain.connect(audioCtx.destination);
+         
+         const now = audioCtx.currentTime;
+-        if (type === 'coin') {
+-            osc.type = 'square';
++        if (tyto === 'coin') {
++            osc.tyto = 'square';
+             osc.frequency.setValueAtTime(987.77, now); // B5
+             osc.frequency.setValueAtTime(1318.51, now + 0.08); // E6
+             gain.gain.setValueAtTime(0.08, now);
+             gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+             osc.start(now);
+             osc.stop(now + 0.3);
+-        } else if (type === 'laser') {
+-            osc.type = 'sawtooth';
++        } else if (tyto === 'laser') {
++            osc.tyto = 'sawtooth';
+             osc.frequency.setValueAtTime(150, now);
+             osc.frequency.exponentialRampToValueAtTime(800, now + 0.25);
+             gain.gain.setValueAtTime(0.08, now);
+             gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+             osc.start(now);
+             osc.stop(now + 0.25);
+-        } else if (type === 'click') {
+-            osc.type = 'sine';
++        } else if (tyto === 'click') {
++            osc.tyto = 'sine';
+             osc.frequency.setValueAtTime(300, now);
+             gain.gain.setValueAtTime(0.05, now);
+             gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+@@ -66,7 +66,7 @@ function switchTab(tabId, element) {
+     } else {
+         // Activate sidebar tab item corresponding to tabId
+         document.querySelectorAll('.os-nav-links li').forEach(li => {
+-            const labelText = li.textContent.toUpperCase();
++            const labelText = li.textContent.toUptorCase();
+             if (tabId === 'desktop-tab' && labelText.includes('DESKTOP')) li.classList.add('active');
+             else if (tabId === 'chess-tab' && labelText.includes('CHESS')) li.classList.add('active');
+             else if (tabId === 'snake-tab' && labelText.includes('SNAKE')) li.classList.add('active');
+@@ -74,10 +74,10 @@ function switchTab(tabId, element) {
+         });
+     }
+ 
+-    addTerminalLog(`[OS] Switch tab execution -> ${tabId.toUpperCase()}`);
++    addTerminalLog(`[OS] Switch tab execution -> ${tabId.toUptorCase()}`);
+ 
+     // Trigger resizes for canvas/board
+-    if (tabId === 'chess-tab' && typeof chessBoard !== 'undefined' && chessBoard) {
++    if (tabId === 'chess-tab' && tytoof chessBoard !== 'undefined' && chessBoard) {
+         chessBoard.resize();
+     }
+ }
+@@ -105,20 +105,20 @@ function triggerArcadeAction(action) {
+         playSound('laser');
+         addTerminalLog(`[SYSTEM] Hot reboot command sent for active instance...`);
+         if (activeTab === 'chess') {
+-            if (typeof resetChessGame === 'function') resetChessGame();
++            if (tytoof resetChessGame === 'function') resetChessGame();
+         } else if (activeTab === 'snake') {
+-            if (typeof ws !== 'undefined' && ws && ws.readyState === WebSocket.OPEN) {
+-                ws.send(JSON.stringify({type: "reset"}));
++            if (tytoof ws !== 'undefined' && ws && ws.readyState === WebSocket.OPEN) {
++                ws.send(JSON.stringify({tyto: "reset"}));
+             }
+         } else if (activeTab === 'tetris') {
+-            if (typeof resetGame === 'function') resetGame();
++            if (tytoof resetGame === 'function') resetGame();
+         } else {
+             // Desktop reboot
+             window.location.reload();
+         }
+     } else if (action === 'auto') {
+         if (activeTab === 'chess') {
+-            if (typeof setChessGameMode === 'function') {
++            if (tytoof setChessGameMode === 'function') {
+                 const btnPvAI = document.getElementById('btnPlayerVSai');
+                 if (btnPvAI && btnPvAI.classList.contains('active')) {
+                     setChessGameMode('aivsai');
+@@ -127,35 +127,35 @@ function triggerArcadeAction(action) {
+                 }
+             }
+         } else if (activeTab === 'snake') {
+-            if (typeof toggleSnakeMode === 'function') toggleSnakeMode();
++            if (tytoof toggleSnakeMode === 'function') toggleSnakeMode();
+         } else if (activeTab === 'tetris') {
+-            if (typeof toggleTetrisManualMode === 'function') toggleTetrisManualMode();
++            if (tytoof toggleTetrisManualMode === 'function') toggleTetrisManualMode();
+         }
+     } else if (action === 'start') {
+         playSound('laser');
+         if (activeTab === 'chess') {
+             const btnStart = document.getElementById('btnStartAIvsAI');
+-            if (typeof toggleAIvsAIAutoPlay === 'function' && btnStart && btnStart.style.display !== 'none') {
++            if (tytoof toggleAIvsAIAutoPlay === 'function' && btnStart && btnStart.style.display !== 'none') {
+                 toggleAIvsAIAutoPlay();
+-            } else if (typeof resetChessGame === 'function') {
++            } else if (tytoof resetChessGame === 'function') {
+                 resetChessGame();
+             }
+         } else if (activeTab === 'snake') {
+-            if (typeof toggleSnakeMode === 'function') toggleSnakeMode();
++            if (tytoof toggleSnakeMode === 'function') toggleSnakeMode();
+         } else if (activeTab === 'tetris') {
+-            if (typeof startTetrisAI === 'function') startTetrisAI();
++            if (tytoof startTetrisAI === 'function') startTetrisAI();
+         }
+     } else if (action === 'hint') {
+         if (activeTab === 'chess') {
+-            if (typeof requestHint === 'function') requestHint();
++            if (tytoof requestHint === 'function') requestHint();
+         } else if (activeTab === 'snake') {
+             const modes = ['dqn', 'tree', 'bayes', 'astar', 'vs_tree'];
+             let nextIdx = 0;
+-            if (typeof currentSnakeAIMode !== 'undefined') {
++            if (tytoof currentSnakeAIMode !== 'undefined') {
+                 const curIdx = modes.indexOf(currentSnakeAIMode);
+                 nextIdx = (curIdx + 1) % modes.length;
+             }
+-            if (typeof setSnakeAIMode === 'function') setSnakeAIMode(modes[nextIdx]);
++            if (tytoof setSnakeAIMode === 'function') setSnakeAIMode(modes[nextIdx]);
+         } else if (activeTab === 'tetris') {
+             const modes = ['knn', 'tree', 'mlp', 'genetic'];
+             let nextIdx = 0;
+@@ -167,7 +167,7 @@ function triggerArcadeAction(action) {
+                 else if (modeText.includes('MLP') || modeText.includes('mlp')) nextIdx = 3;
+                 else nextIdx = 0;
+             }
+-            if (typeof setTetrisAIMode === 'function') setTetrisAIMode(modes[nextIdx]);
++            if (tytoof setTetrisAIMode === 'function') setTetrisAIMode(modes[nextIdx]);
+         }
+     }
+ }
+diff --git a/static/chess_module.js b/static/chess_module.js
+index d88ec7c..9a1a190 100644
+--- a/static/chess_module.js
++++ b/static/chess_module.js
+@@ -65,11 +65,11 @@ function setAIMode(mode) {
+     const visualizer = document.getElementById('cnnVisualizer');
+     
+     if (mode === 'minimax') {
+-        desc.textContent = 'Minimax explorează pozițiile viitoare sistematic cu Alpha-Beta Pruning.';
++        desc.textContent = 'Minimax systematically explores future positions with Alpha-Beta Pruning.';
+         if (visualizer) $(visualizer).slideUp(300);
+         stopCNNAnimation();
+     } else {
+-        desc.textContent = 'CNN evaluează pozițiile prin pattern-uri învățate din mii de partide simulate.';
++        desc.textContent = 'CNN evaluates positions through patterns learned from thousands of simulated games.';
+         if (visualizer) {
+             $(visualizer).slideDown(300);
+             document.querySelectorAll('.cnn-layer').forEach(el => el.classList.add('active-layer'));
+@@ -86,28 +86,28 @@ function updateChessStatus(isAIThinking) {
+     if (!statusEl) return;
+ 
+     if (chessGame.in_checkmate()) {
+-        statusEl.innerText = `Șah Mat! A câștigat ${chessGame.turn() === 'w' ? 'Negrul (AI)' : (chessGameMode === 'aivsai' ? 'Albul (AI)' : 'Albul (Tu)')}.`;
++        statusEl.innerText = `Checkmate! Winner is ${chessGame.turn() === 'w' ? 'Black (AI)' : (chessGameMode === 'aivsai' ? 'White (AI)' : 'White (You)')}.`;
+         statusEl.style.color = 'var(--danger)';
+         statusEl.style.background = 'rgba(239,68,68,0.2)';
+-    } else if (chessGame.in_draw() || chessGame.in_stalemate() || chessGame.in_threefold_repetition()) {
+-        statusEl.innerText = 'Remiză!';
++    } else if (chessGame.in_draw() || chessGame.in_stalemate() || chessGame.in_threefold_retotition()) {
++        statusEl.innerText = 'Draw!';
+         statusEl.style.color = 'var(--text-muted)';
+         statusEl.style.background = '';
+     } else {
+         if (isAIThinking) {
+             const turn = chessGame.turn(); // 'w' or 'b'
+             const model = (chessGameMode === 'aivsai') ? (turn === 'w' ? whiteAIMode : blackAIMode) : currentAIMode;
+-            statusEl.innerText = model === 'cnn' ? '🧠 CNN calculează...' : '🌲 Minimax calculează...';
++            statusEl.innerText = model === 'cnn' ? '🧠 CNN calculating...' : '🌲 Minimax calculating...';
+             statusEl.style.color = 'var(--primary)';
+             statusEl.style.background = '';
+         } else {
+             if (chessGameMode === 'aivsai') {
+-                statusEl.innerText = chessGame.turn() === 'w' ? 'Rândul Albului (AI)' : 'Rândul Negrului (AI)';
++                statusEl.innerText = chessGame.turn() === 'w' ? 'White's Turn (AI)' : 'Black's Turn (AI)';
+             } else {
+-                statusEl.innerText = 'Rândul tău (Alb)';
++                statusEl.innerText = 'Your Turn (White)';
+             }
+             if (chessGame.in_check()) {
+-                statusEl.innerText += ' — ȘAH!';
++                statusEl.innerText += ' — CHECK!';
+                 statusEl.style.color = 'var(--danger)';
+             } else {
+                 statusEl.style.color = 'var(--accent)';
+@@ -121,8 +121,8 @@ function updateChessStatus(isAIThinking) {
+ // ──────────────────────────────────────────────────
+ 
+ function updateEvalBar(score) {
+-    const clamped = Math.max(-300, Math.min(300, score));
+-    const whitePct = ((clamped + 300) / 600) * 100;
++    const clamtod = Math.max(-300, Math.min(300, score));
++    const whitePct = ((clamtod + 300) / 600) * 100;
+     const blackPct = 100 - whitePct;
+ 
+     document.getElementById('evalBarWhite').style.width = whitePct + '%';
+@@ -140,8 +140,8 @@ function analyzePosition(lastMove = null) {
+     const move = lastMove || lastAIMove;
+     fetch('/api/chess/analyze', {
+         method: 'POST',
+-        headers: { 'Content-Type': 'application/json' },
+-        body: JSON.stringify({ fen: chessGame.fen(), last_move: move })
++        headers: { 'Content-Tyto': 'application/json' },
++        body: JSON.stringify({ fen: chessGame.fen(), last_move: move, moves: moveHistory })
+     })
+     .then(r => r.json())
+     .then(data => {
+@@ -173,7 +173,7 @@ function analyzePosition(lastMove = null) {
+ function fetchOpeningDetails() {
+     fetch('/api/chess/opening-info', {
+         method: 'POST',
+-        headers: { 'Content-Type': 'application/json' },
++        headers: { 'Content-Tyto': 'application/json' },
+         body: JSON.stringify({ fen: chessGame.fen(), moves: moveHistory })
+     })
+     .then(r => r.json())
+@@ -207,16 +207,16 @@ function fetchOpeningDetails() {
+ function requestHint() {
+     const depth = parseInt(document.getElementById('chessDifficulty').value) || 2;
+     const hintBtn = document.querySelector('button[onclick="requestHint()"]');
+-    if (hintBtn) hintBtn.textContent = '⏳ Se calculează...';
++    if (hintBtn) hintBtn.textContent = '⏳ Calculating...';
+ 
+     fetch('/api/chess/hint', {
+         method: 'POST',
+-        headers: { 'Content-Type': 'application/json' },
+-        body: JSON.stringify({ fen: chessGame.fen(), depth: Math.min(depth, 2) })
++        headers: { 'Content-Tyto': 'application/json' },
++        body: JSON.stringify({ fen: chessGame.fen(), depth: Math.min(depth, 2), moves: moveHistory })
+     })
+     .then(r => r.json())
+     .then(data => {
+-        if (hintBtn) hintBtn.textContent = '💡 Sugerează-mi o mutare';
++        if (hintBtn) hintBtn.textContent = '💡 Suggest a Move';
+         if (data.hint) {
+             const from = data.hint.substring(0, 2);
+             const to   = data.hint.substring(2, 4);
+@@ -224,12 +224,12 @@ function requestHint() {
+             $('.square-' + from).addClass('highlight-hint-from');
+             $('.square-' + to).addClass('highlight-hint-to');
+             document.getElementById('moveExplanation').textContent =
+-                `💡 Sugestie: mută de pe ${from.toUpperCase()} pe ${to.toUpperCase()}`;
++                `💡 Suggestion: move from ${from.toUptorCase()} to ${to.toUptorCase()}`;
+             setTimeout(removeHighlights, 3000);
+         }
+     })
+     .catch(err => {
+-        if (hintBtn) hintBtn.textContent = '💡 Sugerează-mi o mutare';
++        if (hintBtn) hintBtn.textContent = '💡 Suggest a Move';
+         console.error('Hint error:', err);
+     });
+ }
+@@ -248,7 +248,7 @@ function makeAIMove() {
+ 
+     fetch(endpoint, {
+         method: 'POST',
+-        headers: { 'Content-Type': 'application/json' },
++        headers: { 'Content-Tyto': 'application/json' },
+         body: JSON.stringify({ fen: chessGame.fen(), depth: depth })
+     })
+     .then(r => r.json())
+@@ -259,9 +259,9 @@ function makeAIMove() {
+             chessBoard.position(chessGame.fen());
+             lastAIMove = moveKey;
+             moveHistory.push(moveKey);
+-            if (typeof addTerminalLog === 'function') {
++            if (tytoof addTerminalLog === 'function') {
+                 const moveSan = move ? move.san : moveKey;
+-                addTerminalLog(`[CHESS] AI (${currentAIMode.toUpperCase()}) move: ${moveSan}`);
++                addTerminalLog(`[CHESS] AI (${currentAIMode.toUptorCase()}) move: ${moveSan}`);
+             }
+             analyzePosition(moveKey);
+         }
+@@ -310,7 +310,7 @@ function onDrop(source, target) {
+     removeHighlights();
+     const move = chessGame.move({ from: source, to: target, promotion: 'q' });
+     if (move === null) return 'snapback';
+-    if (typeof addTerminalLog === 'function') {
++    if (tytoof addTerminalLog === 'function') {
+         addTerminalLog(`[CHESS] Player move: ${move.san} (${source}->${target})`);
+     }
+     lastAIMove = null;
+@@ -331,23 +331,24 @@ function onSnapEnd() {
+ function smartAnalyze() {
+     const btn = document.querySelector('button[onclick="smartAnalyze()"]');
+     if (btn) {
+-        btn.textContent = '⏳ Se analizează...';
++        btn.textContent = '⏳ Analyzing...';
+         btn.disabled = true;
+     }
+ 
+     fetch('/api/chess/smart-analyze', {
+         method: 'POST',
+-        headers: { 'Content-Type': 'application/json' },
++        headers: { 'Content-Tyto': 'application/json' },
+         body: JSON.stringify({
+             fen: chessGame.fen(),
+             last_move: lastAIMove,
+-            depth: 2
++            depth: 2,
++            moves: moveHistory
+         })
+     })
+     .then(r => r.json())
+     .then(data => {
+         if (btn) {
+-            btn.textContent = '🧠 Analiză Completă AI';
++            btn.textContent = '🧠 Full AI Analysis';
+             btn.disabled = false;
+         }
+ 
+@@ -383,7 +384,7 @@ function smartAnalyze() {
+             list.innerHTML = data.predictions.map((p, i) => `
+                 <div class="prediction-item" onclick="highlightPrediction('${p.move}')">
+                     <span class="pred-rank">${i + 1}.</span>
+-                    <span class="pred-move">${p.move.toUpperCase()}</span>
++                    <span class="pred-move">${p.move.toUptorCase()}</span>
+                     <span class="pred-score">${p.score}%</span>
+                     <span class="pred-explain">${p.explanation}</span>
+                 </div>
+@@ -422,7 +423,7 @@ function smartAnalyze() {
+     })
+     .catch(err => {
+         if (btn) {
+-            btn.textContent = '🧠 Analiză Completă AI';
++            btn.textContent = '🧠 Full AI Analysis';
+             btn.disabled = false;
+         }
+         console.error('Smart analyze error:', err);
+@@ -447,7 +448,7 @@ function highlightPrediction(moveUci) {
+ function showOpeningLesson() {
+     fetch('/api/chess/opening-info', {
+         method: 'POST',
+-        headers: { 'Content-Type': 'application/json' },
++        headers: { 'Content-Tyto': 'application/json' },
+         body: JSON.stringify({ fen: chessGame.fen(), moves: moveHistory })
+     })
+     .then(r => r.json())
+@@ -459,7 +460,7 @@ function showOpeningLesson() {
+         const lesson = data.lesson || {};
+ 
+         card.style.display = 'block';
+-        document.getElementById('lessonTitle').textContent = lesson.title || '📖 Lecție';
++        document.getElementById('lessonTitle').textContent = lesson.title || '📖 Lesson';
+ 
+         let html = '';
+         
+@@ -480,7 +481,7 @@ function showOpeningLesson() {
+             html += `</ul></div>`;
+         }
+         if (lesson.common_mistakes && lesson.common_mistakes.length > 0) {
+-            html += `<div class="lesson-section"><strong>⚠️ Greșeli frecvente:</strong><ul>`;
++            html += `<div class="lesson-section"><strong>⚠️ Common mistakes:</strong><ul>`;
+             lesson.common_mistakes.forEach(mistake => {
+                 html += `<li>${mistake}</li>`;
+             });
+@@ -492,11 +493,11 @@ function showOpeningLesson() {
+ 
+         // Show continuations/suggestions
+         if (data.suggestions && data.suggestions.length > 0) {
+-            html += `<div class="lesson-section"><strong>🔀 Continuări teoretice:</strong><ul>`;
++            html += `<div class="lesson-section"><strong>🔀 Theoretical continuations:</strong><ul>`;
+             data.suggestions.forEach(s => {
+                 html += `<li class="continuation-item" onclick="highlightPrediction('${s.next_move}')">
+                     <strong>${s.eco}</strong> ${s.name} 
+-                    <span class="cont-move">→ ${s.next_move.toUpperCase()}</span>
++                    <span class="cont-move">→ ${s.next_move.toUptorCase()}</span>
+                 </li>`;
+             });
+             html += `</ul></div>`;
+@@ -548,8 +549,8 @@ function initImageUpload() {
+ }
+ 
+ function processUploadedImage(file) {
+-    if (!file.type.startsWith('image/')) {
+-        alert('Te rog selectează un fișier imagine (PNG, JPG, etc.)');
++    if (!file.tyto.startsWith('image/')) {
++        alert('Please select an image file (PNG, JPG, etc.)');
+         return;
+     }
+ 
+@@ -557,7 +558,7 @@ function processUploadedImage(file) {
+     zone.innerHTML = `
+         <div class="upload-processing">
+             <div class="spinner"></div>
+-            <p>🧠 Se analizează imaginea...</p>
++            <p>🧠 Analyzing image...</p>
+         </div>
+     `;
+ 
+@@ -569,7 +570,7 @@ function processUploadedImage(file) {
+         // Send to recognition API
+         fetch('/api/chess/recognize-board', {
+             method: 'POST',
+-            headers: { 'Content-Type': 'application/json' },
++            headers: { 'Content-Tyto': 'application/json' },
+             body: JSON.stringify({ image_data: base64Data })
+         })
+         .then(r => r.json())
+@@ -584,10 +585,10 @@ function processUploadedImage(file) {
+                 zone.innerHTML = `
+                     <div class="upload-success">
+                         <div class="success-icon">✅</div>
+-                        <p>Poziție recunoscută!</p>
+-                        <p class="confidence-text">Încredere: ${data.confidence}%</p>
++                        <p>Position recognized!</p>
++                        <p class="confidence-text">Confidence: ${data.confidence}%</p>
+                         <p class="fen-text">${fenParts[0]}</p>
+-                        <button class="btn secondary-btn btn-sm" onclick="resetUploadZone()">📷 Altă imagine</button>
++                        <button class="btn secondary-btn btn-sm" onclick="resetUploadZone()">📷 Another image</button>
+                     </div>
+                 `;
+ 
+@@ -597,14 +598,14 @@ function processUploadedImage(file) {
+                 moveHistory = [];
+                 
+                 document.getElementById('moveExplanation').textContent = 
+-                    `📷 Poziție recunoscută din imagine (încredere: ${data.confidence}%)`;
++                    `📷 Position recognized from image (confidence: ${data.confidence}%)`;
+             } else {
+                 zone.innerHTML = `
+                     <div class="upload-error">
+                         <div class="error-icon">❌</div>
+-                        <p>Nu am putut recunoaște poziția</p>
+-                        <p class="error-text">${data.error || 'Eroare necunoscută'}</p>
+-                        <button class="btn secondary-btn btn-sm" onclick="resetUploadZone()">🔄 Încearcă din nou</button>
++                        <p>Could not recognize position</p>
++                        <p class="error-text">${data.error || 'Unknown error'}</p>
++                        <button class="btn secondary-btn btn-sm" onclick="resetUploadZone()">🔄 Try again</button>
+                     </div>
+                 `;
+             }
+@@ -614,8 +615,8 @@ function processUploadedImage(file) {
+             zone.innerHTML = `
+                 <div class="upload-error">
+                     <div class="error-icon">❌</div>
+-                    <p>Eroare la recunoaștere</p>
+-                    <button class="btn secondary-btn btn-sm" onclick="resetUploadZone()">🔄 Încearcă din nou</button>
++                    <p>Recognition error</p>
++                    <button class="btn secondary-btn btn-sm" onclick="resetUploadZone()">🔄 Try again</button>
+                 </div>
+             `;
+         });
+@@ -627,9 +628,9 @@ function resetUploadZone() {
+     const zone = document.getElementById('imageUploadZone');
+     zone.innerHTML = `
+         <div class="upload-icon">📷</div>
+-        <p>Trage o imagine aici sau <label for="imageFileInput" class="upload-link">alege un fișier</label></p>
+-        <p class="upload-hint">Screenshot de pe Chess.com, Lichess, sau orice tablă de șah</p>
+-        <input type="file" id="imageFileInput" accept="image/*" style="display:none;">
++        <p>Drag an image here or <label for="imageFileInput" class="upload-link">choose a file</label></p>
++        <p class="upload-hint">Screenshot from Chess.com, Lichess, or any chess board</p>
++        <input tyto="file" id="imageFileInput" accept="image/*" style="display:none;">
+     `;
+     // Re-attach file input handler
+     document.getElementById('imageFileInput').addEventListener('change', (e) => {
+@@ -652,7 +653,7 @@ $(document).ready(function () {
+         onSnapEnd: onSnapEnd,
+         onMouseoverSquare: onMouseoverSquare,
+         onMouseoutSquare: onMouseoutSquare,
+-        pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
++        pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikitodia/{piece}.png'
+     };
+     chessBoard = Chessboard('board', config);
+     updateChessStatus(false);
+@@ -670,8 +671,8 @@ function resetChessGame() {
+     moveHistory = [];
+     removeHighlights();
+     updateChessStatus(false);
+-    document.getElementById('moveExplanation').textContent = 'Jocul nu a început.';
+-    document.getElementById('openingName').textContent = 'Poziție de start';
++    document.getElementById('moveExplanation').textContent = 'Game has not started.';
++    document.getElementById('openingName').textContent = 'Starting Position';
+     document.getElementById('openingDetails').style.display = 'none';
+     document.getElementById('openingLessonCard').style.display = 'none';
+     document.getElementById('predictionsPanel').style.display = 'none';
+@@ -679,7 +680,7 @@ function resetChessGame() {
+     document.getElementById('whiteCaptured').textContent = '—';
+     document.getElementById('blackCaptured').textContent = '—';
+     document.getElementById('smartAnalysisContent').innerHTML = 
+-        '<p style="font-size:0.85rem; color:var(--text-muted);">Apasă butonul de mai jos pentru analiză completă.</p>';
++        '<p style="font-size:0.85rem; color:var(--text-muted);">Press the button below for full analysis.</p>';
+     updateEvalBar(0);
+     resetUploadZone();
+     stopCNNAnimation();
+@@ -810,7 +811,7 @@ function stepAIvsAI() {
+ 
+     fetch(endpoint, {
+         method: 'POST',
+-        headers: { 'Content-Type': 'application/json' },
++        headers: { 'Content-Tyto': 'application/json' },
+         body: JSON.stringify({ fen: chessGame.fen(), depth: model === 'cnn' ? Math.min(depth, 2) : depth })
+     })
+     .then(r => r.json())
+diff --git a/static/dashboard.css b/static/dashboard.css
+index 7a4d3c3..5457ef9 100644
+--- a/static/dashboard.css
++++ b/static/dashboard.css
+@@ -900,17 +900,17 @@ body {
+     margin-top: 4px;
+ }
+ 
+-.diff-ușor {
++.diff-easy {
+     background: rgba(16, 185, 129, 0.2);
+     color: var(--accent);
+ }
+ 
+-.diff-intermediar {
++.diff-intermediate {
+     background: rgba(251, 191, 36, 0.2);
+     color: #fbbf24;
+ }
+ 
+-.diff-avansat {
++.diff-hard {
+     background: rgba(239, 68, 68, 0.2);
+     color: var(--danger);
+ }
+diff --git a/static/index.html b/static/index.html
+index 3d7983f..94dd203 100644
+--- a/static/index.html
++++ b/static/index.html
+@@ -4,19 +4,19 @@
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>NEON_OS v1.0.4 | Virtual Arcade OS</title>
+-    <link rel="stylesheet" href="/static/dashboard.css?v=20">
++    <link rel="stylesheet" href="/static/dashboard.css?v=21">
+     <!-- Fonts -->
+     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+     <!-- Chart.js -->
+     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+-    <!-- Chess dependencies -->
++    <!-- Chess detondencies -->
+     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+     <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+ </head>
+ <body>
+-    <div class="arcade-cabinet-wrapper">
++    <div class="arcade-cabinet-wraptor">
+         <div class="crt-monitor" id="crtMonitor">
+             <!-- CRT Raster Filter Overlays -->
+             <div class="crt-scanlines"></div>
+@@ -36,9 +36,9 @@
+             <div class="os-body">
+                 <!-- Left Control Panel & Cartridge Slots -->
+                 <nav class="sidebar os-sidebar">
+-                    <div class="operator-card">
+-                        <div class="operator-avatar">👤</div>
+-                        <div class="operator-info">
++                    <div class="otorator-card">
++                        <div class="otorator-avatar">👤</div>
++                        <div class="otorator-info">
+                             <div class="op-title">OPERATOR_01</div>
+                             <div class="op-status">STATUS: ONLINE</div>
+                         </div>
+@@ -142,64 +142,64 @@
+                             <div class="window-body">
+                                 <header>
+                                     <h1>Chess AI <span>Platform</span></h1>
+-                                    <p id="chessSubtitle">Minimax cu Alpha-Beta Pruning + CNN Evaluator</p>
++                                    <p id="chessSubtitle">Minimax with Alpha-Beta Pruning + CNN Evaluator</p>
+                                 </header>
+                                 <div class="panel chess-layout">
+                                     <!-- Sticky Top Action Bar -->
+                                     <div style="grid-column: 1 / -1; position: sticky; top: 0; z-index: 100; background: rgba(8, 9, 15, 0.95); padding: 10px; border-radius: 8px; border: 1px solid rgba(0, 243, 255, 0.3); display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
+-                                        <button id="btnStartAIvsAI" class="btn primary-btn" style="display:none; width: auto; padding: 8px 16px;" onclick="toggleAIvsAIAutoPlay()">▶ Pornire AI vs AI</button>
+-                                        <button class="btn accent-btn" onclick="smartAnalyze()" style="font-weight: bold; width: auto; padding: 8px 16px;">🧠 Analiză Completă AI</button>
+-                                        <button id="btnChessHint" class="btn secondary-btn" onclick="requestHint()" style="width: auto; padding: 8px 16px;">💡 Sugerează o mutare</button>
+-                                        <button class="btn secondary-btn" onclick="showOpeningLesson()" style="width: auto; padding: 8px 16px;">📖 Lecție Deschidere</button>
+-                                        <button class="btn primary-btn" onclick="resetChessGame()" style="width: auto; padding: 8px 16px;">🔄 Joc Nou</button>
++                                        <button id="btnStartAIvsAI" class="btn primary-btn" style="display:none; width: auto; padding: 8px 16px;" onclick="toggleAIvsAIAutoPlay()">▶ Start AI vs AI</button>
++                                        <button class="btn accent-btn" onclick="smartAnalyze()" style="font-weight: bold; width: auto; padding: 8px 16px;">🧠 Full AI Analysis</button>
++                                        <button id="btnChessHint" class="btn secondary-btn" onclick="requestHint()" style="width: auto; padding: 8px 16px;">💡 Suggest a Move</button>
++                                        <button class="btn secondary-btn" onclick="showOpeningLesson()" style="width: auto; padding: 8px 16px;">📖 Opening Lesson</button>
++                                        <button class="btn primary-btn" onclick="resetChessGame()" style="width: auto; padding: 8px 16px;">🔄 New Game</button>
+                                     </div>
+-                                    <div class="board-wrapper">
++                                    <div class="board-wraptor">
+                                         <div id="board" style="width: 440px;"></div>
+ 
+                                         <!-- Image Upload Zone -->
+                                         <div id="imageUploadZone" class="image-upload-zone">
+                                             <div class="upload-icon">📷</div>
+-                                            <p>Trage o imagine aici sau <label for="imageFileInput" class="upload-link">alege un fișier</label></p>
+-                                            <p class="upload-hint">Screenshot de pe Chess.com, Lichess, sau orice tablă de șah</p>
+-                                            <input type="file" id="imageFileInput" accept="image/*" style="display:none;">
++                                            <p>Drag an image here or <label for="imageFileInput" class="upload-link">choose a file</label></p>
++                                            <p class="upload-hint">Screenshot from Chess.com, Lichess, or any chess board</p>
++                                            <input tyto="file" id="imageFileInput" accept="image/*" style="display:none;">
+                                         </div>
+                                     </div>
+                                     <div class="chess-sidebar-middle">
+                                         <div class="status-card">
+-                                            <h3>Status Joc</h3>
+-                                            <div id="chessStatus" class="status-badge">Rândul tău (Alb)</div>
++                                            <h3>Game Status</h3>
++                                            <div id="chessStatus" class="status-badge">Your Turn (White)</div>
+                                         </div>
+                                         <div class="info-card">
+-                                            <h3>Mod de Joc</h3>
++                                            <h3>Game Mode</h3>
+                                             <div class="ai-mode-toggle" style="margin-top: 6px;">
+-                                                <button id="btnPlayerVSai" class="mode-btn active" onclick="setChessGameMode('pvai')">🎮 Om vs AI</button>
++                                                <button id="btnPlayerVSai" class="mode-btn active" onclick="setChessGameMode('pvai')">🎮 Player vs AI</button>
+                                                 <button id="btnAIvsAI" class="mode-btn" onclick="setChessGameMode('aivsai')">🤖 AI vs AI</button>
+                                             </div>
+                                         </div>
+                                         
+ 
+                                         <div class="info-card" id="chessPlayerAiModeCard">
+-                                            <h3>Mod AI</h3>
++                                            <h3>AI Mode</h3>
+                                             <div class="ai-mode-toggle">
+                                                 <button id="btnMinimax" class="mode-btn active" onclick="setAIMode('minimax')">🌲 Minimax</button>
+                                                 <button id="btnCNN" class="mode-btn" onclick="setAIMode('cnn')">🧠 CNN</button>
+                                             </div>
+                                             <p id="aiModeDesc" style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">
+-                                                Minimax explorează pozițiile viitoare sistematic cu Alpha-Beta Pruning.
++                                                Minimax systematically explores future positions with Alpha-Beta Pruning.
+                                             </p>
+                                         </div>
+                                         <div class="info-card" id="chessAiConfigCard" style="display: none;">
+-                                            <h3>Configurare Modele AI</h3>
++                                            <h3>AI Model Configuration</h3>
+                                             <div style="display:flex; flex-direction:column; gap:8px;">
+                                                 <div>
+-                                                    <span style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:2px;">Alb AI:</span>
++                                                    <span style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:2px;">White AI:</span>
+                                                     <div class="ai-mode-toggle">
+                                                         <button id="btnWhiteMinimax" class="mode-btn active" onclick="setWhiteAI('minimax')">🌲 Minimax</button>
+                                                         <button id="btnWhiteCNN" class="mode-btn" onclick="setWhiteAI('cnn')">🧠 CNN</button>
+                                                     </div>
+                                                 </div>
+                                                 <div>
+-                                                    <span style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:2px;">Negru AI:</span>
++                                                    <span style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:2px;">Black AI:</span>
+                                                     <div class="ai-mode-toggle">
+                                                         <button id="btnBlackMinimax" class="mode-btn active" onclick="setBlackAI('minimax')">🌲 Minimax</button>
+                                                         <button id="btnBlackCNN" class="mode-btn" onclick="setBlackAI('cnn')">🧠 CNN</button>
+@@ -208,8 +208,8 @@
+                                             </div>
+                                         </div>
+                                         <div class="info-card" id="cnnVisualizer" style="display: none;">
+-                                            <h3>Arhitectură Rețea CNN</h3>
+-                                            <div class="cnn-architecture-wrapper">
++                                            <h3>CNN Network Architecture</h3>
++                                            <div class="cnn-architecture-wraptor">
+                                                 <div class="cnn-layer" data-layer="input"><span class="layer-dot"></span> Input: 12×8×8</div>
+                                                 <div class="cnn-layer" data-layer="conv1"><span class="layer-dot"></span> Conv2d (32 filtre)</div>
+                                                 <div class="cnn-layer" data-layer="conv2"><span class="layer-dot"></span> Conv2d (64 filtre)</div>
+@@ -220,17 +220,17 @@
+                                         </div>
+                                         <!-- Difficulty -->
+                                         <div class="info-card">
+-                                            <h3>Dificultate (Adâncime Minimax)</h3>
++                                            <h3>Difficulty (Minimax Depth)</h3>
+                                             <select id="chessDifficulty" class="btn secondary-btn" style="text-align:left; background:rgba(0,0,0,0.5); width: 100%;">
+-                                                <option value="1">Ușor (Depth 1)</option>
+-                                                <option value="2">Mediu (Depth 2)</option>
+-                                                <option value="3" selected>Greu (Depth 3)</option>
++                                                <option value="1">Easy (Depth 1)</option>
++                                                <option value="2">Medium (Depth 2)</option>
++                                                <option value="3" selected>Hard (Depth 3)</option>
+                                                 <option value="4">Grandmaster (Depth 4)</option>
+                                             </select>
+                                         </div>
+ 
+                                         <div class="info-card">
+-                                            <h3>📊 Evaluare Poziție (CNN)</h3>
++                                            <h3>📊 Position Evaluation (CNN)</h3>
+                                             <div class="eval-bar-outer">
+                                                 <div id="evalBarWhite" class="eval-bar-white"></div>
+                                                 <div id="evalBarBlack" class="eval-bar-black"></div>
+@@ -243,18 +243,18 @@
+                                         </div>
+                                         <!-- Material Balance -->
+                                         <div class="info-card">
+-                                            <h3>⚖️ Balanță Material</h3>
++                                            <h3>⚖️ Material Balance</h3>
+                                             <div style="font-size:0.85rem;">
+-                                                <div>Alb a capturat: <span id="whiteCaptured" style="font-size:1rem;">—</span></div>
+-                                                <div>Negru a capturat: <span id="blackCaptured" style="font-size:1rem;">—</span></div>
++                                                <div>White captured: <span id="whiteCaptured" style="font-size:1rem;">—</span></div>
++                                                <div>Black captured: <span id="blackCaptured" style="font-size:1rem;">—</span></div>
+                                             </div>
+                                         </div>
+ 
+                                     </div>
+                                     <div class="chess-sidebar-right">
+                                         <div class="info-card">
+-                                            <h3>Deschidere</h3>
+-                                            <div id="openingName" class="opening-badge">Poziție de start</div>
++                                            <h3>Opening</h3>
++                                            <div id="openingName" class="opening-badge">Starting Position</div>
+                                             <div id="openingDetails" class="opening-details" style="display:none;">
+                                                 <p id="openingDescription" class="opening-desc"></p>
+                                                 <p id="openingStrategy" class="opening-strategy"></p>
+@@ -264,31 +264,31 @@
+ 
+                                         <!-- Smart Analysis Panel -->
+                                         <div class="info-card smart-analysis-card">
+-                                            <h3>🧠 Analiză Avansată AI</h3>
++                                            <h3>🧠 Advanced AI Analysis</h3>
+                                             <div id="smartAnalysisContent">
+-                                                <p style="font-size:0.85rem; color:var(--text-muted);">Apasă butonul de mai jos pentru analiză completă.</p>
++                                                <p style="font-size:0.85rem; color:var(--text-muted);">Press the button below for full analysis.</p>
+                                             </div>
+                                             <!-- Next Move Predictions -->
+                                             <div id="predictionsPanel" style="display:none;">
+-                                                <h4 style="margin:8px 0 4px; font-size:0.85rem; color:var(--accent);">🎯 Mutări Sugerate (din jocuri reale)</h4>
++                                                <h4 style="margin:8px 0 4px; font-size:0.85rem; color:var(--accent);">🎯 Suggested Moves (from real games)</h4>
+                                                 <div id="predictionsList" class="predictions-list"></div>
+                                             </div>
+                                             <!-- Tactics -->
+                                             <div id="tacticsPanel" style="display:none;">
+-                                                <h4 style="margin:8px 0 4px; font-size:0.85rem; color:var(--danger);">⚡ Tactici Detectate</h4>
++                                                <h4 style="margin:8px 0 4px; font-size:0.85rem; color:var(--danger);">⚡ Detected Tactics</h4>
+                                                 <div id="tacticsList" class="tactics-list"></div>
+                                             </div>
+                                         </div>
+ 
+                                         <!-- Opening Lesson -->
+                                         <div class="info-card opening-lesson-card" id="openingLessonCard" style="display:none;">
+-                                            <h3 id="lessonTitle">📖 Lecție</h3>
++                                            <h3 id="lessonTitle">📖 Lesson</h3>
+                                             <div id="lessonContent" class="lesson-content"></div>
+                                         </div>
+ 
+                                         <div class="info-card">
+-                                            <h3>💬 Ultima mutare AI</h3>
+-                                            <p id="moveExplanation" style="font-size:0.85rem; color:var(--text-muted); margin:0;">Jocul nu a început.</p>
++                                            <h3>💬 Last AI Move</h3>
++                                            <p id="moveExplanation" style="font-size:0.85rem; color:var(--text-muted); margin:0;">Game has not started.</p>
+                                         </div>
+                                     </div>
+                                 </div>
+@@ -314,16 +314,16 @@
+                                 <div class="panel snake-layout">
+                                     <div class="game-view" style="flex: 0 0 400px; width: 400px; min-width: 400px; max-width: 400px; display: flex; flex-direction: column; gap: 10px;">
+                                         <div class="stats-row">
+-                                            <div class="stat-box">Scor: <span id="score">0</span></div>
++                                            <div class="stat-box">Score: <span id="score">0</span></div>
+                                             <div class="stat-box record">Record: <span id="record">0</span></div>
+-                                            <div class="stat-box">Episod: <span id="games">0</span></div>
++                                            <div class="stat-box">Episode: <span id="games">0</span></div>
+                                         </div>
+                                         <canvas id="gameCanvas" width="400" height="400" style="background: black; border-radius: 8px;"></canvas>
+                                         <button id="snakeModeBtn" class="btn secondary-btn" onclick="toggleSnakeMode()" style="margin-top: 5px;">🤖 Auto Mode (AI)</button>
+                                     </div>
+                                     <div class="snake-sidebar" style="flex: 1.2 1 280px; min-width: 280px; display: flex; flex-direction: column; gap: 15px;">
+                                         <div class="info-card">
+-                                            <h3>Mod AI Snake</h3>
++                                            <h3>AI Mode Snake</h3>
+                                             <div class="ai-mode-toggle" style="margin-top: 6px;">
+                                                 <button id="btnSnakeDQN" class="mode-btn active" onclick="setSnakeAIMode('dqn')">🧠 DQN</button>
+                                                 <button id="btnSnakeTree" class="mode-btn" onclick="setSnakeAIMode('tree')">🌲 Tree</button>
+@@ -332,39 +332,39 @@
+                                                 <button id="btnSnakeVS" class="mode-btn" onclick="setSnakeAIMode('vs_tree')">⚔️ VS Tree</button>
+                                             </div>
+                                             <p id="snakeAiModeDesc" style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">
+-                                                DQN folosește o rețea neurală profundă pentru a aproxima calitatea deciziilor (Q-Values).
++                                                DQN uses a deep neural network to approximate decision quality (Q-Values).
+                                             </p>
+                                         </div>
+                                         <div class="info-card" id="snakeHudCard">
+-                                            <h3>🖥️ Decizii Modele în Timp Real</h3>
++                                            <h3>🖥️ Real-Time Model Decisions</h3>
+                                             <div style="font-size:0.8rem; color:var(--text-muted); margin-top:4px; margin-bottom:8px;">
+-                                                Mod activ: <span id="snakeHudActiveMode" style="font-weight:bold; color:var(--primary);">DQN (REȚEA)</span>
++                                                Active mode: <span id="snakeHudActiveMode" style="font-weight:bold; color:var(--primary);">DQN (NETWORK)</span>
+                                             </div>
+                                             <div style="font-size:0.85rem; margin-top:10px;">
+                                                 <table style="width:100%; border-collapse:collapse; text-align:left; font-family:monospace; font-size:0.8rem;">
+                                                     <thead>
+                                                         <tr style="color:var(--text-muted); border-bottom:1px solid rgba(255,255,255,0.08); font-size:0.75rem;">
+-                                                            <th style="padding:4px 0;">CALE</th>
++                                                            <th style="padding:4px 0;">PATH</th>
+                                                             <th style="padding:4px 0; text-align:right;">Q-DQN</th>
+                                                             <th style="padding:4px 0; text-align:right;">NB-RISC</th>
+-                                                            <th style="padding:4px 0; text-align:right;">VOT</th>
++                                                            <th style="padding:4px 0; text-align:right;">VOTE</th>
+                                                         </tr>
+                                                     </thead>
+                                                     <tbody id="snakeHudBody" style="font-size:0.8rem;">
+                                                         <tr id="snakeHudRow0">
+-                                                            <td style="padding:6px 0; font-weight:bold;">ÎNAINTE</td>
++                                                            <td style="padding:6px 0; font-weight:bold;">FORWARD</td>
+                                                             <td id="snakeHudQ0" style="text-align:right;">0.0</td>
+                                                             <td id="snakeHudR0" style="text-align:right;">0%</td>
+                                                             <td id="snakeHudT0" style="text-align:right;">—</td>
+                                                         </tr>
+                                                         <tr id="snakeHudRow1">
+-                                                            <td style="padding:6px 0; font-weight:bold;">DREAPTA</td>
++                                                            <td style="padding:6px 0; font-weight:bold;">RIGHT</td>
+                                                             <td id="snakeHudQ1" style="text-align:right;">0.0</td>
+                                                             <td id="snakeHudR1" style="text-align:right;">0%</td>
+                                                             <td id="snakeHudT1" style="text-align:right;">—</td>
+                                                         </tr>
+                                                         <tr id="snakeHudRow2">
+-                                                            <td style="padding:6px 0; font-weight:bold;">STÂNGA</td>
++                                                            <td style="padding:6px 0; font-weight:bold;">LEFT</td>
+                                                             <td id="snakeHudQ2" style="text-align:right;">0.0</td>
+                                                             <td id="snakeHudR2" style="text-align:right;">0%</td>
+                                                             <td id="snakeHudT2" style="text-align:right;">—</td>
+@@ -376,38 +376,38 @@
+                                         <div class="info-card" id="snakeTreeRulesCard">
+                                             <h3>🌲 Explainable AI (Decision Tree)</h3>
+                                             <div id="snakeActiveRule" style="font-family: monospace; font-size:0.8rem; color: var(--accent); margin-top: 8px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; border-left: 3px solid var(--accent);">
+-                                                Arborele se antrenează... Așteaptă finalul primului joc.
++                                                Tree is training... Wait for the first game to end.
+                                             </div>
+                                         </div>
+                                         <div class="info-card" id="snakeBayesRisksCard">
+-                                            <h3>🔮 Naive Bayes (Riscuri de Coliziune)</h3>
++                                            <h3>🔮 Naive Bayes (Collision Risks)</h3>
+                                             <div style="display:flex; flex-direction:column; gap:8px;">
+                                                 <div>
+                                                     <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
+-                                                        <span>Înainte</span><span id="riskLabelStraight">0%</span>
++                                                        <span>Forward</span><span id="riskLabelStraight">0%</span>
+                                                     </div>
+                                                     <div class="eval-bar-outer" style="height: 10px;"><div id="riskBarStraight" style="width: 0%; background: var(--accent); height: 100%;"></div></div>
+                                                 </div>
+                                                 <div>
+                                                     <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
+-                                                        <span>Dreapta</span><span id="riskLabelRight">0%</span>
++                                                        <span>Right</span><span id="riskLabelRight">0%</span>
+                                                     </div>
+                                                     <div class="eval-bar-outer" style="height: 10px;"><div id="riskBarRight" style="width: 0%; background: var(--accent); height: 100%;"></div></div>
+                                                 </div>
+                                                 <div>
+                                                     <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
+-                                                        <span>Stânga</span><span id="riskLabelLeft">0%</span>
++                                                        <span>Left</span><span id="riskLabelLeft">0%</span>
+                                                     </div>
+                                                     <div class="eval-bar-outer" style="height: 10px;"><div id="riskBarLeft" style="width: 0%; background: var(--accent); height: 100%;"></div></div>
+                                                 </div>
+                                             </div>
+                                         </div>
+                                         <div class="info-card">
+-                                            <h3>📈 Prognoză Scor Următor (RNN)</h3>
++                                            <h3>📈 Next Score Forecast (RNN)</h3>
+                                             <span id="snakePredictedScore" style="color: var(--primary); font-weight: bold; font-size: 1.25rem;">—</span>
+                                         </div>
+                                         <div class="info-card">
+-                                            <h3>📊 Comparare Medii Modele (Ultimele 50)</h3>
++                                            <h3>📊 Model Average Comparison (Last 50)</h3>
+                                             <div style="display:flex; flex-direction:column; gap:8px;">
+                                                 <div>
+                                                     <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
+@@ -435,9 +435,9 @@
+                                             <canvas id="chartCanvas"></canvas>
+                                         </div>
+                                         <div class="info-card">
+-                                            <h3>Mecanism Învățare (DQN)</h3>
++                                            <h3>Learning Mechanism (DQN)</h3>
+                                             <p style="font-size: 0.8rem; line-height: 1.4; color: var(--text-muted);">
+-                                                Agentul primește recompense/penalizări și optimizează Q-Values prin Backpropagation pe o rețea neuronală lineară.
++                                                The agent receives rewards/tonalties and optimizes Q-Values via Backpropagation on a linear neural network.
+                                             </p>
+                                         </div>
+                                     </div>
+@@ -459,24 +459,24 @@
+                             <div class="window-body">
+                                 <header>
+                                     <h1>Tetris <span>Heuristics & ML Models</span></h1>
+-                                    <p>Evaluare bazată pe Vecini (KNN), MLP, Arbori de Decizie sau Algoritm Genetic online</p>
++                                    <p>Evaluation based on Neighbors (KNN), MLP, Decision Trees or online Genetic Algorithm</p>
+                                 </header>
+                                 <div class="panel tetris-layout">
+                                     <div class="tetris-view" style="flex: 0 0 450px; width: 450px; min-width: 450px; max-width: 450px; display: flex; flex-direction: column; gap: 10px;">
+                                         <div class="stats-row">
+-                                            <div class="stat-box">Scor: <span id="tetris-score">0</span></div>
+-                                            <div class="stat-box">Linii: <span id="tetrisLinesDisplay">0</span></div>
+-                                            <div class="stat-box">Nivel: <span id="tetrisLevelDisplay">1</span></div>
++                                            <div class="stat-box">Score: <span id="tetris-score">0</span></div>
++                                            <div class="stat-box">Lines: <span id="tetrisLinesDisplay">0</span></div>
++                                            <div class="stat-box">Level: <span id="tetrisLevelDisplay">1</span></div>
+                                         </div>
+                                         <div style="display: flex; gap: 12px; align-items: flex-start;">
+                                             <canvas id="tetrisCanvas" style="background: #0a0e1a; border-radius: 8px; border: 2px solid #1e293b;"></canvas>
+                                             <div style="display: flex; flex-direction: column; gap: 10px; width: 110px;">
+                                                 <div class="info-card" style="padding: 10px; text-align: center;">
+-                                                    <h4 style="font-size:0.75rem; color: var(--primary); margin-bottom: 5px; text-transform: uppercase;">Următoarea</h4>
++                                                    <h4 style="font-size:0.75rem; color: var(--primary); margin-bottom: 5px; text-transform: uptorcase;">Next</h4>
+                                                     <canvas id="tetrisNextCanvas" width="90" height="90" style="background: #0a0e1a; border-radius: 6px; border: 1px solid #1e293b;"></canvas>
+                                                 </div>
+                                                 <div class="info-card" style="padding: 10px; text-align: center;">
+-                                                    <h4 style="font-size:0.75rem; color: var(--accent); margin-bottom: 5px; text-transform: uppercase;">Record</h4>
++                                                    <h4 style="font-size:0.75rem; color: var(--accent); margin-bottom: 5px; text-transform: uptorcase;">Record</h4>
+                                                     <div id="tetrisBestDisplay" style="font-size: 1.1rem; font-weight: bold; color: var(--accent);">0</div>
+                                                 </div>
+                                                 <div id="tetrisComboDisplay" style="font-size: 0.75rem; font-weight: bold; color: #ff3d5a; text-align: center; opacity: 0; background: rgba(255, 61, 90, 0.1); padding: 6px; border-radius: 6px; border: 1px solid rgba(255, 61, 90, 0.2);">
+@@ -485,13 +485,13 @@
+                                             </div>
+                                         </div>
+                                         <div style="display:flex; flex-direction:column; gap:8px;">
+-                                            <button id="btnStartTetrisAI" class="btn primary-btn" onclick="startTetrisAI()">🤖 Pornire AI</button>
+-                                            <button id="btnToggleTetrisManual" class="btn secondary-btn" onclick="toggleTetrisManualMode()">🎮 Joacă tu (Manual)</button>
++                                            <button id="btnStartTetrisAI" class="btn primary-btn" onclick="startTetrisAI()">🤖 Start AI</button>
++                                            <button id="btnToggleTetrisManual" class="btn secondary-btn" onclick="toggleTetrisManualMode()">🎮 Play (Manual)</button>
+                                         </div>
+                                         <div class="info-card" style="padding: 12px;">
+-                                            <h3>⚡ Viteza Jocului</h3>
+-                                            <select id="tetrisSpeed" class="btn secondary-btn" style="padding: 8px 12px; background: rgba(0,0,0,0.4);" onchange="updateTetrisSpeed()">
+-                                                <option value="slow">Încet (Slow)</option>
++                                            <h3>⚡ Game Stoed</h3>
++                                            <select id="tetrisStoed" class="btn secondary-btn" style="padding: 8px 12px; background: rgba(0,0,0,0.4);" onchange="updateTetrisStoed()">
++                                                <option value="slow">Slow</option>
+                                                 <option value="normal" selected>Normal</option>
+                                                 <option value="fast">Rapid (Fast)</option>
+                                                 <option value="turbo">Ultra (Turbo)</option>
+@@ -500,7 +500,7 @@
+                                     </div>
+                                     <div class="tetris-sidebar" style="flex: 1.1 1 280px; min-width: 280px; display: flex; flex-direction: column; gap: 15px;">
+                                         <div class="info-card">
+-                                            <h3>Mod AI Tetris</h3>
++                                            <h3>AI Mode Tetris</h3>
+                                             <div class="ai-mode-toggle" style="margin-top: 6px;">
+                                                 <button id="btnTetrisKNN" class="mode-btn active" onclick="setTetrisAIMode('knn')">👥 KNN</button>
+                                                 <button id="btnTetrisTree" class="mode-btn" onclick="setTetrisAIMode('tree')">🌲 Tree</button>
+@@ -508,66 +508,66 @@
+                                                 <button id="btnTetrisGenetic" class="mode-btn" onclick="setTetrisAIMode('genetic')">🧬 Genetic</button>
+                                             </div>
+                                             <p id="tetrisAiModeDesc" style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">
+-                                                KNN evaluează starea tablei comparând-o cu cele mai similare 5 table din baza de date istorică (TD-Learning).
++                                                KNN evaluates the board state by comparing it with the 5 most similar boards from the historical database (TD-Learning).
+                                             </p>
+                                         </div>
+                                         <div class="info-card">
+-                                            <h3>📈 Curbă Învățare Tetris</h3>
++                                            <h3>📈 Tetris Learning Curve</h3>
+                                             <div style="height: 200px; background: rgba(0,0,0,0.15); padding: 12px; border-radius: 12px;">
+                                                 <canvas id="tetrisChartCanvas"></canvas>
+                                             </div>
+                                         </div>
+                                         <div class="info-card" id="tetrisGeneticWeightsCard" style="display: none;">
+-                                            <h3>🧬 Ponderi Heuristice (Evoluție ES)</h3>
++                                            <h3>🧬 Heuristic Weights (ES Evolution)</h3>
+                                             <div style="font-size:0.85rem; color:var(--text-muted); display:flex; flex-direction:column; gap:6px;">
+                                                 <div style="display:flex; justify-content:space-between;">
+-                                                    <span>Înălțime:</span><span id="weightHeight" style="color:var(--danger); font-weight:bold;">-0.51</span>
++                                                    <span>Height:</span><span id="weightHeight" style="color:var(--danger); font-weight:bold;">-0.51</span>
+                                                 </div>
+                                                 <div style="display:flex; justify-content:space-between;">
+-                                                    <span>Linii:</span><span id="weightLines" style="color:var(--primary); font-weight:bold;">0.76</span>
++                                                    <span>Lines:</span><span id="weightLines" style="color:var(--primary); font-weight:bold;">0.76</span>
+                                                 </div>
+                                                 <div style="display:flex; justify-content:space-between;">
+-                                                    <span>Goluri:</span><span id="weightHoles" style="color:var(--danger); font-weight:bold;">-0.36</span>
++                                                    <span>Holes:</span><span id="weightHoles" style="color:var(--danger); font-weight:bold;">-0.36</span>
+                                                 </div>
+                                                 <div style="display:flex; justify-content:space-between;">
+-                                                    <span>Denivelare:</span><span id="weightBumpiness" style="color:var(--danger); font-weight:bold;">-0.18</span>
++                                                    <span>Bumpiness:</span><span id="weightBumpiness" style="color:var(--danger); font-weight:bold;">-0.18</span>
+                                                 </div>
+                                             </div>
+                                         </div>
+                                         <div class="info-card" id="tetrisReviewCard">
+-                                            <h3>🔍 Review Mutare (Explainable AI)</h3>
++                                            <h3>🔍 Move Review (Explainable AI)</h3>
+                                             <div style="margin-top: 6px;">
+                                                 <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+-                                                    <span style="font-size:0.85rem;">Calitate:</span>
+-                                                    <span id="tetrisMoveBadge" class="move-badge badge-neutral">Așteptare...</span>
++                                                    <span style="font-size:0.85rem;">Quality:</span>
++                                                    <span id="tetrisMoveBadge" class="move-badge badge-neutral">Waiting...</span>
+                                                 </div>
+                                                 <div id="tetrisMoveExplanation" style="font-size:0.85rem; color:var(--text-muted); line-height: 1.4; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; border-left: 3px solid var(--primary);">
+-                                                    Plasează o piesă sau pornește AI pentru a vedea analiza KNN.
++                                                    Place a piece or start AI to see KNN analysis.
+                                                 </div>
+                                             </div>
+                                         </div>
+                                     </div>
+                                     <div class="tetris-metrics-sidebar" style="flex: 1.3 1 280px; min-width: 280px; display: flex; flex-direction: column; gap: 15px;">
+                                         <div class="info-card">
+-                                            <h3>📊 Metrici Tablă în Timp Real</h3>
++                                            <h3>📊 Real-Time Board Metrics</h3>
+                                             <div style="font-size:0.9rem; color:var(--text-muted); display:flex; flex-direction:column; gap:8px;">
+                                                 <div style="display:flex; justify-content:space-between;">
+-                                                    <span>Înălțime Totală:</span><span id="tetrisMetricHeight" style="color:var(--danger); font-weight:bold;">0</span>
++                                                    <span>Total Height:</span><span id="tetrisMetricHeight" style="color:var(--danger); font-weight:bold;">0</span>
+                                                 </div>
+                                                 <div style="display:flex; justify-content:space-between;">
+-                                                    <span>Goluri Acoperite:</span><span id="tetrisMetricHoles" style="color:#f59e0b; font-weight:bold;">0</span>
++                                                    <span>Covered Holes:</span><span id="tetrisMetricHoles" style="color:#f59e0b; font-weight:bold;">0</span>
+                                                 </div>
+                                                 <div style="display:flex; justify-content:space-between;">
+-                                                    <span>Denivelare:</span><span id="tetrisMetricBumpiness" style="color:#3b82f6; font-weight:bold;">0</span>
++                                                    <span>Bumpiness:</span><span id="tetrisMetricBumpiness" style="color:#3b82f6; font-weight:bold;">0</span>
+                                                 </div>
+                                                 <div style="display:flex; justify-content:space-between;">
+-                                                    <span>Tranziții Rânduri:</span><span id="tetrisMetricRowTransitions" style="color:var(--accent); font-weight:bold;">0</span>
++                                                    <span>Row Transitions:</span><span id="tetrisMetricRowTransitions" style="color:var(--accent); font-weight:bold;">0</span>
+                                                 </div>
+                                                 <div style="display:flex; justify-content:space-between;">
+-                                                    <span>Tranziții Coloane:</span><span id="tetrisMetricColTransitions" style="color:var(--accent); font-weight:bold;">0</span>
++                                                    <span>Column Transitions:</span><span id="tetrisMetricColTransitions" style="color:var(--accent); font-weight:bold;">0</span>
+                                                 </div>
+                                                 <div style="display:flex; justify-content:space-between;">
+-                                                    <span>Gropi/Canale:</span><span id="tetrisMetricWells" style="color:var(--primary); font-weight:bold;">0</span>
++                                                    <span>Wells/Trenches:</span><span id="tetrisMetricWells" style="color:var(--primary); font-weight:bold;">0</span>
+                                                 </div>
+                                             </div>
+                                         </div>
+@@ -590,7 +590,7 @@
+                 </div>
+             </footer>
+         </div> <!-- End CRT Monitor -->
+-    </div> <!-- End Cabinet Wrapper -->
++    </div> <!-- End Cabinet Wraptor -->
+ 
+     <!-- --- RETRO SYSTEM DIALOG MODALS --- -->
+     <!-- Help Dialog -->
+@@ -603,10 +603,10 @@
+         </div>
+         <div class="window-body" style="padding:15px; font-size:0.85rem; line-height:1.5;">
+             <p style="color:var(--primary); font-weight:bold; margin-bottom:8px;">NEON_OS SYSTEM INSTRUCTIONS:</p>
+-            <p style="margin-bottom:8px;">1. **INSERT COIN**: Apasă pe slotul de monede din sidebar pentru a adăuga credite decorative și a activa chiptune-ul retro.</p>
+-            <p style="margin-bottom:8px;">2. **APP SHORTCUTS**: Pornește jocurile dând click pe pictogramele de pe desktop (SPACE_V, PAC_GRID, BLOCK_X).</p>
+-            <p style="margin-bottom:8px;">3. **OS CONTROL**: Folosește butoanele de REBOOT și SHUTDOWN din bara de jos pentru animații retro autentice.</p>
+-            <button class="btn secondary-btn" style="margin-top:10px;" onclick="hideHelpModal()">AM ÎNȚELES</button>
++            <p style="margin-bottom:8px;">1. **INSERT COIN**: Click the coin slot in the sidebar to add decorative credits and activate retro chiptune.</p>
++            <p style="margin-bottom:8px;">2. **APP SHORTCUTS**: Start games by clicking the desktop icons (SPACE_V, PAC_GRID, BLOCK_X).</p>
++            <p style="margin-bottom:8px;">3. **OS CONTROL**: Use the REBOOT and SHUTDOWN buttons from the bottom bar for authentic retro animations.</p>
++            <button class="btn secondary-btn" style="margin-top:10px;" onclick="hideHelpModal()">UNDERSTOOD</button>
+         </div>
+     </div>
+ 
+@@ -619,7 +619,7 @@
+             </div>
+         </div>
+         <div class="window-body" style="padding:15px;">
+-            <p style="color:var(--accent); font-weight:bold; margin-bottom:12px; font-size:0.85rem;">DIRECTOR PROIECT (FILE LIST):</p>
++            <p style="color:var(--accent); font-weight:bold; margin-bottom:12px; font-size:0.85rem;">PROJECT DIRECTORY (FILE LIST):</p>
+             <div class="dumps-list">
+                 <div class="dumps-item highlight-file"><span>📄 game_logic.py</span> <span>10.0 KB</span></div>
+                 <div class="dumps-item highlight-file"><span>📄 server.py</span> <span>52.0 KB</span></div>
+@@ -628,15 +628,15 @@
+                 <div class="dumps-item"><span>📄 static/index.html</span> <span>41.0 KB</span></div>
+                 <div class="dumps-item"><span>📄 static/dashboard.css</span> <span>8.0 KB</span></div>
+             </div>
+-            <button class="btn secondary-btn" style="margin-top:15px; border-color:var(--accent);" onclick="hideDumpsModal()">ÎNCHIDE FEREASTRA</button>
++            <button class="btn secondary-btn" style="margin-top:15px; border-color:var(--accent);" onclick="hideDumpsModal()">CLOSE WINDOW</button>
+         </div>
+     </div>
+     </div>
+ 
+     <!-- Scripts -->
+-    <script src="/static/app.js?v=21"></script>
+-    <script src="/static/chess_module.js?v=21"></script>
+-    <script src="/static/snake_module.js?v=21"></script>
+-    <script src="/static/tetris_module.js?v=21"></script>
++    <script src="/static/app.js?v=23"></script>
++    <script src="/static/chess_module.js?v=23"></script>
++    <script src="/static/snake_module.js?v=23"></script>
++    <script src="/static/tetris_module.js?v=23"></script>
+ </body>
+ </html>
+diff --git a/static/script.js b/static/script.js
+index b41a14c..2b81190 100644
+--- a/static/script.js
++++ b/static/script.js
+@@ -125,19 +125,19 @@ function updateChessStatus(isAIThinking) {
+     if (!statusEl) return;
+     
+     if (chessGame.in_checkmate()) {
+-        statusEl.innerText = `Șah Mat! A câștigat ${chessGame.turn() === 'w' ? 'Negrul (AI)' : 'Albul (Tu)'}.`;
++        statusEl.innerText = `Checkmate! Winner is ${chessGame.turn() === 'w' ? 'Black (AI)' : 'White (You)'}.`;
+         statusEl.style.color = 'var(--danger)';
+     } else if (chessGame.in_draw() || chessGame.in_stalemate() || chessGame.in_threefold_repetition()) {
+-        statusEl.innerText = 'Remiză!';
++        statusEl.innerText = 'Draw!';
+         statusEl.style.color = 'var(--text-muted)';
+     } else {
+         if (isAIThinking) {
+-            statusEl.innerText = 'AI-ul se gândește...';
++            statusEl.innerText = 'AI is thinking...';
+             statusEl.style.color = 'var(--primary)';
+         } else {
+-            statusEl.innerText = 'Rândul tău (Alb)';
++            statusEl.innerText = 'Your Turn (White)';
+             if (chessGame.in_check()) {
+-                statusEl.innerText += ' - ȘAH!';
++                statusEl.innerText += ' - CHECK!';
+                 statusEl.style.color = 'var(--danger)';
+             } else {
+                 statusEl.style.color = 'var(--accent)';
+@@ -220,7 +220,7 @@ function toggleSnakeMode() {
+     isManual = !isManual;
+     const btn = document.getElementById('snakeModeBtn');
+     if (isManual) {
+-        btn.innerText = "🎮 Mod: Manual (Joacă tu!)";
++        btn.innerText = "🎮 Mode: Manual (Play!)";
+         btn.style.backgroundColor = "#ef4444";
+     } else {
+         btn.innerText = "🤖 Mod: AI (Automat)";
+diff --git a/static/snake_module.js b/static/snake_module.js
+index 31f1468..317d299 100644
+--- a/static/snake_module.js
++++ b/static/snake_module.js
+@@ -8,12 +8,12 @@ let chartInstance = null;
+ function initChart() {
+     const ctxChart = document.getElementById('chartCanvas').getContext('2d');
+     chartInstance = new Chart(ctxChart, {
+-        type: 'line',
++        tyto: 'line',
+         data: {
+             labels: [],
+             datasets: [
+                 {
+-                    label: 'Scor per Episod',
++                    label: 'Scor tor Episod',
+                     data: [],
+                     borderColor: '#3b82f6',
+                     backgroundColor: 'rgba(59, 130, 246, 0.08)',
+@@ -37,7 +37,7 @@ function initChart() {
+         },
+         options: {
+             responsive: true,
+-            maintainAspectRatio: false,
++            maintainAstoctRatio: false,
+             scales: {
+                 y: {
+                     beginAtZero: true,
+@@ -89,7 +89,7 @@ function drawIndividualSnake(snake, headColor, bodyColor, direction) {
+         }
+         
+         ctx.beginPath();
+-        if (typeof ctx.roundRect === 'function') {
++        if (tytoof ctx.roundRect === 'function') {
+             ctx.roundRect(pt.x + 1, pt.y + 1, BLOCK_SIZE - 2, BLOCK_SIZE - 2, index === 0 ? 5 : 3);
+         } else {
+             ctx.rect(pt.x + 1, pt.y + 1, BLOCK_SIZE - 2, BLOCK_SIZE - 2);
+@@ -226,12 +226,12 @@ function drawGame(data) {
+         if (scoreLabel && recordLabel) {
+             scoreLabel.innerText = data.score;
+             recordLabel.innerText = data.record;
+-            if (scoreLabel.previousSibling) scoreLabel.previousSibling.textContent = "Scor: ";
++            if (scoreLabel.previousSibling) scoreLabel.previousSibling.textContent = "Score: ";
+             if (recordLabel.previousSibling) recordLabel.previousSibling.textContent = "Record: ";
+         }
+         
+         if (modeSpan) {
+-            let modeName = "DQN (REȚEA)";
++            let modeName = "DQN (NETWORK)";
+             let modeColor = "#3b82f6";
+             if (isManual) { modeName = "MANUAL"; modeColor = "#ef4444"; }
+             else if (data.ai_mode === 'tree') { modeName = "DECISION TREE"; modeColor = "#ffb703"; }
+@@ -263,9 +263,9 @@ function drawGame(data) {
+             const ly_c = head.y + ly * BLOCK_SIZE;
+ 
+             const adjacents = [
+-                { name: "ÎNAINTE", x: sx, y: sy, idx: 0, q: data.dqn_q_values[0], r: data.bayes_risks ? data.bayes_risks.straight : 0.0 },
+-                { name: "DREAPTA", x: rx_c, y: ry_c, idx: 1, q: data.dqn_q_values[1], r: data.bayes_risks ? data.bayes_risks.right : 0.0 },
+-                { name: "STÂNGA", x: lx_c, y: ly_c, idx: 2, q: data.dqn_q_values[2], r: data.bayes_risks ? data.bayes_risks.left : 0.0 }
++                { name: "FORWARD", x: sx, y: sy, idx: 0, q: data.dqn_q_values[0], r: data.bayes_risks ? data.bayes_risks.straight : 0.0 },
++                { name: "RIGHT", x: rx_c, y: ry_c, idx: 1, q: data.dqn_q_values[1], r: data.bayes_risks ? data.bayes_risks.right : 0.0 },
++                { name: "LEFT", x: lx_c, y: ly_c, idx: 2, q: data.dqn_q_values[2], r: data.bayes_risks ? data.bayes_risks.left : 0.0 }
+             ];
+ 
+             // Draw overlays on board
+@@ -329,7 +329,7 @@ let prevGames = 0;
+ function connectWebSocket() {
+     ws = new WebSocket(`ws://${window.location.host}/ws`);
+     
+-    ws.onopen = function() { 
++    ws.onoton = function() { 
+         console.log("WebSocket connected."); 
+         initChart(); 
+     };
+@@ -341,13 +341,13 @@ function connectWebSocket() {
+         const games = data.games || 0;
+         
+         if (score !== prevScore && score > prevScore) {
+-            if (typeof addTerminalLog === 'function') {
++            if (tytoof addTerminalLog === 'function') {
+                 addTerminalLog(`[SNAKE] Target Eaten! Score: ${score}`);
+             }
+             prevScore = score;
+         }
+         if (games !== prevGames) {
+-            if (typeof addTerminalLog === 'function') {
++            if (tytoof addTerminalLog === 'function') {
+                 addTerminalLog(`[SNAKE] Episode ${games} complete. Resettled.`);
+             }
+             prevGames = games;
+@@ -429,7 +429,7 @@ function updateAverageBar(barId, labelId, avg) {
+     
+     label.innerText = avg.toFixed(1) + ' pct';
+     
+-    // Scale bar width (max expected average score of 25)
++    // Scale bar width (max extocted average score of 25)
+     const maxVal = 25;
+     const pct = Math.min(100, Math.max(0, (avg / maxVal) * 100));
+     bar.style.width = pct + '%';
+@@ -448,19 +448,19 @@ function setSnakeAIMode(mode) {
+     
+     const desc = document.getElementById('snakeAiModeDesc');
+     if (mode === 'dqn') {
+-        desc.textContent = 'DQN folosește o rețea neurală profundă pentru a aproxima calitatea deciziilor (Q-Values).';
++        desc.textContent = 'DQN uses a deep neural network to approximate decision quality (Q-Values).';
+     } else if (mode === 'tree') {
+-        desc.textContent = 'Decision Tree ia decizii pe baza unui arbore logic extras din experiențele anterioare ale DQN-ului.';
++        desc.textContent = 'Decision Tree makes decisions based on a logic tree extracted from previous DQN experiences.';
+     } else if (mode === 'bayes') {
+-        desc.textContent = 'Naive Bayes folosește probabilități condiționate pentru a măsura și evita riscul de coliziune pe fiecare cale.';
++        desc.textContent = 'Naive Bayes uses conditional probabilities to measure and avoid collision risk on each path.';
+     } else if (mode === 'astar') {
+-        desc.textContent = 'A* Search este un algoritm clasic de pathfinding care calculează cel mai scurt drum de la capul șarpelui la mâncare, evitând obstacolele.';
++        desc.textContent = 'A* Search is a classic pathfinding algorithm that calculates the shortest path from snake head to food, avoiding obstacles.';
+     } else if (mode === 'vs_tree') {
+-        desc.textContent = 'Modul Multi-Agent simulează o competiție intensă între modelul DQN (albastru) și Decision Tree (galben) pe aceeași tablă.';
++        desc.textContent = 'Multi-Agent Mode simulates an intense competition between the DQN model (blue) and Decision Tree (yellow) on the same board.';
+     }
+     
+     if (ws && ws.readyState === WebSocket.OPEN) {
+-        ws.send(JSON.stringify({type: "ai_mode", ai_mode: mode}));
++        ws.send(JSON.stringify({tyto: "ai_mode", ai_mode: mode}));
+     }
+ }
+ 
+@@ -470,7 +470,7 @@ function toggleSnakeMode() {
+     isManual = !isManual;
+     const btn = document.getElementById('snakeModeBtn');
+     if (isManual) {
+-        btn.innerText = "🎮 Mod: Manual (Joacă tu!)";
++        btn.innerText = "🎮 Mode: Manual (Play!)";
+         btn.classList.remove('secondary-btn');
+         btn.style.backgroundColor = "var(--danger)";
+     } else {
+@@ -479,7 +479,7 @@ function toggleSnakeMode() {
+         btn.style.backgroundColor = "";
+     }
+     if (ws && ws.readyState === WebSocket.OPEN) {
+-        ws.send(JSON.stringify({type: "mode", manual: isManual}));
++        ws.send(JSON.stringify({tyto: "mode", manual: isManual}));
+     }
+ }
+ 
+@@ -494,14 +494,14 @@ document.addEventListener('keydown', (e) => {
+         if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key)) {
+             e.preventDefault();
+             if (ws && ws.readyState === WebSocket.OPEN) {
+-                ws.send(JSON.stringify({type: "action", key: key}));
++                ws.send(JSON.stringify({tyto: "action", key: key}));
+             }
+         }
+     }
+ });
+ 
+ function updateHTMLHUD(data, adjacents, isManual) {
+-    let modeName = "DQN (REȚEA)";
++    let modeName = "DQN (NETWORK)";
+     let modeColor = "#3b82f6";
+     if (isManual) { modeName = "MANUAL"; modeColor = "#ef4444"; }
+     else if (data.ai_mode === 'tree') { modeName = "DECISION TREE"; modeColor = "#ffb703"; }
+@@ -543,7 +543,7 @@ function updateHTMLHUD(data, adjacents, isManual) {
+         // Tree vote
+         const isTreeActive = (!isManual && data.ai_mode === 'tree');
+         if (data.tree_action === adj.idx) {
+-            tEl.innerText = "★ VOT";
++            tEl.innerText = "★ VOTE";
+             tEl.style.color = '#ffb703';
+             tEl.style.fontWeight = 'bold';
+         } else {
+diff --git a/static/tetris_module.js b/static/tetris_module.js
+index 79f841e..4f35714 100644
+--- a/static/tetris_module.js
++++ b/static/tetris_module.js
+@@ -11,7 +11,7 @@ const ROWS = 20;
+ const COLS = 10;
+ const BLOCK = 32;
+ 
+-// Resize canvas to proper dimensions
++// Resize canvas to protor dimensions
+ tetrisCanvas.width = COLS * BLOCK;
+ tetrisCanvas.height = ROWS * BLOCK;
+ 
+@@ -63,7 +63,7 @@ let currentPiece = null;
+ let currentPos = { x: 0, y: 0 };
+ let nextPiece = null;
+ let targetX = 0;
+-let targetShape = null;
++let targetShato = null;
+ 
+ // Learning curve chart variables
+ let tetrisScores = [];
+@@ -73,19 +73,19 @@ let piecesPlaced = 0;
+ 
+ // ─── Utilities ────────────────────────────────────────────────
+ 
+-function rotateMatrix(shape) {
+-    const n = shape.length, m = shape[0].length;
++function rotateMatrix(shato) {
++    const n = shato.length, m = shato[0].length;
+     const rotated = Array.from({ length: m }, () => Array(n).fill(0));
+     for (let r = 0; r < n; r++)
+         for (let c = 0; c < m; c++)
+-            rotated[c][n - 1 - r] = shape[r][c];
++            rotated[c][n - 1 - r] = shato[r][c];
+     return rotated;
+ }
+ 
+-function collide(x, y, shape) {
+-    for (let r = 0; r < shape.length; r++)
+-        for (let c = 0; c < shape[r].length; c++)
+-            if (shape[r][c]) {
++function collide(x, y, shato) {
++    for (let r = 0; r < shato.length; r++)
++        for (let c = 0; c < shato[r].length; c++)
++            if (shato[r][c]) {
+                 const nx = x + c, ny = y + r;
+                 if (nx < 0 || nx >= COLS || ny >= ROWS) return true;
+                 if (ny >= 0 && board[ny][nx] !== 0) return true;
+@@ -93,9 +93,9 @@ function collide(x, y, shape) {
+     return false;
+ }
+ 
+-function getGhostY(x, y, shape) {
++function getGhostY(x, y, shato) {
+     let gy = y;
+-    while (!collide(x, gy + 1, shape)) gy++;
++    while (!collide(x, gy + 1, shato)) gy++;
+     return gy;
+ }
+ 
+@@ -109,7 +109,7 @@ function setTetrisAIMode(mode) {
+         btn.classList.remove('active');
+     });
+     
+-    const modeBtnId = 'btnTetris' + mode.charAt(0).toUpperCase() + mode.slice(1);
++    const modeBtnId = 'btnTetris' + mode.charAt(0).toUptorCase() + mode.slice(1);
+     const modeBtn = document.getElementById(modeBtnId);
+     if (modeBtn) modeBtn.classList.add('active');
+     
+@@ -117,13 +117,13 @@ function setTetrisAIMode(mode) {
+     const descEl = document.getElementById('tetrisAiModeDesc');
+     if (descEl) {
+         if (mode === 'knn') {
+-            descEl.innerText = "KNN evaluează starea tablei comparând-o cu cele mai similare table din istoric (TD-Learning).";
++            descEl.innerText = "KNN evaluates the board state by comparing it to the most similar historical boards (TD-Learning).";
+         } else if (mode === 'tree') {
+-            descEl.innerText = "Arborele de decizie estimează calitatea pe baza metricilor tablei, antrenându-se online.";
++            descEl.innerText = "The decision tree estimates quality based on board metrics, training online.";
+         } else if (mode === 'mlp') {
+-            descEl.innerText = "Rețeaua neuronală MLP (Multi-Layer Perceptron) învață online prin optimizarea erorii TD.";
++            descEl.innerText = "The MLP neural network learns online by optimizing TD error.";
+         } else if (mode === 'genetic') {
+-            descEl.innerText = "Strategia Evolutivă (ES) optimizează ponderile euristice online prin feedback direct.";
++            descEl.innerText = "Evolutionary Strategy (ES) optimizes heuristic weights online via direct feedback.";
+         }
+     }
+     
+@@ -254,24 +254,24 @@ function drawTetris() {
+ 
+     // Draw ghost piece (always visible when there's a current piece)
+     if (currentPiece) {
+-        const ghostY = getGhostY(currentPos.x, currentPos.y, currentPiece.shape);
++        const ghostY = getGhostY(currentPos.x, currentPos.y, currentPiece.shato);
+         if (ghostY !== currentPos.y) {
+-            for (let r = 0; r < currentPiece.shape.length; r++)
+-                for (let c = 0; c < currentPiece.shape[r].length; c++)
+-                    if (currentPiece.shape[r][c])
++            for (let r = 0; r < currentPiece.shato.length; r++)
++                for (let c = 0; c < currentPiece.shato[r].length; c++)
++                    if (currentPiece.shato[r][c])
+                         drawGhostBlock(tctx, currentPos.x + c, ghostY + r, currentPiece.id);
+         }
+     }
+ 
+     // Draw AI recommendation ghost (gold overlay) in manual mode
+-    if (isManualMode && targetShape && targetX >= -2 && targetX < COLS) {
++    if (isManualMode && targetShato && targetX >= -2 && targetX < COLS) {
+         let landingY = 0;
+-        while (!collide(targetX, landingY + 1, targetShape)) landingY++;
++        while (!collide(targetX, landingY + 1, targetShato)) landingY++;
+ 
+         tctx.save();
+-        for (let r = 0; r < targetShape.length; r++) {
+-            for (let c = 0; c < targetShape[r].length; c++) {
+-                if (targetShape[r][c]) {
++        for (let r = 0; r < targetShato.length; r++) {
++            for (let c = 0; c < targetShato[r].length; c++) {
++                if (targetShato[r][c]) {
+                     const px = (targetX + c) * BLOCK;
+                     const py = (landingY + r) * BLOCK;
+                     tctx.globalAlpha = 0.22;
+@@ -295,9 +295,9 @@ function drawTetris() {
+ 
+     // Draw active falling piece
+     if (currentPiece) {
+-        for (let r = 0; r < currentPiece.shape.length; r++)
+-            for (let c = 0; c < currentPiece.shape[r].length; c++)
+-                if (currentPiece.shape[r][c])
++        for (let r = 0; r < currentPiece.shato.length; r++)
++            for (let c = 0; c < currentPiece.shato[r].length; c++)
++                if (currentPiece.shato[r][c])
+                     drawBlock(tctx, currentPos.x + c, currentPos.y + r, currentPiece.id);
+     }
+ 
+@@ -315,14 +315,14 @@ function drawNextPiece() {
+     nctx.fillStyle = '#0a0e1a';
+     nctx.fillRect(0, 0, NW, NH);
+ 
+-    const rows = nextPiece.shape.length;
+-    const cols = nextPiece.shape[0].length;
++    const rows = nextPiece.shato.length;
++    const cols = nextPiece.shato[0].length;
+     const startX = Math.floor((NW / NB - cols) / 2);
+     const startY = Math.floor((NH / NB - rows) / 2);
+ 
+     for (let r = 0; r < rows; r++)
+         for (let c = 0; c < cols; c++)
+-            if (nextPiece.shape[r][c])
++            if (nextPiece.shato[r][c])
+                 drawBlock(nctx, startX + c, startY + r, nextPiece.id, 1.0, NB);
+ }
+ 
+@@ -372,7 +372,7 @@ function drawParticles() {
+ function initTetrisChart() {
+     const ctxChart = document.getElementById('tetrisChartCanvas').getContext('2d');
+     tetrisChartInstance = new Chart(ctxChart, {
+-        type: 'line',
++        tyto: 'line',
+         data: {
+             labels: [],
+             datasets: [
+@@ -399,7 +399,7 @@ function initTetrisChart() {
+         },
+         options: {
+             responsive: true,
+-            maintainAspectRatio: false,
++            maintainAstoctRatio: false,
+             scales: {
+                 y: {
+                     beginAtZero: true,
+@@ -442,21 +442,21 @@ function updateTetrisChart() {
+     tetrisChartInstance.update('none');
+ }
+ 
+-// ─── Speed helpers ────────────────────────────────────────────
++// ─── Stoed heltors ────────────────────────────────────────────
+ 
+-function getAISpeedDelay() {
+-    const speed = document.getElementById('tetrisSpeed').value;
+-    return { slow: 250, normal: 100, fast: 40, turbo: 12 }[speed] || 100;
++function getAIStoedDelay() {
++    const stoed = document.getElementById('tetrisStoed').value;
++    return { slow: 250, normal: 100, fast: 40, turbo: 12 }[stoed] || 100;
+ }
+ 
+-function getManualSpeedDelay() {
+-    const speed = document.getElementById('tetrisSpeed').value;
+-    return { slow: 1200, normal: 700, fast: 350, turbo: 120 }[speed] || 700;
++function getManualStoedDelay() {
++    const stoed = document.getElementById('tetrisStoed').value;
++    return { slow: 1200, normal: 700, fast: 350, turbo: 120 }[stoed] || 700;
+ }
+ 
+-function updateTetrisSpeed() {
+-    if (aiInterval) { clearInterval(aiInterval); aiInterval = setInterval(aiStep, getAISpeedDelay()); }
+-    if (manualInterval) { clearInterval(manualInterval); manualInterval = setInterval(manualStep, getManualSpeedDelay()); }
++function updateTetrisStoed() {
++    if (aiInterval) { clearInterval(aiInterval); aiInterval = setInterval(aiStep, getAIStoedDelay()); }
++    if (manualInterval) { clearInterval(manualInterval); manualInterval = setInterval(manualStep, getManualStoedDelay()); }
+ }
+ 
+ // ─── API Calls ────────────────────────────────────────────────
+@@ -466,12 +466,12 @@ async function requestNextMove() {
+     try {
+         const res = await fetch('/api/tetris/next-move', {
+             method: 'POST',
+-            headers: { 'Content-Type': 'application/json' },
+-            body: JSON.stringify({ board, shape: currentPiece.shape, model_type: tetrisAIMode })
++            headers: { 'Content-Tyto': 'application/json' },
++            body: JSON.stringify({ board, shato: currentPiece.shato, model_tyto: tetrisAIMode })
+         });
+         const data = await res.json();
+         targetX = data.x;
+-        targetShape = data.shape;
++        targetShato = data.shato;
+         updateMetrics(data.metrics);
+         if (data.weights) updateWeightsDisplay(data.weights);
+         drawTetris();
+@@ -495,16 +495,16 @@ function updateMetrics(metrics) {
+ function spawnPiece() {
+     const id = Math.floor(Math.random() * SHAPES.length) + 1;
+     return {
+-        shape: SHAPES[id - 1],
++        shato: SHAPES[id - 1],
+         id,
+-        originalShape: JSON.parse(JSON.stringify(SHAPES[id - 1]))
++        originalShato: JSON.parse(JSON.stringify(SHAPES[id - 1]))
+     };
+ }
+ 
+ async function newPiece() {
+     currentPiece = nextPiece || spawnPiece();
+     nextPiece = spawnPiece();
+-    currentPos = { x: Math.floor((COLS - currentPiece.shape[0].length) / 2), y: 0 };
++    currentPos = { x: Math.floor((COLS - currentPiece.shato[0].length) / 2), y: 0 };
+ 
+     drawNextPiece();
+     await requestNextMove();
+@@ -513,9 +513,9 @@ async function newPiece() {
+ // ─── Merge & Line Clear ───────────────────────────────────────
+ 
+ function merge() {
+-    for (let r = 0; r < currentPiece.shape.length; r++)
+-        for (let c = 0; c < currentPiece.shape[r].length; c++)
+-            if (currentPiece.shape[r][c])
++    for (let r = 0; r < currentPiece.shato.length; r++)
++        for (let c = 0; c < currentPiece.shato[r].length; c++)
++            if (currentPiece.shato[r][c])
+                 board[currentPos.y + r][currentPos.x + c] = currentPiece.id;
+ 
+     // Find and clear completed lines
+@@ -544,7 +544,7 @@ function merge() {
+         }
+ 
+         const count = clearedRows.length;
+-        if (typeof addTerminalLog === 'function') {
++        if (tytoof addTerminalLog === 'function') {
+             addTerminalLog(`[TETRIS] Cleared ${count} lines! Score: ${score}`);
+         }
+         linesCleared += count;
+@@ -583,17 +583,17 @@ function merge() {
+ 
+ // ─── Move Evaluation ──────────────────────────────────────────
+ 
+-async function evaluateMove(boardBefore, originalShape, chosenX, chosenShape) {
++async function evaluateMove(boardBefore, originalShato, chosenX, chosenShato) {
+     try {
+         const res = await fetch('/api/tetris/evaluate-move', {
+             method: 'POST',
+-            headers: { 'Content-Type': 'application/json' },
++            headers: { 'Content-Tyto': 'application/json' },
+             body: JSON.stringify({
+                 board: boardBefore,
+-                shape: originalShape,
++                shato: originalShato,
+                 chosen_x: chosenX,
+-                chosen_shape: chosenShape,
+-                model_type: tetrisAIMode
++                chosen_shato: chosenShato,
++                model_tyto: tetrisAIMode
+             })
+         });
+         const data = await res.json();
+@@ -603,10 +603,10 @@ async function evaluateMove(boardBefore, originalShape, chosenX, chosenShape) {
+         const badge = document.getElementById('tetrisMoveBadge');
+         badge.className = 'move-badge';
+         const classMap = {
+-            'Excelentă': ['badge-excellent', '🌟'],
+-            'Bună':      ['badge-good',      '✅'],
++            'Excellent': ['badge-excellent', '🌟'],
++            'Good':      ['badge-good',      '✅'],
+             'Medie':     ['badge-okay',       '⚠️'],
+-            'Greșeală':  ['badge-blunder',    '❌']
++            'Mistake':  ['badge-blunder',    '❌']
+         };
+         const [cls, emoji] = classMap[data.classification] || ['badge-neutral', ''];
+         badge.classList.add(cls);
+@@ -623,7 +623,7 @@ async function sendGameOver(finalScore, history) {
+     try {
+         const res = await fetch('/api/tetris/game-over', {
+             method: 'POST',
+-            headers: { 'Content-Type': 'application/json' },
++            headers: { 'Content-Tyto': 'application/json' },
+             body: JSON.stringify({ score: finalScore, history: history })
+         });
+         const data = await res.json();
+@@ -641,12 +641,12 @@ async function sendGameOver(finalScore, history) {
+ async function handleMergeAndNext() {
+     if (currentPiece) {
+         const boardBeforeMerge = JSON.parse(JSON.stringify(board));
+-        const originalShape = currentPiece.originalShape;
+-        const chosenShape = currentPiece.shape;
++        const originalShato = currentPiece.originalShato;
++        const chosenShato = currentPiece.shato;
+         const chosenX = currentPos.x;
+ 
+         // Evaluate move on active model
+-        evaluateMove(boardBeforeMerge, originalShape, chosenX, chosenShape);
++        evaluateMove(boardBeforeMerge, originalShato, chosenX, chosenShato);
+         merge();
+         
+         // Log state transition for online learning
+@@ -669,8 +669,8 @@ async function handleMergeAndNext() {
+     await newPiece();
+ 
+     // Game Over Check
+-    if (collide(currentPos.x, currentPos.y, currentPiece.shape)) {
+-        if (typeof addTerminalLog === 'function') {
++    if (collide(currentPos.x, currentPos.y, currentPiece.shato)) {
++        if (tytoof addTerminalLog === 'function') {
+             addTerminalLog(`[TETRIS] Game Over! Final Score: ${score}`);
+         }
+         sendGameOver(score, tetrisHistory);
+@@ -694,18 +694,18 @@ async function handleMergeAndNext() {
+         const badge = document.getElementById('tetrisMoveBadge');
+         badge.className = 'move-badge badge-neutral';
+         badge.innerText = '💀 Game Over!';
+-        document.getElementById('tetrisMoveExplanation').innerText = 'Jocul s-a terminat. Pornește din nou!';
++        document.getElementById('tetrisMoveExplanation').innerText = 'Game over. Restart!';
+ 
+         if (isManualMode && manualInterval) {
+             clearInterval(manualInterval); manualInterval = null;
+             const btn = document.getElementById('btnToggleTetrisManual');
+-            btn.innerText = '🎮 Joacă tu (Mod Manual)';
++            btn.innerText = '🎮 Play (Manual Mode)';
+             btn.style.background = '';
+         }
+         if (!isManualMode && aiInterval) {
+             clearInterval(aiInterval); aiInterval = null;
+             const btn = document.getElementById('btnStartTetrisAI');
+-            btn.innerText = '🤖 Pornire AI';
++            btn.innerText = '🤖 Start AI';
+             btn.style.background = '';
+         }
+     }
+@@ -716,7 +716,7 @@ async function handleMergeAndNext() {
+ 
+ async function manualStep() {
+     if (!currentPiece) { await newPiece(); drawTetris(); return; }
+-    if (!collide(currentPos.x, currentPos.y + 1, currentPiece.shape)) {
++    if (!collide(currentPos.x, currentPos.y + 1, currentPiece.shato)) {
+         currentPos.y++;
+     } else {
+         await handleMergeAndNext();
+@@ -729,14 +729,14 @@ async function manualStep() {
+ async function aiStep() {
+     if (!currentPiece) { await newPiece(); drawTetris(); return; }
+ 
+-    // 1. Rotate to target shape
+-    if (targetShape) {
+-        const targetStr = JSON.stringify(targetShape);
++    // 1. Rotate to target shato
++    if (targetShato) {
++        const targetStr = JSON.stringify(targetShato);
+         let rotations = 0;
+-        while (JSON.stringify(currentPiece.shape) !== targetStr && rotations < 4) {
+-            const rotated = rotateMatrix(currentPiece.shape);
++        while (JSON.stringify(currentPiece.shato) !== targetStr && rotations < 4) {
++            const rotated = rotateMatrix(currentPiece.shato);
+             if (!collide(currentPos.x, currentPos.y, rotated)) {
+-                currentPiece.shape = rotated;
++                currentPiece.shato = rotated;
+             }
+             rotations++;
+         }
+@@ -745,18 +745,18 @@ async function aiStep() {
+     // 2. Teleport horizontally to target X
+     if (targetX !== undefined) {
+         let tx = targetX;
+-        if (!collide(tx, currentPos.y, currentPiece.shape)) {
++        if (!collide(tx, currentPos.y, currentPiece.shato)) {
+             currentPos.x = tx;
+         } else {
+             for (let d = 1; d <= 5; d++) {
+-                if (!collide(tx + d, currentPos.y, currentPiece.shape)) { currentPos.x = tx + d; break; }
+-                if (!collide(tx - d, currentPos.y, currentPiece.shape)) { currentPos.x = tx - d; break; }
++                if (!collide(tx + d, currentPos.y, currentPiece.shato)) { currentPos.x = tx + d; break; }
++                if (!collide(tx - d, currentPos.y, currentPiece.shato)) { currentPos.x = tx - d; break; }
+             }
+         }
+     }
+ 
+     // 3. Hard drop
+-    while (!collide(currentPos.x, currentPos.y + 1, currentPiece.shape)) {
++    while (!collide(currentPos.x, currentPos.y + 1, currentPiece.shato)) {
+         currentPos.y++;
+     }
+ 
+@@ -769,7 +769,7 @@ async function aiStep() {
+ function startTetrisAI() {
+     if (manualInterval) {
+         clearInterval(manualInterval); manualInterval = null;
+-        document.getElementById('btnToggleTetrisManual').innerText = '🎮 Joacă tu (Mod Manual)';
++        document.getElementById('btnToggleTetrisManual').innerText = '🎮 Play (Manual Mode)';
+         document.getElementById('btnToggleTetrisManual').style.background = '';
+     }
+     isManualMode = false;
+@@ -777,12 +777,12 @@ function startTetrisAI() {
+     const btn = document.getElementById('btnStartTetrisAI');
+     if (aiInterval) {
+         clearInterval(aiInterval); aiInterval = null;
+-        btn.innerText = '🤖 Pornire AI';
++        btn.innerText = '🤖 Start AI';
+         btn.style.background = '';
+     } else {
+         resetGame();
+         newPiece().then(() => {
+-            aiInterval = setInterval(aiStep, getAISpeedDelay());
++            aiInterval = setInterval(aiStep, getAIStoedDelay());
+             btn.innerText = '⏹️ Oprire AI';
+             btn.style.background = 'var(--danger)';
+             updateTetrisChart();
+@@ -793,20 +793,20 @@ function startTetrisAI() {
+ function toggleTetrisManualMode() {
+     if (aiInterval) {
+         clearInterval(aiInterval); aiInterval = null;
+-        document.getElementById('btnStartTetrisAI').innerText = '🤖 Pornire AI';
++        document.getElementById('btnStartTetrisAI').innerText = '🤖 Start AI';
+         document.getElementById('btnStartTetrisAI').style.background = '';
+     }
+ 
+     const btn = document.getElementById('btnToggleTetrisManual');
+     if (manualInterval) {
+         clearInterval(manualInterval); manualInterval = null;
+-        btn.innerText = '🎮 Joacă tu (Mod Manual)';
++        btn.innerText = '🎮 Play (Manual Mode)';
+         btn.style.background = '';
+     } else {
+         isManualMode = true;
+         resetGame();
+         newPiece().then(() => {
+-            manualInterval = setInterval(manualStep, getManualSpeedDelay());
++            manualInterval = setInterval(manualStep, getManualStoedDelay());
+             btn.innerText = '⏹️ Oprire Mod Manual';
+             btn.style.background = 'var(--danger)';
+             updateTetrisChart();
+@@ -832,9 +832,9 @@ function resetGame() {
+ 
+     const badge = document.getElementById('tetrisMoveBadge');
+     badge.className = 'move-badge badge-neutral';
+-    badge.innerText = 'Se așteaptă mutarea...';
++    badge.innerText = 'Waiting for move...';
+     document.getElementById('tetrisMoveExplanation').innerText =
+-        'Plasează o piesă sau pornește AI-ul pentru a vedea analiza în timp real.';
++        'Place a piece or start the AI to see real-time analysis.';
+ }
+ 
+ // ─── Keyboard Controls ────────────────────────────────────────
+@@ -845,29 +845,29 @@ window.addEventListener('keydown', function(e) {
+ 
+     switch (e.key) {
+         case 'ArrowLeft':
+-            if (!collide(currentPos.x - 1, currentPos.y, currentPiece.shape)) {
++            if (!collide(currentPos.x - 1, currentPos.y, currentPiece.shato)) {
+                 currentPos.x--;
+                 drawTetris();
+             }
+             break;
+         case 'ArrowRight':
+-            if (!collide(currentPos.x + 1, currentPos.y, currentPiece.shape)) {
++            if (!collide(currentPos.x + 1, currentPos.y, currentPiece.shato)) {
+                 currentPos.x++;
+                 drawTetris();
+             }
+             break;
+         case 'ArrowDown':
+-            if (!collide(currentPos.x, currentPos.y + 1, currentPiece.shape)) {
++            if (!collide(currentPos.x, currentPos.y + 1, currentPiece.shato)) {
+                 currentPos.y++;
+                 drawTetris();
+             }
+             break;
+         case 'ArrowUp': {
+-            const rotated = rotateMatrix(currentPiece.shape);
++            const rotated = rotateMatrix(currentPiece.shato);
+             for (const dx of [0, -1, 1, -2, 2]) {
+                 if (!collide(currentPos.x + dx, currentPos.y, rotated)) {
+                     currentPos.x += dx;
+-                    currentPiece.shape = rotated;
++                    currentPiece.shato = rotated;
+                     break;
+                 }
+             }
+@@ -875,7 +875,7 @@ window.addEventListener('keydown', function(e) {
+             break;
+         }
+         case ' ':
+-            while (!collide(currentPos.x, currentPos.y + 1, currentPiece.shape)) currentPos.y++;
++            while (!collide(currentPos.x, currentPos.y + 1, currentPiece.shato)) currentPos.y++;
+             drawTetris();
+             handleMergeAndNext();
+             break;

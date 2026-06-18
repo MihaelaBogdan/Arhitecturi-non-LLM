@@ -125,19 +125,19 @@ function updateChessStatus(isAIThinking) {
     if (!statusEl) return;
     
     if (chessGame.in_checkmate()) {
-        statusEl.innerText = `Șah Mat! A câștigat ${chessGame.turn() === 'w' ? 'Negrul (AI)' : 'Albul (Tu)'}.`;
+        statusEl.innerText = `Checkmate! Winner is ${chessGame.turn() === 'w' ? 'Black (AI)' : 'White (You)'}.`;
         statusEl.style.color = 'var(--danger)';
     } else if (chessGame.in_draw() || chessGame.in_stalemate() || chessGame.in_threefold_repetition()) {
-        statusEl.innerText = 'Remiză!';
+        statusEl.innerText = 'Draw!';
         statusEl.style.color = 'var(--text-muted)';
     } else {
         if (isAIThinking) {
-            statusEl.innerText = 'AI-ul se gândește...';
+            statusEl.innerText = 'AI is thinking...';
             statusEl.style.color = 'var(--primary)';
         } else {
-            statusEl.innerText = 'Rândul tău (Alb)';
+            statusEl.innerText = 'Your Turn (White)';
             if (chessGame.in_check()) {
-                statusEl.innerText += ' - ȘAH!';
+                statusEl.innerText += ' - CHECK!';
                 statusEl.style.color = 'var(--danger)';
             } else {
                 statusEl.style.color = 'var(--accent)';
@@ -220,7 +220,7 @@ function toggleSnakeMode() {
     isManual = !isManual;
     const btn = document.getElementById('snakeModeBtn');
     if (isManual) {
-        btn.innerText = "🎮 Mod: Manual (Joacă tu!)";
+        btn.innerText = "🎮 Mode: Manual (Play!)";
         btn.style.backgroundColor = "#ef4444";
     } else {
         btn.innerText = "🤖 Mod: AI (Automat)";

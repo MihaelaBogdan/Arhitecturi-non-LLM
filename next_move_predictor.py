@@ -23,6 +23,9 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+from chess_ai import evaluate_board
+from opening_coach import get_opening_coach
+
 from chess_cnn import board_to_tensor
 
 MODEL_PATH = os.path.join("model", "next_move.pth")
@@ -109,36 +112,63 @@ def get_next_move_model() -> NextMoveCNN:
 
 def predict_next_move(board: chess.Board, top_k: int = 5) -> list[dict]:
     """
-    Predict the best next moves for the given position.
-    
-    Returns list of dicts with 'move' (UCI), 'score', 'explanation'.
+    Predict the best next moves using a 1-ply lookahead with the CNN Evaluator.
     """
-    model = get_next_move_model()
-    tensor = board_to_tensor(board).unsqueeze(0)  # (1, 12, 8, 8)
-
-    with torch.no_grad():
-        logits = model(tensor)  # (1, 4096)
-        probs = torch.softmax(logits, dim=1).squeeze(0)  # (4096,)
-
-    # Get legal moves and their probabilities
     legal_moves = list(board.legal_moves)
+    if not legal_moves:
+        return []
+
+    # 1. Check the Opening Book First
+    coach = get_opening_coach()
+    info = coach.get_opening_info(board)
+    book_moves = {}
+    
+    if len(board.move_stack) < 15 and "suggestions" in info:
+        # Give a slight decaying confidence for book moves just to sort them
+        base_conf = 99.0
+        for sug in info["suggestions"]:
+            move_uci = sug.get("next_move")
+            if move_uci and chess.Move.from_uci(move_uci) in legal_moves:
+                if move_uci not in book_moves:
+                    desc = sug.get("description", "")
+                    # Ensure description fits nicely
+                    explanation = f"From the opening book ({sug.get('name', 'N/A')}). {desc}"
+                    book_moves[move_uci] = {
+                        "move": move_uci,
+                        "score": round(base_conf, 1),
+                        "explanation": explanation
+                    }
+                    base_conf -= 0.5
+
+    results = list(book_moves.values())
+
+    # 2. Evaluate remaining moves with Heuristic
+    is_white = board.turn
     move_scores = []
 
     for move in legal_moves:
-        idx = move_to_index(move)
-        score = probs[idx].item()
-        move_scores.append((move, score))
+        if move.uci() in book_moves:
+            continue
+            
+        board.push(move)
+        score = evaluate_board(board)
+        board.pop()
+        
+        eval_score = score if is_white else -score
+        move_scores.append((move, eval_score))
 
-    # Sort by score descending
     move_scores.sort(key=lambda x: x[1], reverse=True)
 
-    results = []
-    for move, score in move_scores[:top_k]:
-        # Generate explanation
-        explanation = _explain_predicted_move(board, move, score)
+    # 3. Fill the rest of the top_k
+    for move, score in move_scores:
+        if len(results) >= top_k:
+            break
+            
+        confidence = 1 / (1 + np.exp(-score / 100.0)) * 100
+        explanation = _explain_predicted_move(board, move, confidence)
         results.append({
             "move": move.uci(),
-            "score": round(score * 100, 2),
+            "score": round(confidence, 1),
             "explanation": explanation,
         })
 
@@ -149,41 +179,41 @@ def _explain_predicted_move(board: chess.Board, move: chess.Move, confidence: fl
     """Generate a Romanian explanation for a predicted move."""
     piece = board.piece_at(move.from_square)
     if not piece:
-        return "Mutare sugerată din analiza jocurilor reale."
+        return "Suggested move from analysis of real games."
 
     PIECE_NAMES = {
-        chess.PAWN: "Pionul", chess.KNIGHT: "Calul", chess.BISHOP: "Nebunul",
-        chess.ROOK: "Turnul", chess.QUEEN: "Regina", chess.KING: "Regele",
+        chess.PAWN: "Pawn", chess.KNIGHT: "Knight", chess.BISHOP: "Bishop",
+        chess.ROOK: "Rook", chess.QUEEN: "Queen", chess.KING: "King",
     }
 
-    piece_name = PIECE_NAMES.get(piece.piece_type, "Piesa")
+    piece_name = PIECE_NAMES.get(piece.piece_type, "Piece")
     from_sq = chess.square_name(move.from_square).upper()
     to_sq = chess.square_name(move.to_square).upper()
 
-    quality = "excelentă" if confidence > 0.3 else ("bună" if confidence > 0.1 else "interesantă")
+    quality = "excellent" if confidence > 0.3 else ("good" if confidence > 0.1 else "interesting")
 
     # Check special moves
     if board.is_capture(move):
         captured = board.piece_at(move.to_square)
-        cap_name = PIECE_NAMES.get(captured.piece_type, "piesa").lower() if captured else "piesa"
-        return f"Mutare {quality}: {piece_name} capturează {cap_name} pe {to_sq} (conf: {confidence*100:.0f}%)"
+        cap_name = PIECE_NAMES.get(captured.piece_type, "piece").lower() if captured else "piece"
+        return f"{quality.capitalize()} move: {piece_name} captures {cap_name} on {to_sq} (conf: {confidence*100:.0f}%)"
 
     if board.is_castling(move):
-        side = "scurtă" if board.is_kingside_castling(move) else "lungă"
-        return f"Rocadă {side} — mutare {quality} din baza de date (conf: {confidence*100:.0f}%)"
+        side = "kingside" if board.is_kingside_castling(move) else "queenside"
+        return f"{side.capitalize()} castling — {quality} move from database (conf: {confidence*100:.0f}%)"
 
     # Center control
     center = {chess.E4, chess.E5, chess.D4, chess.D5}
     if move.to_square in center:
-        return f"{piece_name} controlează centrul pe {to_sq} — mutare {quality} (conf: {confidence*100:.0f}%)"
+        return f"{piece_name} controls the center on {to_sq} — {quality} move (conf: {confidence*100:.0f}%)"
 
     # Check
     board_copy = board.copy()
     board_copy.push(move)
     if board_copy.is_check():
-        return f"{piece_name} pe {to_sq} dă ȘAH! — mutare {quality} (conf: {confidence*100:.0f}%)"
+        return f"{piece_name} on {to_sq} gives CHECK! — {quality} move (conf: {confidence*100:.0f}%)"
 
-    return f"{piece_name} mută pe {to_sq} — mutare {quality} din analiza a mii de partide (conf: {confidence*100:.0f}%)"
+    return f"{piece_name} moves to {to_sq} — {quality} move from analysis of thousands of games (conf: {confidence*100:.0f}%)"
 
 
 # ──────────────────────────────────────────────────
@@ -225,7 +255,7 @@ def prepare_training_data(csv_path: str, max_positions: int = 50000,
     print(f"  Jocuri decisive: {len(decisive):,}")
 
     data = []
-    skipped = 0
+    skiptod = 0
 
     for _, row in decisive.iterrows():
         if len(data) >= max_positions:
@@ -233,7 +263,7 @@ def prepare_training_data(csv_path: str, max_positions: int = 50000,
 
         moves_str = str(row[moves_col]).strip()
         if not moves_str or moves_str == 'nan':
-            skipped += 1
+            skiptod += 1
             continue
 
         # Determine winner
@@ -276,7 +306,7 @@ def prepare_training_data(csv_path: str, max_positions: int = 50000,
         if len(data) % 5000 == 0 and len(data) > 0:
             print(f"    {len(data):,} poziții extrase...")
 
-    print(f"  ✅ Total: {len(data):,} poziții | Skipped: {skipped:,}")
+    print(f"  ✅ Total: {len(data):,} poziții | Skiptod: {skiptod:,}")
     return data
 
 

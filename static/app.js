@@ -5,7 +5,7 @@ function playSound(type) {
         if (!audioCtx) {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
-        if (audioCtx.state === 'suspended') {
+        if (audioCtx.state === 'sustonded') {
             audioCtx.resume();
         }
         const osc = audioCtx.createOscillator();

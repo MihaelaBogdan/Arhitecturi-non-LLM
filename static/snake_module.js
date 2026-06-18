@@ -13,7 +13,7 @@ function initChart() {
             labels: [],
             datasets: [
                 {
-                    label: 'Scor per Episod',
+                    label: 'Score per Episode',
                     data: [],
                     borderColor: '#3b82f6',
                     backgroundColor: 'rgba(59, 130, 246, 0.08)',
@@ -24,7 +24,7 @@ function initChart() {
                     pointBackgroundColor: '#3b82f6'
                 },
                 {
-                    label: 'Media (toate)',
+                    label: 'Average (all)',
                     data: [],
                     borderColor: '#10b981',
                     backgroundColor: 'rgba(16, 185, 129, 0.04)',
@@ -226,12 +226,12 @@ function drawGame(data) {
         if (scoreLabel && recordLabel) {
             scoreLabel.innerText = data.score;
             recordLabel.innerText = data.record;
-            if (scoreLabel.previousSibling) scoreLabel.previousSibling.textContent = "Scor: ";
+            if (scoreLabel.previousSibling) scoreLabel.previousSibling.textContent = "Score: ";
             if (recordLabel.previousSibling) recordLabel.previousSibling.textContent = "Record: ";
         }
         
         if (modeSpan) {
-            let modeName = "DQN (REȚEA)";
+            let modeName = "DQN (NETWORK)";
             let modeColor = "#3b82f6";
             if (isManual) { modeName = "MANUAL"; modeColor = "#ef4444"; }
             else if (data.ai_mode === 'tree') { modeName = "DECISION TREE"; modeColor = "#ffb703"; }
@@ -263,9 +263,9 @@ function drawGame(data) {
             const ly_c = head.y + ly * BLOCK_SIZE;
 
             const adjacents = [
-                { name: "ÎNAINTE", x: sx, y: sy, idx: 0, q: data.dqn_q_values[0], r: data.bayes_risks ? data.bayes_risks.straight : 0.0 },
-                { name: "DREAPTA", x: rx_c, y: ry_c, idx: 1, q: data.dqn_q_values[1], r: data.bayes_risks ? data.bayes_risks.right : 0.0 },
-                { name: "STÂNGA", x: lx_c, y: ly_c, idx: 2, q: data.dqn_q_values[2], r: data.bayes_risks ? data.bayes_risks.left : 0.0 }
+                { name: "FORWARD", x: sx, y: sy, idx: 0, q: data.dqn_q_values[0], r: data.bayes_risks ? data.bayes_risks.straight : 0.0 },
+                { name: "RIGHT", x: rx_c, y: ry_c, idx: 1, q: data.dqn_q_values[1], r: data.bayes_risks ? data.bayes_risks.right : 0.0 },
+                { name: "LEFT", x: lx_c, y: ly_c, idx: 2, q: data.dqn_q_values[2], r: data.bayes_risks ? data.bayes_risks.left : 0.0 }
             ];
 
             // Draw overlays on board
@@ -377,7 +377,7 @@ function connectWebSocket() {
         
         // Update RNN Predicted Score
         if (data.predicted_next_score !== undefined) {
-            document.getElementById('snakePredictedScore').innerText = data.predicted_next_score > 0 ? data.predicted_next_score + ' puncte' : '—';
+            document.getElementById('snakePredictedScore').innerText = data.predicted_next_score > 0 ? data.predicted_next_score + ' points' : '—';
         }
 
         // Update model averages comparison
@@ -427,7 +427,7 @@ function updateAverageBar(barId, labelId, avg) {
     const label = document.getElementById(labelId);
     if (!bar || !label) return;
     
-    label.innerText = avg.toFixed(1) + ' pct';
+    label.innerText = avg.toFixed(1) + ' pts';
     
     // Scale bar width (max expected average score of 25)
     const maxVal = 25;
@@ -448,15 +448,15 @@ function setSnakeAIMode(mode) {
     
     const desc = document.getElementById('snakeAiModeDesc');
     if (mode === 'dqn') {
-        desc.textContent = 'DQN folosește o rețea neurală profundă pentru a aproxima calitatea deciziilor (Q-Values).';
+        desc.textContent = 'DQN uses a deep neural network to approximate decision quality (Q-Values).';
     } else if (mode === 'tree') {
-        desc.textContent = 'Decision Tree ia decizii pe baza unui arbore logic extras din experiențele anterioare ale DQN-ului.';
+        desc.textContent = 'Decision Tree makes decisions based on a logic tree extracted from previous DQN experiences.';
     } else if (mode === 'bayes') {
-        desc.textContent = 'Naive Bayes folosește probabilități condiționate pentru a măsura și evita riscul de coliziune pe fiecare cale.';
+        desc.textContent = 'Naive Bayes uses conditional probabilities to measure and avoid collision risk on each path.';
     } else if (mode === 'astar') {
-        desc.textContent = 'A* Search este un algoritm clasic de pathfinding care calculează cel mai scurt drum de la capul șarpelui la mâncare, evitând obstacolele.';
+        desc.textContent = 'A* Search is a classic pathfinding algorithm that calculates the shortest path from snake head to food, avoiding obstacles.';
     } else if (mode === 'vs_tree') {
-        desc.textContent = 'Modul Multi-Agent simulează o competiție intensă între modelul DQN (albastru) și Decision Tree (galben) pe aceeași tablă.';
+        desc.textContent = 'Multi-Agent Mode simulates an intense competition between the DQN model (blue) and Decision Tree (yellow) on the same board.';
     }
     
     if (ws && ws.readyState === WebSocket.OPEN) {
@@ -470,7 +470,7 @@ function toggleSnakeMode() {
     isManual = !isManual;
     const btn = document.getElementById('snakeModeBtn');
     if (isManual) {
-        btn.innerText = "🎮 Mod: Manual (Joacă tu!)";
+        btn.innerText = "🎮 Mode: Manual (Play!)";
         btn.classList.remove('secondary-btn');
         btn.style.backgroundColor = "var(--danger)";
     } else {
@@ -501,7 +501,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 function updateHTMLHUD(data, adjacents, isManual) {
-    let modeName = "DQN (REȚEA)";
+    let modeName = "DQN (NETWORK)";
     let modeColor = "#3b82f6";
     if (isManual) { modeName = "MANUAL"; modeColor = "#ef4444"; }
     else if (data.ai_mode === 'tree') { modeName = "DECISION TREE"; modeColor = "#ffb703"; }
@@ -543,7 +543,7 @@ function updateHTMLHUD(data, adjacents, isManual) {
         // Tree vote
         const isTreeActive = (!isManual && data.ai_mode === 'tree');
         if (data.tree_action === adj.idx) {
-            tEl.innerText = "★ VOT";
+            tEl.innerText = "★ VOTE";
             tEl.style.color = '#ffb703';
             tEl.style.fontWeight = 'bold';
         } else {
