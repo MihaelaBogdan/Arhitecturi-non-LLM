@@ -91,7 +91,7 @@ function updateChessStatus(isAIThinking) {
         if (isAIThinking) {
             const turn = chessGame.turn(); // 'w' or 'b'
             const model = (chessGameMode === 'aivsai') ? (turn === 'w' ? whiteAIMode : blackAIMode) : currentAIMode;
-            statusEl.innerText = model === 'cnn' ? '🧠 CNN calculează...' : '🌲 Minimax calculează...';
+            statusEl.innerText = model === 'cnn' ? 'CNN calculează...' : 'Minimax calculează...';
             statusEl.style.color = 'var(--primary)';
             statusEl.style.background = '';
         } else {
@@ -169,7 +169,7 @@ function requestHint() {
     })
     .then(r => r.json())
     .then(data => {
-        if (hintBtn) hintBtn.textContent = '💡 Sugerează-mi o mutare';
+        if (hintBtn) hintBtn.textContent = 'Sugerează-mi o mutare';
         if (data.hint) {
             const from = data.hint.substring(0, 2);
             const to   = data.hint.substring(2, 4);
@@ -178,13 +178,13 @@ function requestHint() {
             $('.square-' + from).addClass('highlight-hint-from');
             $('.square-' + to).addClass('highlight-hint-to');
             document.getElementById('moveExplanation').textContent =
-                `💡 Sugestie: mută de pe ${from.toUpperCase()} pe ${to.toUpperCase()}`;
+                `Sugestie: mută de pe ${from.toUpperCase()} pe ${to.toUpperCase()}`;
             // Remove hint highlight after 3s
             setTimeout(removeHighlights, 3000);
         }
     })
     .catch(err => {
-        if (hintBtn) hintBtn.textContent = '💡 Sugerează-mi o mutare';
+        if (hintBtn) hintBtn.textContent = 'Sugerează-mi o mutare';
         console.error('Hint error:', err);
     });
 }
@@ -400,10 +400,10 @@ function updateAIvsAIButtonState() {
     const btn = document.getElementById('btnStartAIvsAI');
     if (!btn) return;
     if (isAIvsAIPlaying) {
-        btn.innerHTML = '⏸ Oprire AI contra AI';
+        btn.innerHTML = 'Oprire AI contra AI';
         btn.style.backgroundColor = 'var(--danger)';
     } else {
-        btn.innerHTML = '▶ Pornire AI contra AI';
+        btn.innerHTML = 'Pornire AI contra AI';
         btn.style.backgroundColor = 'var(--accent)';
     }
 }

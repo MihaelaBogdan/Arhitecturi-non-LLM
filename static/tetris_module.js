@@ -433,7 +433,7 @@ function updateTetrisChart() {
     }
 
     const labels = scoresToPlot.map((_, i) =>
-        i < tetrisScores.length ? `Joc ${i + 1}` : `🔴 Live`
+        i < tetrisScores.length ? `Joc ${i + 1}` : `Live`
     );
 
     tetrisChartInstance.data.labels = labels;
@@ -559,7 +559,7 @@ function merge() {
         if (combo > 1) {
             const comboEl = document.getElementById('tetrisComboDisplay');
             if (comboEl) {
-                comboEl.innerText = `🔥 x${combo} COMBO!`;
+                comboEl.innerText = `x${combo} COMBO!`;
                 comboEl.style.opacity = '1';
                 clearTimeout(window._comboTimeout);
                 window._comboTimeout = setTimeout(() => { comboEl.style.opacity = '0'; }, 1500);
@@ -603,14 +603,14 @@ async function evaluateMove(boardBefore, originalShape, chosenX, chosenShape) {
         const badge = document.getElementById('tetrisMoveBadge');
         badge.className = 'move-badge';
         const classMap = {
-            'Excelentă': ['badge-excellent', '🌟'],
-            'Bună':      ['badge-good',      '✅'],
-            'Medie':     ['badge-okay',       '⚠️'],
-            'Greșeală':  ['badge-blunder',    '❌']
+            'Excelentă': ['badge-excellent', ''],
+            'Bună':      ['badge-good',      ''],
+            'Medie':     ['badge-okay',       ''],
+            'Greșeală':  ['badge-blunder',    '']
         };
         const [cls, emoji] = classMap[data.classification] || ['badge-neutral', ''];
         badge.classList.add(cls);
-        badge.innerText = `${data.classification} ${emoji}`;
+        badge.innerText = `${data.classification} ${emoji}`.trim();
         document.getElementById('tetrisMoveExplanation').innerText = data.explanation;
     } catch (err) {
         console.error("Failed to evaluate move:", err);
@@ -693,19 +693,19 @@ async function handleMergeAndNext() {
 
         const badge = document.getElementById('tetrisMoveBadge');
         badge.className = 'move-badge badge-neutral';
-        badge.innerText = '💀 Game Over!';
+        badge.innerText = 'Game Over!';
         document.getElementById('tetrisMoveExplanation').innerText = 'Jocul s-a terminat. Pornește din nou!';
 
         if (isManualMode && manualInterval) {
             clearInterval(manualInterval); manualInterval = null;
             const btn = document.getElementById('btnToggleTetrisManual');
-            btn.innerText = '🎮 Joacă tu (Mod Manual)';
+            btn.innerText = 'Joacă tu (Mod Manual)';
             btn.style.background = '';
         }
         if (!isManualMode && aiInterval) {
             clearInterval(aiInterval); aiInterval = null;
             const btn = document.getElementById('btnStartTetrisAI');
-            btn.innerText = '🤖 Pornire AI';
+            btn.innerText = 'Pornire AI';
             btn.style.background = '';
         }
     }
@@ -769,7 +769,7 @@ async function aiStep() {
 function startTetrisAI() {
     if (manualInterval) {
         clearInterval(manualInterval); manualInterval = null;
-        document.getElementById('btnToggleTetrisManual').innerText = '🎮 Joacă tu (Mod Manual)';
+        document.getElementById('btnToggleTetrisManual').innerText = 'Joacă tu (Mod Manual)';
         document.getElementById('btnToggleTetrisManual').style.background = '';
     }
     isManualMode = false;
@@ -777,13 +777,13 @@ function startTetrisAI() {
     const btn = document.getElementById('btnStartTetrisAI');
     if (aiInterval) {
         clearInterval(aiInterval); aiInterval = null;
-        btn.innerText = '🤖 Pornire AI';
+        btn.innerText = 'Pornire AI';
         btn.style.background = '';
     } else {
         resetGame();
         newPiece().then(() => {
             aiInterval = setInterval(aiStep, getAISpeedDelay());
-            btn.innerText = '⏹️ Oprire AI';
+            btn.innerText = 'Oprire AI';
             btn.style.background = 'var(--danger)';
             updateTetrisChart();
         });
@@ -793,21 +793,21 @@ function startTetrisAI() {
 function toggleTetrisManualMode() {
     if (aiInterval) {
         clearInterval(aiInterval); aiInterval = null;
-        document.getElementById('btnStartTetrisAI').innerText = '🤖 Pornire AI';
+        document.getElementById('btnStartTetrisAI').innerText = 'Pornire AI';
         document.getElementById('btnStartTetrisAI').style.background = '';
     }
 
     const btn = document.getElementById('btnToggleTetrisManual');
     if (manualInterval) {
         clearInterval(manualInterval); manualInterval = null;
-        btn.innerText = '🎮 Joacă tu (Mod Manual)';
+        btn.innerText = 'Joacă tu (Mod Manual)';
         btn.style.background = '';
     } else {
         isManualMode = true;
         resetGame();
         newPiece().then(() => {
             manualInterval = setInterval(manualStep, getManualSpeedDelay());
-            btn.innerText = '⏹️ Oprire Mod Manual';
+            btn.innerText = 'Oprire Mod Manual';
             btn.style.background = 'var(--danger)';
             updateTetrisChart();
         });

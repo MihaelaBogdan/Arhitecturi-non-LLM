@@ -470,11 +470,11 @@ function toggleSnakeMode() {
     isManual = !isManual;
     const btn = document.getElementById('snakeModeBtn');
     if (isManual) {
-        btn.innerText = "🎮 Mod: Manual (Joacă tu!)";
+        btn.innerText = "Mod: Manual (Joacă tu!)";
         btn.classList.remove('secondary-btn');
         btn.style.backgroundColor = "var(--danger)";
     } else {
-        btn.innerText = "🤖 Auto Mode (AI)";
+        btn.innerText = "Auto Mode (AI)";
         btn.classList.add('secondary-btn');
         btn.style.backgroundColor = "";
     }
