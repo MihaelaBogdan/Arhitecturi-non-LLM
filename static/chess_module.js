@@ -242,7 +242,7 @@ function requestHint() {
     })
     .then(r => r.json())
     .then(data => {
-        if (hintBtn) hintBtn.textContent = 'Sugerează-mi o mutare';
+        if (hintBtn) hintBtn.textContent = 'Suggest a Move';
         if (data.hint) {
             const from = data.hint.substring(0, 2);
             const to   = data.hint.substring(2, 4);
@@ -250,13 +250,13 @@ function requestHint() {
             $('.square-' + from).addClass('highlight-hint-from');
             $('.square-' + to).addClass('highlight-hint-to');
             document.getElementById('moveExplanation').textContent =
-                `Sugestie: mută de pe ${from.toUpperCase()} pe ${to.toUpperCase()}`;
+                `Suggestion: move from ${from.toUpperCase()} to ${to.toUpperCase()}`;
             // Remove hint highlight after 3s
             setTimeout(removeHighlights, 3000);
         }
     })
     .catch(err => {
-        if (hintBtn) hintBtn.textContent = 'Sugerează-mi o mutare';
+        if (hintBtn) hintBtn.textContent = 'Suggest a Move';
         console.error('Hint error:', err);
     });
 }
@@ -821,10 +821,10 @@ function updateAIvsAIButtonState() {
     const btn = document.getElementById('btnStartAIvsAI');
     if (!btn) return;
     if (isAIvsAIPlaying) {
-        btn.innerHTML = 'Oprire AI contra AI';
+        btn.innerHTML = 'Stop AI vs AI';
         btn.style.backgroundColor = 'var(--danger)';
     } else {
-        btn.innerHTML = 'Pornire AI contra AI';
+        btn.innerHTML = 'Start AI vs AI';
         btn.style.backgroundColor = 'var(--accent)';
     }
 }

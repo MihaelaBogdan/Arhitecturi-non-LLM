@@ -377,7 +377,7 @@ function initTetrisChart() {
             labels: [],
             datasets: [
                 {
-                    label: 'Scor Joc',
+                    label: 'Game Score',
                     data: [],
                     borderColor: '#3b82f6',
                     backgroundColor: 'rgba(59,130,246,0.08)',
@@ -387,7 +387,7 @@ function initTetrisChart() {
                     pointBackgroundColor: '#3b82f6'
                 },
                 {
-                    label: 'Media',
+                    label: 'Mean',
                     data: [],
                     borderColor: '#10b981',
                     backgroundColor: 'rgba(16,185,129,0.06)',
@@ -433,7 +433,7 @@ function updateTetrisChart() {
     }
 
     const labels = scoresToPlot.map((_, i) =>
-        i < tetrisScores.length ? `Joc ${i + 1}` : `Live`
+        i < tetrisScores.length ? `Game ${i + 1}` : `Live`
     );
 
     tetrisChartInstance.data.labels = labels;
@@ -698,18 +698,18 @@ async function handleMergeAndNext() {
         const badge = document.getElementById('tetrisMoveBadge');
         badge.className = 'move-badge badge-neutral';
         badge.innerText = 'Game Over!';
-        document.getElementById('tetrisMoveExplanation').innerText = 'Jocul s-a terminat. Pornește din nou!';
+        document.getElementById('tetrisMoveExplanation').innerText = 'Game over. Restart!';
 
         if (isManualMode && manualInterval) {
             clearInterval(manualInterval); manualInterval = null;
             const btn = document.getElementById('btnToggleTetrisManual');
-            btn.innerText = 'Joacă tu (Mod Manual)';
+            btn.innerText = 'Play (Manual Mode)';
             btn.style.background = '';
         }
         if (!isManualMode && aiInterval) {
             clearInterval(aiInterval); aiInterval = null;
             const btn = document.getElementById('btnStartTetrisAI');
-            btn.innerText = 'Pornire AI';
+            btn.innerText = 'Start AI';
             btn.style.background = '';
         }
     }
@@ -773,7 +773,7 @@ async function aiStep() {
 function startTetrisAI() {
     if (manualInterval) {
         clearInterval(manualInterval); manualInterval = null;
-        document.getElementById('btnToggleTetrisManual').innerText = 'Joacă tu (Mod Manual)';
+        document.getElementById('btnToggleTetrisManual').innerText = 'Play (Manual Mode)';
         document.getElementById('btnToggleTetrisManual').style.background = '';
     }
     isManualMode = false;
@@ -781,13 +781,13 @@ function startTetrisAI() {
     const btn = document.getElementById('btnStartTetrisAI');
     if (aiInterval) {
         clearInterval(aiInterval); aiInterval = null;
-        btn.innerText = 'Pornire AI';
+        btn.innerText = 'Start AI';
         btn.style.background = '';
     } else {
         resetGame();
         newPiece().then(() => {
             aiInterval = setInterval(aiStep, getAISpeedDelay());
-            btn.innerText = 'Oprire AI';
+            btn.innerText = 'Stop AI';
             btn.style.background = 'var(--danger)';
             updateTetrisChart();
         });
@@ -797,21 +797,21 @@ function startTetrisAI() {
 function toggleTetrisManualMode() {
     if (aiInterval) {
         clearInterval(aiInterval); aiInterval = null;
-        document.getElementById('btnStartTetrisAI').innerText = 'Pornire AI';
+        document.getElementById('btnStartTetrisAI').innerText = 'Start AI';
         document.getElementById('btnStartTetrisAI').style.background = '';
     }
 
     const btn = document.getElementById('btnToggleTetrisManual');
     if (manualInterval) {
         clearInterval(manualInterval); manualInterval = null;
-        btn.innerText = 'Joacă tu (Mod Manual)';
+        btn.innerText = 'Play (Manual Mode)';
         btn.style.background = '';
     } else {
         isManualMode = true;
         resetGame();
         newPiece().then(() => {
             manualInterval = setInterval(manualStep, getManualSpeedDelay());
-            btn.innerText = 'Oprire Mod Manual';
+            btn.innerText = 'Stop Manual Mode';
             btn.style.background = 'var(--danger)';
             updateTetrisChart();
         });

@@ -470,7 +470,7 @@ function toggleSnakeMode() {
     isManual = !isManual;
     const btn = document.getElementById('snakeModeBtn');
     if (isManual) {
-        btn.innerText = "Mod: Manual (Joacă tu!)";
+        btn.innerText = "Mode: Manual (Play!)";
         btn.classList.remove('secondary-btn');
         btn.style.backgroundColor = "var(--danger)";
     } else {
