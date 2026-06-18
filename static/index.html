@@ -131,7 +131,7 @@
 
                     <!-- 2. CHESS AI APP WINDOW -->
                     <section id="chess-tab" class="tab-pane" style="display:none;">
-                        <div class="sys-window" style="height:100%; border-color:var(--accent);">
+                        <div class="sys-window" style="min-height: 100%; height: auto; border-color:var(--accent);">
                             <div class="window-header" style="background:#1a0814; border-color:rgba(255, 0, 127, 0.2);">
                                 <span class="window-title" style="color:var(--accent); text-shadow:var(--glow-pink);">CHESS_AI.EXE</span>
                                 <div class="window-controls">
@@ -253,7 +253,7 @@
 
                     <!-- 3. SNAKE RL APP WINDOW -->
                     <section id="snake-tab" class="tab-pane" style="display:none;">
-                        <div class="sys-window" style="height:100%; border-color:var(--primary);">
+                        <div class="sys-window" style="min-height: 100%; height: auto; border-color:var(--primary);">
                             <div class="window-header">
                                 <span class="window-title">SNAKE_RL.EXE</span>
                                 <div class="window-controls">
@@ -276,7 +276,7 @@
                                         <canvas id="gameCanvas" width="400" height="400" style="background: black; border-radius: 8px;"></canvas>
                                         <button id="snakeModeBtn" class="btn secondary-btn" onclick="toggleSnakeMode()" style="margin-top: 5px;">🤖 Auto Mode (AI)</button>
                                     </div>
-                                    <div class="snake-sidebar" style="flex: 1.2 1 280px; min-width: 280px; display: flex; flex-direction: column; gap: 15px; max-height: 80vh;">
+                                    <div class="snake-sidebar" style="flex: 1.2 1 280px; min-width: 280px; display: flex; flex-direction: column; gap: 15px;">
                                         <div class="info-card">
                                             <h3>Mod AI Snake</h3>
                                             <div class="ai-mode-toggle" style="margin-top: 6px;">
@@ -403,7 +403,7 @@
 
                     <!-- 4. TETRIS AI APP WINDOW -->
                     <section id="tetris-tab" class="tab-pane" style="display:none;">
-                        <div class="sys-window" style="height:100%; border-color:var(--warning);">
+                        <div class="sys-window" style="min-height: 100%; height: auto; border-color:var(--warning);">
                             <div class="window-header" style="background:#1a1408; border-color:rgba(255, 183, 3, 0.2);">
                                 <span class="window-title" style="color:var(--warning); text-shadow:0 0 10px rgba(255, 183, 3, 0.4);">TETRIS_AI.EXE</span>
                                 <div class="window-controls">
@@ -453,7 +453,7 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="tetris-sidebar" style="flex: 1.1 1 280px; min-width: 280px; display: flex; flex-direction: column; gap: 15px; max-height: 80vh;">
+                                    <div class="tetris-sidebar" style="flex: 1.1 1 280px; min-width: 280px; display: flex; flex-direction: column; gap: 15px;">
                                         <div class="info-card">
                                             <h3>Mod AI Tetris</h3>
                                             <div class="ai-mode-toggle" style="margin-top: 6px;">
