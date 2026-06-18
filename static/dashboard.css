@@ -462,12 +462,25 @@ body {
     border-radius: 12px;
 }
 
-.chess-layout, .snake-layout, .tetris-layout {
+.snake-layout, .tetris-layout {
     display: flex;
     flex-wrap: wrap;
     gap: 24px;
 }
 
+.chess-layout {
+    display: grid;
+    grid-template-columns: min-content 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+}
+
+/* Also ensure the sidebar wrappers fit well */
+.chess-sidebar-middle, .chess-sidebar-right {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
 .status-card, .info-card {
     background: rgba(0, 0, 0, 0.5) !important;
     border: 1px solid rgba(0, 243, 255, 0.12) !important;

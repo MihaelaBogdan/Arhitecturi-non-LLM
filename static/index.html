@@ -145,6 +145,14 @@
                                     <p id="chessSubtitle">Minimax cu Alpha-Beta Pruning + CNN Evaluator</p>
                                 </header>
                                 <div class="panel chess-layout">
+                                    <!-- Sticky Top Action Bar -->
+                                    <div style="grid-column: 1 / -1; position: sticky; top: 0; z-index: 100; background: rgba(8, 9, 15, 0.95); padding: 10px; border-radius: 8px; border: 1px solid rgba(0, 243, 255, 0.3); display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
+                                        <button id="btnStartAIvsAI" class="btn primary-btn" style="display:none; width: auto; padding: 8px 16px;" onclick="toggleAIvsAIAutoPlay()">▶ Pornire AI vs AI</button>
+                                        <button class="btn accent-btn" onclick="smartAnalyze()" style="font-weight: bold; width: auto; padding: 8px 16px;">🧠 Analiză Completă AI</button>
+                                        <button id="btnChessHint" class="btn secondary-btn" onclick="requestHint()" style="width: auto; padding: 8px 16px;">💡 Sugerează o mutare</button>
+                                        <button class="btn secondary-btn" onclick="showOpeningLesson()" style="width: auto; padding: 8px 16px;">📖 Lecție Deschidere</button>
+                                        <button class="btn primary-btn" onclick="resetChessGame()" style="width: auto; padding: 8px 16px;">🔄 Joc Nou</button>
+                                    </div>
                                     <div class="board-wrapper">
                                         <div id="board" style="width: 440px;"></div>
 
@@ -156,7 +164,7 @@
                                             <input type="file" id="imageFileInput" accept="image/*" style="display:none;">
                                         </div>
                                     </div>
-                                    <div class="chess-sidebar">
+                                    <div class="chess-sidebar-middle">
                                         <div class="status-card">
                                             <h3>Status Joc</h3>
                                             <div id="chessStatus" class="status-badge">Rândul tău (Alb)</div>
@@ -168,6 +176,8 @@
                                                 <button id="btnAIvsAI" class="mode-btn" onclick="setChessGameMode('aivsai')">🤖 AI vs AI</button>
                                             </div>
                                         </div>
+                                        
+
                                         <div class="info-card" id="chessPlayerAiModeCard">
                                             <h3>Mod AI</h3>
                                             <div class="ai-mode-toggle">
@@ -240,6 +250,8 @@
                                             </div>
                                         </div>
 
+                                    </div>
+                                    <div class="chess-sidebar-right">
                                         <div class="info-card">
                                             <h3>Deschidere</h3>
                                             <div id="openingName" class="opening-badge">Poziție de start</div>
@@ -277,13 +289,6 @@
                                         <div class="info-card">
                                             <h3>💬 Ultima mutare AI</h3>
                                             <p id="moveExplanation" style="font-size:0.85rem; color:var(--text-muted); margin:0;">Jocul nu a început.</p>
-                                        </div>
-                                        <div style="display:flex; flex-direction:column; gap:8px;">
-                                            <button id="btnStartAIvsAI" class="btn primary-btn" style="display:none;" onclick="toggleAIvsAIAutoPlay()">▶ Pornire AI vs AI</button>
-                                            <button class="btn accent-btn" onclick="smartAnalyze()">🧠 Analiză Completă AI</button>
-                                            <button id="btnChessHint" class="btn secondary-btn" onclick="requestHint()">💡 Sugerează-mi o mutare</button>
-                                            <button class="btn secondary-btn" onclick="showOpeningLesson()">📖 Lecție Deschidere</button>
-                                            <button class="btn primary-btn" onclick="resetChessGame()">🔄 Joc Nou</button>
                                         </div>
                                     </div>
                                 </div>
