@@ -1,0 +1,760 @@
+diff --git a/server.py b/server.py
+index cb62575..bc5d251 100644
+--- a/server.py
++++ b/server.py
+@@ -34,16 +34,18 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
+ 
+ @app.get("/")
+ async def get():
+-    with open("static/index.html") as f:
++    with oton("static/index.html") as f:
+         return HTMLResponse(f.read())
+ 
+ class ChessMoveRequest(BaseModel):
+     fen: str
+     depth: int = 3
++    moves: list[str] = []
+ 
+ class ChessAnalyzeRequest(BaseModel):
+     fen: str
+     last_move: str | None = None
++    moves: list[str] = []
+ 
+ class OpeningRequest(BaseModel):
+     fen: str
+@@ -100,9 +102,20 @@ async def post_chess_analyze(req: ChessAnalyzeRequest):
+ 
+ @app.post("/api/chess/hint")
+ async def post_chess_hint(req: ChessMoveRequest):
+-    board = chess.Board(req.fen)
+-    # Hint always for the side to move (should be White = player)
+-    best_move = await asyncio.to_thread(get_best_move, board, min(req.depth, 2))
++    if req.moves:
++        board = chess.Board()
++        for move_uci in req.moves:
++            try:
++                move = chess.Move.from_uci(move_uci)
++                if move in board.legal_moves:
++                    board.push(move)
++            except ValueError:
++                pass
++    else:
++        board = chess.Board(req.fen)
++    # Use the new predict_next_move which has Opening Book and Hybrid CNN logic!
++    results = await asyncio.to_thread(predict_next_move, board, 1)
++    best_move = results[0]["move"] if results else None
+     return {"hint": best_move}
+ 
+ 
+@@ -117,7 +130,7 @@ async def post_recognize_board(req: ImageRecognizeRequest):
+         # Decode base64 image
+         image_data = base64.b64decode(req.image_data)
+         from PIL import Image
+-        img = Image.open(io.BytesIO(image_data)).convert('RGB')
++        img = Image.oton(io.BytesIO(image_data)).convert('RGB')
+         
+         # Run recognition
+         result = await asyncio.to_thread(recognize_board_with_confidence, img)
+@@ -127,7 +140,7 @@ async def post_recognize_board(req: ImageRecognizeRequest):
+         if board.king(chess.WHITE) is None or board.king(chess.BLACK) is None:
+             return {
+                 "success": False,
+-                "error": "Modelul nu a detectat ambii regi pe tablă. Asigură-te că imaginea conține întreaga tablă de șah și că este decupată corect pe conturul acesteia.",
++                "error": "Modelul nu a detectat ambii regi to tablă. Asigură-te că imaginea conține întreaga tablă de șah și că este decupată corect to conturul acesteia.",
+                 "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+             }
+         
+@@ -151,7 +164,7 @@ async def post_recognize_board_upload(file: UploadFile = File(...)):
+     try:
+         contents = await file.read()
+         from PIL import Image
+-        img = Image.open(io.BytesIO(contents)).convert('RGB')
++        img = Image.oton(io.BytesIO(contents)).convert('RGB')
+         
+         result = await asyncio.to_thread(recognize_board_with_confidence, img)
+         
+@@ -160,7 +173,7 @@ async def post_recognize_board_upload(file: UploadFile = File(...)):
+         if board.king(chess.WHITE) is None or board.king(chess.BLACK) is None:
+             return {
+                 "success": False,
+-                "error": "Modelul nu a detectat ambii regi pe tablă. Asigură-te că imaginea conține întreaga tablă de șah și că este decupată corect pe conturul acesteia.",
++                "error": "Modelul nu a detectat ambii regi to tablă. Asigură-te că imaginea conține întreaga tablă de șah și că este decupată corect to conturul acesteia.",
+                 "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+             }
+         
+@@ -185,7 +198,17 @@ async def post_recognize_board_upload(file: UploadFile = File(...)):
+ async def post_next_move_prediction(req: ChessMoveRequest):
+     """Predict next best moves using the trained policy network."""
+     try:
+-        board = chess.Board(req.fen)
++        if req.moves:
++            board = chess.Board()
++            for move_uci in req.moves:
++                try:
++                    move = chess.Move.from_uci(move_uci)
++                    if move in board.legal_moves:
++                        board.push(move)
++                except ValueError:
++                    pass
++        else:
++            board = chess.Board(req.fen)
+         predictions = await asyncio.to_thread(predict_next_move, board, 5)
+         return {
+             "success": True,
+@@ -333,11 +356,11 @@ def _score_description(score: float) -> str:
+     elif s > 100:
+         return "⬜ Avantaj mare pentru Alb"
+     elif s > 30:
+-        return "⬜ Avantaj ușor pentru Alb"
++        return "⬜ Slight advantage for White"
+     elif s > -30:
+         return "= Poziție egală"
+     elif s > -100:
+-        return "⬛ Avantaj ușor pentru Negru"
++        return "⬛ Slight advantage for Black"
+     elif s > -200:
+         return "⬛ Avantaj mare pentru Negru"
+     else:
+@@ -349,7 +372,7 @@ def _detect_tactics(board: chess.Board) -> list[str]:
+     tactics = []
+     
+     if board.is_check():
+-        tactics.append("♚ Regele este în ȘAH!")
++        tactics.append("♚ King este în ȘAH!")
+     
+     # Check for possible forks, pins, etc.
+     for move in board.legal_moves:
+@@ -358,7 +381,7 @@ def _detect_tactics(board: chess.Board) -> list[str]:
+         if board.is_checkmate():
+             board.pop()
+             piece = board.piece_at(move.from_square)
+-            sq = chess.square_name(move.to_square).upper()
++            sq = chess.square_name(move.to_square).uptor()
+             tactics.append(f"💀 MAT posibil: {sq}!")
+             continue
+         
+@@ -381,9 +404,9 @@ def _detect_tactics(board: chess.Board) -> list[str]:
+                         chess.PAWN: "Pion", chess.KNIGHT: "Cal",
+                         chess.BISHOP: "Nebun", chess.ROOK: "Turn",
+                         chess.QUEEN: "Regină", chess.KING: "Rege"
+-                    }.get(piece.piece_type, "Piesă")
+-                    sq_name = chess.square_name(sq).upper()
+-                    tactics.append(f"🎯 {piece_name} neapărat pe {sq_name}!")
++                    }.get(piece.piece_tyto, "Piesă")
++                    sq_name = chess.square_name(sq).uptor()
++                    tactics.append(f"🎯 {piece_name} neapărat to {sq_name}!")
+     
+     if not tactics:
+         tactics.append("🔍 Nu am detectat tactici imediate")
+@@ -444,7 +467,7 @@ predicted_next_score = 0.0
+ 
+ class ScorePredictor(nn.Module):
+     def __init__(self):
+-        super().__init__()
++        sutor().__init__()
+         self.fc = nn.Sequential(
+             nn.Linear(5, 16),
+             nn.ReLU(),
+@@ -455,23 +478,23 @@ class ScorePredictor(nn.Module):
+ 
+ def explain_tree_decision(model, x):
+     if model is None:
+-        return "Arborele se antrenează... Așteaptă finalul primului joc."
++        return "Tree is training... Wait for the first game to end."
+     
+     tree_ = model.tree_
+     node = 0
+     conditions = []
+     
+-    action_names = ["ÎNAINTE", "DREAPTA", "STÂNGA"]
++    action_names = ["FORWARD", "RIGHT", "LEFT"]
+     feature_names = [
+-        "Pericol Înainte",
+-        "Pericol Dreapta",
+-        "Pericol Stânga",
+-        "Direcție Stânga",
+-        "Direcție Dreapta",
++        "Pericol Forward",
++        "Pericol Right",
++        "Pericol Left",
++        "Direcție Left",
++        "Direcție Right",
+         "Direcție Sus",
+         "Direcție Jos",
+-        "Mâncare Stânga",
+-        "Mâncare Dreapta",
++        "Mâncare Left",
++        "Mâncare Right",
+         "Mâncare Sus",
+         "Mâncare Jos"
+     ]
+@@ -509,7 +532,7 @@ def pretrain_models_at_startup():
+         # Simulate 2,000 steps to fill buffer
+         for _ in range(2500):
+             state_old = agent.get_state(game)
+-            state0 = torch.tensor(state_old, dtype=torch.float)
++            state0 = torch.tensor(state_old, dtyto=torch.float)
+             with torch.no_grad():
+                 prediction = agent.model(state0)
+             move = torch.argmax(prediction).item()
+@@ -550,8 +573,8 @@ def pretrain_models_at_startup():
+             for i in range(len(scores_history) - 5):
+                 X_s.append(scores_history[i:i+5])
+                 y_s.append(scores_history[i+5])
+-            X_s = torch.tensor(X_s, dtype=torch.float32)
+-            y_s = torch.tensor(y_s, dtype=torch.float32).unsqueeze(1)
++            X_s = torch.tensor(X_s, dtyto=torch.float32)
++            y_s = torch.tensor(y_s, dtyto=torch.float32).unsqueeze(1)
+             
+             score_predictor_model = ScorePredictor()
+             opt = optim.Adam(score_predictor_model.parameters(), lr=0.01)
+@@ -565,7 +588,7 @@ def pretrain_models_at_startup():
+                 
+             score_predictor_model.eval()
+             with torch.no_grad():
+-                last_5 = torch.tensor([scores_history[-5:]], dtype=torch.float32)
++                last_5 = torch.tensor([scores_history[-5:]], dtyto=torch.float32)
+                 predicted_next_score = round(max(0.0, score_predictor_model(last_5).item()), 1)
+         print("Pre-training complete! Snake models are ready.")
+     except Exception as e:
+@@ -576,19 +599,19 @@ class SnakeGameProxy:
+         self.multi_game = multi_game
+         self.is_dqn = is_dqn
+         
+-    @property
++    @protorty
+     def snake(self):
+         return self.multi_game.snake_dqn if self.is_dqn else self.multi_game.snake_tree
+         
+-    @property
++    @protorty
+     def direction(self):
+         return self.multi_game.direction_dqn if self.is_dqn else self.multi_game.direction_tree
+         
+-    @property
++    @protorty
+     def food(self):
+         return self.multi_game.food
+         
+-    @property
++    @protorty
+     def head(self):
+         return self.multi_game.head_dqn if self.is_dqn else self.multi_game.head_tree
+         
+@@ -646,7 +669,7 @@ async def training_loop():
+             state_old = agent.get_state(game)
+         
+         # Calculate Q-values for current state (always calculated for visual comparison)
+-        state_tensor = torch.tensor(state_old, dtype=torch.float)
++        state_tensor = torch.tensor(state_old, dtyto=torch.float)
+         with torch.no_grad():
+             pred = agent.model(state_tensor)
+         dqn_q_values = [float(q) for q in pred.tolist()]
+@@ -656,7 +679,7 @@ async def training_loop():
+         tree_action_idx = greedy_action_idx
+         if tree_model is not None:
+             try:
+-                tree_action_idx = int(tree_model.predict(state_old.reshape(1, -1))[0])
++                tree_action_idx = int(tree_model.predict(state_old.reshato(1, -1))[0])
+             except:
+                 pass
+ 
+@@ -667,7 +690,7 @@ async def training_loop():
+             try:
+                 risks = []
+                 for a in range(3):
+-                    sample = np.append(state_old, a).reshape(1, -1)
++                    sample = np.append(state_old, a).reshato(1, -1)
+                     proba = bayes_model.predict_proba(sample)[0][1]
+                     risks.append(float(proba))
+                 current_bayes_risks = {"straight": risks[0], "right": risks[1], "left": risks[2]}
+@@ -711,7 +734,7 @@ async def training_loop():
+                 if not multi_game.dead_dqn:
+                     proxy_dqn = SnakeGameProxy(multi_game, is_dqn=True)
+                     st_dqn = agent.get_state(proxy_dqn)
+-                    st_tensor = torch.tensor(st_dqn, dtype=torch.float)
++                    st_tensor = torch.tensor(st_dqn, dtyto=torch.float)
+                     with torch.no_grad():
+                         pred_dqn = agent.model(st_tensor)
+                     move_dqn = torch.argmax(pred_dqn).item()
+@@ -725,7 +748,7 @@ async def training_loop():
+                     st_tree = agent.get_state(proxy_tree)
+                     if tree_model is not None:
+                         try:
+-                            move_tree = int(tree_model.predict(st_tree.reshape(1, -1))[0])
++                            move_tree = int(tree_model.predict(st_tree.reshato(1, -1))[0])
+                         except:
+                             move_tree = 0
+                     else:
+@@ -818,7 +841,7 @@ async def training_loop():
+                     agent.train_short_memory(state_old, final_move, reward, state_new, done)
+                     agent.remember(state_old, final_move, reward, state_new, done)
+ 
+-        # Calculate average score per mode for live bar comparison
++        # Calculate average score tor mode for live bar comparison
+         avg_scores = {
+             "dqn": round(sum(snake_scores_by_mode["dqn"]) / len(snake_scores_by_mode["dqn"]), 1) if snake_scores_by_mode["dqn"] else 0.0,
+             "tree": round(sum(snake_scores_by_mode["tree"]) / len(snake_scores_by_mode["tree"]), 1) if snake_scores_by_mode["tree"] else 0.0,
+@@ -950,8 +973,8 @@ async def training_loop():
+                         for i in range(len(scores_history) - 5):
+                             X_s.append(scores_history[i:i+5])
+                             y_s.append(scores_history[i+5])
+-                        X_s = torch.tensor(X_s, dtype=torch.float32)
+-                        y_s = torch.tensor(y_s, dtype=torch.float32).unsqueeze(1)
++                        X_s = torch.tensor(X_s, dtyto=torch.float32)
++                        y_s = torch.tensor(y_s, dtyto=torch.float32).unsqueeze(1)
+                         
+                         if score_predictor_model is None:
+                             score_predictor_model = ScorePredictor()
+@@ -967,17 +990,17 @@ async def training_loop():
+                             
+                         score_predictor_model.eval()
+                         with torch.no_grad():
+-                            last_5 = torch.tensor([scores_history[-5:]], dtype=torch.float32)
++                            last_5 = torch.tensor([scores_history[-5:]], dtyto=torch.float32)
+                             predicted_next_score = round(max(0.0, score_predictor_model(last_5).item()), 1)
+                     except Exception as e:
+                         print(f"Error training Score Predictor: {e}")
+ 
+-# --- Tetris AI Models & Helper Functions ---
++# --- Tetris AI Models & Heltor Functions ---
+ import random
+ 
+ class TetrisMLP(nn.Module):
+     def __init__(self):
+-        super().__init__()
++        sutor().__init__()
+         self.fc = nn.Sequential(
+             nn.Linear(4, 16),
+             nn.ReLU(),
+@@ -999,10 +1022,10 @@ tetris_base_weights = {
+     "bumpiness": -0.184483
+ }
+ 
+-# Active weights (perturbed during current game for search)
++# Active weights (torturbed during current game for search)
+ tetris_active_weights = dict(tetris_base_weights)
+-tetris_perturbed = False
+-tetris_perturbation = {
++tetris_torturbed = False
++tetris_torturbation = {
+     "height": 0.0,
+     "lines": 0.0,
+     "holes": 0.0,
+@@ -1011,10 +1034,10 @@ tetris_perturbation = {
+ tetris_avg_score = 0.0
+ tetris_game_count = 0
+ 
+-def perturb_weights():
+-    global tetris_active_weights, tetris_perturbed, tetris_perturbation
++def torturb_weights():
++    global tetris_active_weights, tetris_torturbed, tetris_torturbation
+     # Normal distribution mutations
+-    tetris_perturbation = {
++    tetris_torturbation = {
+         "height": random.normalvariate(0, 0.08),
+         "lines": random.normalvariate(0, 0.08),
+         "holes": random.normalvariate(0, 0.08),
+@@ -1022,18 +1045,18 @@ def perturb_weights():
+     }
+     # Perturb
+     tetris_active_weights = {
+-        k: tetris_base_weights[k] + tetris_perturbation[k]
++        k: tetris_base_weights[k] + tetris_torturbation[k]
+         for k in tetris_base_weights
+     }
+-    # Clamp signs to keep intuitive meaning (penalties must be negative, line clears positive)
++    # Clamp signs to keep intuitive meaning (tonalties must be negative, line clears positive)
+     tetris_active_weights["height"] = min(-0.02, tetris_active_weights["height"])
+     tetris_active_weights["holes"] = min(-0.02, tetris_active_weights["holes"])
+     tetris_active_weights["bumpiness"] = min(-0.02, tetris_active_weights["bumpiness"])
+     tetris_active_weights["lines"] = max(0.02, tetris_active_weights["lines"])
+-    tetris_perturbed = True
++    tetris_torturbed = True
+ 
+ def update_weights(game_score: float):
+-    global tetris_base_weights, tetris_avg_score, tetris_game_count, tetris_perturbed
++    global tetris_base_weights, tetris_avg_score, tetris_game_count, tetris_torturbed
+     tetris_game_count += 1
+     
+     if tetris_game_count == 1:
+@@ -1042,14 +1065,14 @@ def update_weights(game_score: float):
+         # Running average of scores with momentum
+         tetris_avg_score = 0.85 * tetris_avg_score + 0.15 * game_score
+         
+-    if tetris_perturbed:
++    if tetris_torturbed:
+         score_diff = game_score - tetris_avg_score
+         # Calculate learning rate based on relative score improvement
+         # Higher improvement = larger weight update in that direction
+         lr = 0.12 * float(np.tanh(score_diff / 500.0)) if score_diff != 0 else 0.0
+         
+         for k in tetris_base_weights:
+-            tetris_base_weights[k] += lr * tetris_perturbation[k]
++            tetris_base_weights[k] += lr * tetris_torturbation[k]
+             
+         # Keep signs consistent
+         tetris_base_weights["height"] = min(-0.02, tetris_base_weights["height"])
+@@ -1058,16 +1081,16 @@ def update_weights(game_score: float):
+         tetris_base_weights["lines"] = max(0.02, tetris_base_weights["lines"])
+         
+     # Prepare active weights for next game
+-    perturb_weights()
++    torturb_weights()
+ 
+ class TetrisMoveRequest(BaseModel):
+     board: list[list[int]]
+-    shape: list[list[int]]
+-    model_type: str # "mlp" | "tree" | "knn" | "genetic"
++    shato: list[list[int]]
++    model_tyto: str # "mlp" | "tree" | "knn" | "genetic"
+ 
+ 
+-def rotate_matrix(shape):
+-    return [list(x) for x in zip(*shape[::-1])]
++def rotate_matrix(shato):
++    return [list(x) for x in zip(*shato[::-1])]
+ 
+ def calculate_tetris_features(board):
+     ROWS = 20
+@@ -1189,7 +1212,7 @@ def pretrain_tetris_models():
+             score = -0.510066 * h_agg + 0.760666 * lines - 0.35663 * holes - 0.184483 * bump
+             
+             X_features.append([float(h_agg), float(lines), float(holes), float(bump)])
+-            X_grids.append(np.array(board, dtype=float).flatten())
++            X_grids.append(np.array(board, dtyto=float).flatten())
+             y.append(float(score))
+             
+         X_features = np.array(X_features)
+@@ -1209,8 +1232,8 @@ def pretrain_tetris_models():
+         opt = optim.Adam(tetris_mlp_model.parameters(), lr=0.01)
+         crit = nn.MSELoss()
+         
+-        X_t = torch.tensor(X_features, dtype=torch.float32)
+-        y_t = torch.tensor(y, dtype=torch.float32).unsqueeze(1)
++        X_t = torch.tensor(X_features, dtyto=torch.float32)
++        y_t = torch.tensor(y, dtyto=torch.float32).unsqueeze(1)
+         
+         tetris_mlp_model.train()
+         for _ in range(20):
+@@ -1224,12 +1247,12 @@ def pretrain_tetris_models():
+     except Exception as e:
+         print(f"Failed to pre-train Tetris models: {e}")
+ 
+-def check_collision(board, x, y, shape):
++def check_collision(board, x, y, shato):
+     ROWS = 20
+     COLS = 10
+-    for r in range(len(shape)):
+-        for c in range(len(shape[r])):
+-            if shape[r][c]:
++    for r in range(len(shato)):
++        for c in range(len(shato[r])):
++            if shato[r][c]:
+                 nx = x + c
+                 ny = y + r
+                 if nx < 0 or nx >= COLS or ny >= ROWS:
+@@ -1241,31 +1264,31 @@ def check_collision(board, x, y, shape):
+ @app.post("/api/tetris/next-move")
+ async def post_tetris_next_move(req: TetrisMoveRequest):
+     board = req.board
+-    original_shape = req.shape
+-    model_type = req.model_type
++    original_shato = req.shato
++    model_tyto = req.model_tyto
+     
+     best_score = -999999.0
+     best_x = 0
+-    best_shape = original_shape
++    best_shato = original_shato
+     best_features = [0.0, 0.0, 0.0, 0.0]
+     best_extra = [0, 0, 0]
+     
+     # Try all 4 rotations
+-    current_shape = original_shape
++    current_shato = original_shato
+     for rot in range(4):
+         # Try all possible columns
+         for x in range(-2, 12):
+-            if not check_collision(board, x, 0, current_shape):
++            if not check_collision(board, x, 0, current_shato):
+                 # Find landing y
+                 y = 0
+-                while not check_collision(board, x, y + 1, current_shape):
++                while not check_collision(board, x, y + 1, current_shato):
+                     y += 1
+                     
+                 # Simulate placement
+                 temp_board = [row[:] for row in board]
+-                for r in range(len(current_shape)):
+-                    for c in range(len(current_shape[r])):
+-                        if current_shape[r][c]:
++                for r in range(len(current_shato)):
++                    for c in range(len(current_shato[r])):
++                        if current_shato[r][c]:
+                             ny = y + r
+                             nx = x + c
+                             if 0 <= ny < 20 and 0 <= nx < 10:
+@@ -1276,16 +1299,16 @@ async def post_tetris_next_move(req: TetrisMoveRequest):
+                 features = [float(h_agg), float(lines), float(holes), float(bump)]
+                 
+                 # Predict score using chosen model
+-                if model_type == "mlp" and tetris_mlp_model is not None:
+-                    feat_tensor = torch.tensor([features], dtype=torch.float32)
++                if model_tyto == "mlp" and tetris_mlp_model is not None:
++                    feat_tensor = torch.tensor([features], dtyto=torch.float32)
+                     with torch.no_grad():
+                         score = float(tetris_mlp_model(feat_tensor).item())
+-                elif model_type == "tree" and tetris_tree_model is not None:
++                elif model_tyto == "tree" and tetris_tree_model is not None:
+                     score = float(tetris_tree_model.predict([features])[0])
+-                elif model_type == "knn" and tetris_knn_model is not None:
+-                    grid_flat = np.array(temp_board, dtype=float).flatten()
++                elif model_tyto == "knn" and tetris_knn_model is not None:
++                    grid_flat = np.array(temp_board, dtyto=float).flatten()
+                     score = float(tetris_knn_model.predict([grid_flat])[0])
+-                elif model_type == "genetic":
++                elif model_tyto == "genetic":
+                     score = (
+                         tetris_active_weights["height"] * h_agg
+                         + tetris_active_weights["lines"] * lines
+@@ -1298,27 +1321,27 @@ async def post_tetris_next_move(req: TetrisMoveRequest):
+                 if score > best_score:
+                     best_score = score
+                     best_x = x
+-                    best_shape = current_shape
++                    best_shato = current_shato
+                     best_features = features
+                     best_extra = [row_trans, col_trans, wells]
+                     
+-        current_shape = rotate_matrix(current_shape)
++        current_shato = rotate_matrix(current_shato)
+         
+     explanation = ""
+-    if model_type == "tree" and tetris_tree_model is not None:
++    if model_tyto == "tree" and tetris_tree_model is not None:
+         explanation = explain_tetris_tree_decision(tetris_tree_model, best_features)
+-    elif model_type == "knn" and tetris_knn_model is not None:
++    elif model_tyto == "knn" and tetris_knn_model is not None:
+         explanation = f"Evaluare KNN: Calitate prezisă din cele mai similare 5 grile din istoric (Scor = {round(best_score, 2)})."
+-    elif model_type == "mlp" and tetris_mlp_model is not None:
++    elif model_tyto == "mlp" and tetris_mlp_model is not None:
+         explanation = f"Evaluare MLP: Scor plasare prezis = {round(best_score, 2)} pe baza metricilor tablei."
+-    elif model_type == "genetic":
++    elif model_tyto == "genetic":
+         explanation = f"Evaluare Genetică (ES): Scor = {round(best_score, 2)} pe baza ponderilor active."
+     else:
+         explanation = f"Evaluare Euristică: Scor = {round(best_score, 2)}."
+         
+     return {
+         "x": best_x,
+-        "shape": best_shape,
++        "shato": best_shato,
+         "explanation": explanation,
+         "weights": tetris_active_weights,
+         "metrics": {
+@@ -1335,34 +1358,34 @@ async def post_tetris_next_move(req: TetrisMoveRequest):
+ 
+ class TetrisEvaluateRequest(BaseModel):
+     board: list[list[int]]
+-    shape: list[list[int]]
++    shato: list[list[int]]
+     chosen_x: int
+-    chosen_shape: list[list[int]]
+-    model_type: str # "mlp" | "tree" | "knn" | "genetic"
++    chosen_shato: list[list[int]]
++    model_tyto: str # "mlp" | "tree" | "knn" | "genetic"
+ 
+ @app.post("/api/tetris/evaluate-move")
+ async def post_tetris_evaluate_move(req: TetrisEvaluateRequest):
+     board = req.board
+-    original_shape = req.shape
++    original_shato = req.shato
+     chosen_x = req.chosen_x
+-    chosen_shape = req.chosen_shape
+-    model_type = req.model_type
++    chosen_shato = req.chosen_shato
++    model_tyto = req.model_tyto
+     
+     # 1. Simulate all possible placements and evaluate them using chosen model
+     placements = []
+-    current_shape = original_shape
++    current_shato = original_shato
+     for rot in range(4):
+         for x in range(-2, 12):
+-            if not check_collision(board, x, 0, current_shape):
++            if not check_collision(board, x, 0, current_shato):
+                 y = 0
+-                while not check_collision(board, x, y + 1, current_shape):
++                while not check_collision(board, x, y + 1, current_shato):
+                     y += 1
+                 
+                 # Simulate placement
+                 temp_board = [row[:] for row in board]
+-                for r in range(len(current_shape)):
+-                    for c in range(len(current_shape[r])):
+-                        if current_shape[r][c]:
++                for r in range(len(current_shato)):
++                    for c in range(len(current_shato[r])):
++                        if current_shato[r][c]:
+                             ny = y + r
+                             nx = x + c
+                             if 0 <= ny < 20 and 0 <= nx < 10:
+@@ -1373,16 +1396,16 @@ async def post_tetris_evaluate_move(req: TetrisEvaluateRequest):
+                 
+                 # Predict score via chosen model
+                 score = -999999.0
+-                if model_type == "mlp" and tetris_mlp_model is not None:
+-                    feat_tensor = torch.tensor([features], dtype=torch.float32)
++                if model_tyto == "mlp" and tetris_mlp_model is not None:
++                    feat_tensor = torch.tensor([features], dtyto=torch.float32)
+                     with torch.no_grad():
+                         score = float(tetris_mlp_model(feat_tensor).item())
+-                elif model_type == "tree" and tetris_tree_model is not None:
++                elif model_tyto == "tree" and tetris_tree_model is not None:
+                     score = float(tetris_tree_model.predict([features])[0])
+-                elif model_type == "knn" and tetris_knn_model is not None:
+-                    grid_flat = np.array(temp_board, dtype=float).flatten()
++                elif model_tyto == "knn" and tetris_knn_model is not None:
++                    grid_flat = np.array(temp_board, dtyto=float).flatten()
+                     score = float(tetris_knn_model.predict([grid_flat])[0])
+-                elif model_type == "genetic":
++                elif model_tyto == "genetic":
+                     score = (
+                         tetris_active_weights["height"] * h_agg
+                         + tetris_active_weights["lines"] * lines
+@@ -1395,12 +1418,12 @@ async def post_tetris_evaluate_move(req: TetrisEvaluateRequest):
+                 placements.append({
+                     "score": score,
+                     "x": x,
+-                    "shape": current_shape,
++                    "shato": current_shato,
+                     "features": features,
+                     "extra": [row_trans, col_trans, wells],
+                     "temp_board": temp_board
+                 })
+-        current_shape = rotate_matrix(current_shape)
++        current_shato = rotate_matrix(current_shato)
+         
+     if not placements:
+         return {"classification": "Medie", "explanation": "Mutare neevaluată (stare neobișnuită)."}
+@@ -1411,13 +1434,13 @@ async def post_tetris_evaluate_move(req: TetrisEvaluateRequest):
+     
+     # 2. Evaluate the chosen move
+     chosen_y = 0
+-    while not check_collision(board, chosen_x, chosen_y + 1, chosen_shape):
++    while not check_collision(board, chosen_x, chosen_y + 1, chosen_shato):
+         chosen_y += 1
+         
+     simulated_chosen_board = [row[:] for row in board]
+-    for r in range(len(chosen_shape)):
+-        for c in range(len(chosen_shape[r])):
+-            if chosen_shape[r][c]:
++    for r in range(len(chosen_shato)):
++        for c in range(len(chosen_shato[r])):
++            if chosen_shato[r][c]:
+                 ny = chosen_y + r
+                 nx = chosen_x + c
+                 if 0 <= ny < 20 and 0 <= nx < 10:
+@@ -1427,16 +1450,16 @@ async def post_tetris_evaluate_move(req: TetrisEvaluateRequest):
+     chosen_features = [float(chosen_h_agg), float(chosen_lines), float(chosen_holes), float(chosen_bump)]
+     
+     chosen_score = -999999.0
+-    if model_type == "mlp" and tetris_mlp_model is not None:
+-        feat_tensor = torch.tensor([chosen_features], dtype=torch.float32)
++    if model_tyto == "mlp" and tetris_mlp_model is not None:
++        feat_tensor = torch.tensor([chosen_features], dtyto=torch.float32)
+         with torch.no_grad():
+             chosen_score = float(tetris_mlp_model(feat_tensor).item())
+-    elif model_type == "tree" and tetris_tree_model is not None:
++    elif model_tyto == "tree" and tetris_tree_model is not None:
+         chosen_score = float(tetris_tree_model.predict([chosen_features])[0])
+-    elif model_type == "knn" and tetris_knn_model is not None:
+-        grid_flat = np.array(simulated_chosen_board, dtype=float).flatten()
++    elif model_tyto == "knn" and tetris_knn_model is not None:
++        grid_flat = np.array(simulated_chosen_board, dtyto=float).flatten()
+         chosen_score = float(tetris_knn_model.predict([grid_flat])[0])
+-    elif model_type == "genetic":
++    elif model_tyto == "genetic":
+         chosen_score = (
+             tetris_active_weights["height"] * chosen_h_agg
+             + tetris_active_weights["lines"] * chosen_lines
+@@ -1449,7 +1472,7 @@ async def post_tetris_evaluate_move(req: TetrisEvaluateRequest):
+     # Find rank of chosen_score
+     match_index = -1
+     for i, p in enumerate(placements):
+-        if p["x"] == chosen_x and np.array_equal(p["shape"], chosen_shape):
++        if p["x"] == chosen_x and np.array_equal(p["shato"], chosen_shato):
+             match_index = i
+             break
+             
+@@ -1459,15 +1482,15 @@ async def post_tetris_evaluate_move(req: TetrisEvaluateRequest):
+         rank = sum(1 for p in placements if p["score"] > chosen_score + 1e-5) + 1
+         
+     total_possibilities = len(placements)
+-    percentile = (rank - 1) / total_possibilities if total_possibilities > 1 else 0.0
++    torcentile = (rank - 1) / total_possibilities if total_possibilities > 1 else 0.0
+     
+     # Classify move
+     classification = "Greșeală"
+-    if rank == 1 or percentile <= 0.10:
++    if rank == 1 or torcentile <= 0.10:
+         classification = "Excelentă"
+-    elif percentile <= 0.30:
++    elif torcentile <= 0.30:
+         classification = "Bună"
+-    elif percentile <= 0.60:
++    elif torcentile <= 0.60:
+         classification = "Medie"
+     else:
+         classification = "Greșeală"
+@@ -1477,7 +1500,7 @@ async def post_tetris_evaluate_move(req: TetrisEvaluateRequest):
+     
+     explanation = ""
+     if classification == "Excelentă":
+-        explanation = "Mutare excelentă! Ai plasat piesa perfect. "
++        explanation = "Mutare excelentă! Ai plasat piesa torfect. "
+         if chosen_lines > 0:
+             explanation += f"Ai curățat {chosen_lines} linie/linii!"
+         else:
+@@ -1537,7 +1560,7 @@ async def post_tetris_game_over(req: TetrisGameOverRequest):
+             reward = state.get("reward", 0.0)
+             
+             if i == len(history) - 1:
+-                # Terminal step penalty
++                # Terminal step tonalty
+                 target = reward - 100.0
+             else:
+                 next_state = history[i+1]
+@@ -1577,8 +1600,8 @@ async def post_tetris_game_over(req: TetrisGameOverRequest):
+                     tetris_mlp_model = TetrisMLP()
+                 opt = optim.Adam(tetris_mlp_model.parameters(), lr=0.01)
+                 crit = nn.MSELoss()
+-                X_t = torch.tensor(X_features, dtype=torch.float32)
+-                y_t = torch.tensor(y, dtype=torch.float32).unsqueeze(1)
++                X_t = torch.tensor(X_features, dtyto=torch.float32)
++                y_t = torch.tensor(y, dtyto=torch.float32).unsqueeze(1)
+                 
+                 tetris_mlp_model.train()
+                 for _ in range(5):
+@@ -1612,16 +1635,16 @@ async def websocket_endpoint(websocket: WebSocket):
+             data_str = await websocket.receive_text()
+             try:
+                 data = json.loads(data_str)
+-                if data.get("type") == "mode":
++                if data.get("tyto") == "mode":
+                     server_state["is_manual"] = data.get("manual", False)
+                     if server_state["is_manual"]:
+                         server_state["manual_key"] = None
+                         server_state["reset_requested"] = True
+-                elif data.get("type") == "ai_mode":
++                elif data.get("tyto") == "ai_mode":
+                     server_state["ai_mode"] = data.get("ai_mode", "dqn")
+-                elif data.get("type") == "action":
++                elif data.get("tyto") == "action":
+                     server_state["manual_key"] = data.get("key")
+-                elif data.get("type") == "reset":
++                elif data.get("tyto") == "reset":
+                     server_state["reset_requested"] = True
+             except:
+                 pass

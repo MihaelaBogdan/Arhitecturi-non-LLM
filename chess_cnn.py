@@ -116,7 +116,8 @@ def _minimax_cnn(board: chess.Board, depth: int, alpha: float, beta: float, maxi
 
 def get_best_move_cnn(board: chess.Board, depth: int = 2) -> str | None:
     """Return the best move UCI string using CNN evaluation inside Minimax."""
-    best_move = None
+    import random
+    best_moves = []
     if board.turn == chess.WHITE:
         best_val = -float("inf")
         for move in board.legal_moves:
@@ -125,7 +126,9 @@ def get_best_move_cnn(board: chess.Board, depth: int = 2) -> str | None:
             board.pop()
             if val > best_val:
                 best_val = val
-                best_move = move
+                best_moves = [move]
+            elif val == best_val:
+                best_moves.append(move)
     else:
         best_val = float("inf")
         for move in board.legal_moves:
@@ -134,5 +137,46 @@ def get_best_move_cnn(board: chess.Board, depth: int = 2) -> str | None:
             board.pop()
             if val < best_val:
                 best_val = val
-                best_move = move
-    return best_move.uci() if best_move else None
+                best_moves = [move]
+            elif val == best_val:
+                best_moves.append(move)
+    return random.choice(best_moves).uci() if best_moves else None
+
+
+def get_cnn_saliency(board: chess.Board) -> list[float]:
+    """Calculate gradient-based saliency for each square on the board."""
+    try:
+        model = get_model()
+        model.eval()
+        
+        t = board_to_tensor(board).unsqueeze(0)  # (1, 12, 8, 8)
+        t.requires_grad = True
+        
+        score = model(t)
+        model.zero_grad()
+        score.backward()
+        
+        grads = t.grad.detach().cpu().numpy()[0]  # (12, 8, 8)
+        saliency = np.sum(np.abs(grads), axis=0)  # (8, 8)
+        
+        max_val = saliency.max()
+        if max_val > 0:
+            saliency = saliency / max_val
+            
+        saliency_list = [0.0] * 64
+        for square in chess.SQUARES:
+            rank = chess.square_rank(square)
+            file = chess.square_file(square)
+            # board_to_tensor uses rank for row and file for col.
+            # python-chess squares index: sq = rank * 8 + file
+            saliency_list[square] = float(saliency[rank][file])
+        return saliency_list
+    except Exception as e:
+        print(f"Saliency computation failed: {e}")
+        # Return fallback based on basic piece locations
+        fallback = [0.0] * 64
+        for sq in chess.SQUARES:
+            piece = board.piece_at(sq)
+            if piece:
+                fallback[sq] = 0.3
+        return fallback

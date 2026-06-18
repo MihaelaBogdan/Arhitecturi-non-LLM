@@ -117,13 +117,13 @@ function setTetrisAIMode(mode) {
     const descEl = document.getElementById('tetrisAiModeDesc');
     if (descEl) {
         if (mode === 'knn') {
-            descEl.innerText = "KNN evaluează starea tablei comparând-o cu cele mai similare table din istoric (TD-Learning).";
+            descEl.innerText = "KNN evaluates the board state by comparing it to the most similar historical boards (TD-Learning).";
         } else if (mode === 'tree') {
-            descEl.innerText = "Arborele de decizie estimează calitatea pe baza metricilor tablei, antrenându-se online.";
+            descEl.innerText = "The decision tree estimates quality based on board metrics, training online.";
         } else if (mode === 'mlp') {
-            descEl.innerText = "Rețeaua neuronală MLP (Multi-Layer Perceptron) învață online prin optimizarea erorii TD.";
+            descEl.innerText = "The MLP neural network learns online by optimizing TD error.";
         } else if (mode === 'genetic') {
-            descEl.innerText = "Strategia Evolutivă (ES) optimizează ponderile euristice online prin feedback direct.";
+            descEl.innerText = "Evolutionary Strategy (ES) optimizes heuristic weights online via direct feedback.";
         }
     }
     
@@ -603,10 +603,14 @@ async function evaluateMove(boardBefore, originalShape, chosenX, chosenShape) {
         const badge = document.getElementById('tetrisMoveBadge');
         badge.className = 'move-badge';
         const classMap = {
+            'Excellent': ['badge-excellent', ''],
+            'Good':      ['badge-good',      ''],
+            'Average':   ['badge-okay',      ''],
+            'Mistake':   ['badge-blunder',   ''],
             'Excelentă': ['badge-excellent', ''],
             'Bună':      ['badge-good',      ''],
-            'Medie':     ['badge-okay',       ''],
-            'Greșeală':  ['badge-blunder',    '']
+            'Medie':     ['badge-okay',      ''],
+            'Greșeală':  ['badge-blunder',   '']
         };
         const [cls, emoji] = classMap[data.classification] || ['badge-neutral', ''];
         badge.classList.add(cls);
@@ -832,9 +836,9 @@ function resetGame() {
 
     const badge = document.getElementById('tetrisMoveBadge');
     badge.className = 'move-badge badge-neutral';
-    badge.innerText = 'Se așteaptă mutarea...';
+    badge.innerText = 'Waiting for move...';
     document.getElementById('tetrisMoveExplanation').innerText =
-        'Plasează o piesă sau pornește AI-ul pentru a vedea analiza în timp real.';
+        'Place a piece or start the AI to see real-time analysis.';
 }
 
 // ─── Keyboard Controls ────────────────────────────────────────
