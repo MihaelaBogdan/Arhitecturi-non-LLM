@@ -1335,13 +1335,13 @@ async def post_tetris_next_move(req: TetrisMoveRequest):
     if model_type == "tree" and tetris_tree_model is not None:
         explanation = explain_tetris_tree_decision(tetris_tree_model, best_features)
     elif model_type == "knn" and tetris_knn_model is not None:
-        explanation = f"Evaluare KNN: Calitate prezisă din cele mai similare 5 grile din istoric (Scor = {round(best_score, 2)})."
+        explanation = f"KNN Evaluation: Predicted quality from the 5 most similar historical boards (Score = {round(best_score, 2)})."
     elif model_type == "mlp" and tetris_mlp_model is not None:
-        explanation = f"Evaluare MLP: Scor plasare prezis = {round(best_score, 2)} pe baza metricilor tablei."
+        explanation = f"MLP Evaluation: Predicted placement score = {round(best_score, 2)} based on board metrics."
     elif model_type == "genetic":
-        explanation = f"Evaluare Genetică (ES): Scor = {round(best_score, 2)} pe baza ponderilor active."
+        explanation = f"Genetic Evaluation (ES): Score = {round(best_score, 2)} based on active weights."
     else:
-        explanation = f"Evaluare Euristică: Scor = {round(best_score, 2)}."
+        explanation = f"Heuristic Evaluation: Score = {round(best_score, 2)}."
         
     return {
         "x": best_x,
