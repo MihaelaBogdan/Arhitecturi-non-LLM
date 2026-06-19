@@ -697,20 +697,21 @@ async function handleMergeAndNext() {
 
         const badge = document.getElementById('tetrisMoveBadge');
         badge.className = 'move-badge badge-neutral';
-        badge.innerText = 'Game Over!';
-        document.getElementById('tetrisMoveExplanation').innerText = 'Game over. Restart!';
 
-        if (isManualMode && manualInterval) {
-            clearInterval(manualInterval); manualInterval = null;
-            const btn = document.getElementById('btnToggleTetrisManual');
-            btn.innerText = 'Play (Manual Mode)';
-            btn.style.background = '';
-        }
-        if (!isManualMode && aiInterval) {
-            clearInterval(aiInterval); aiInterval = null;
-            const btn = document.getElementById('btnStartTetrisAI');
-            btn.innerText = 'Start AI';
-            btn.style.background = '';
+        if (isManualMode) {
+            badge.innerText = 'Game Over!';
+            document.getElementById('tetrisMoveExplanation').innerText = 'Game over. Restart!';
+            if (manualInterval) {
+                clearInterval(manualInterval); manualInterval = null;
+                const btn = document.getElementById('btnToggleTetrisManual');
+                btn.innerText = 'Play (Manual Mode)';
+                btn.style.background = '';
+            }
+        } else {
+            badge.innerText = 'Restarting...';
+            document.getElementById('tetrisMoveExplanation').innerText = 'Game over. Auto-restarting...';
+            currentPiece = null;
+            await newPiece();
         }
     }
 
